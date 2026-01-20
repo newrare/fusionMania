@@ -1,0 +1,78 @@
+# Godot 4+ specific ignores
+.godot/
+.import/
+
+# Godot-specific ignores
+*.tmp
+export.cfg
+export_presets.cfg
+*.translation
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+
+# System/OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Runtime data
+pids
+*.pid
+android/
+*.seed
+
+# Build artifacts
+builds/
+dist/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Audio cache (if any)
+.audio_cache/
+
+# Custom user settings
+user://
+
+# Android signing keys - NEVER commit these!
+*.keystore
+ 
+# Ignore drafts folder (project planning, guides, etc.)
+drafts/
+*.jks
+debug.keystore
+release.keystore
+
+# Android build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Custom files to ignore
+TODO.md
+COPILOT_DIRECTIVE.md
+create_keystore.sh
+fusion_mania.keystore
