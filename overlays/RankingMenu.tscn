@@ -1,0 +1,44 @@
+[gd_scene load_steps=3 format=3 uid="uid://d7kq6wxranking"]
+
+[ext_resource type="Script" path="res://overlays/RankingMenu.gd" id="1_ranking"]
+[ext_resource type="PackedScene" uid="uid://b9kq8wxbhbtn1" path="res://widgets/UIButton.tscn" id="2_uibtn"]
+
+[node name="RankingMenu" type="CanvasLayer"]
+script = ExtResource("1_ranking")
+
+[node name="OverlayBackground" type="ColorRect" parent="."]
+offset_right = 1080.0
+offset_bottom = 1920.0
+color = Color(0, 0, 0, 0.8)
+
+[node name="MenuContainer" type="VBoxContainer" parent="."]
+offset_left = 190.0
+offset_top = 400.0
+offset_right = 890.0
+offset_bottom = 1500.0
+theme_override_constants/separation = 15
+
+[node name="TitleLabel" type="Label" parent="MenuContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 56
+text = "🏆 RANKING"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer1" type="Control" parent="MenuContainer"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="ScoresContainer" type="VBoxContainer" parent="MenuContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 15
+
+[node name="Spacer2" type="Control" parent="MenuContainer"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="BtnBack" parent="MenuContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 70)
+text = "← BACK"

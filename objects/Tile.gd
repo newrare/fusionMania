@@ -27,9 +27,10 @@ var is_frozen: bool    = false
 var freeze_turns: int  = 0
 
 # Visual node references
-@onready var background  = $Background
-@onready var value_label = $ValueLabel
-@onready var power_icon  = $PowerIcon
+var background:  ColorRect
+var value_label: Label
+var power_icon:  TextureRect
+var power_label: Label
 
 # Signals
 signal tile_clicked(tile)
@@ -38,13 +39,25 @@ signal tile_merged(tile, merged_value: int)
 signal tile_destroyed(tile)
 
 
+func _ready():
+	# Get child node references
+	background  = $Background
+	value_label = $ValueLabel
+	power_icon  = $PowerIcon
+	power_label = $PowerLabel
+	
+	# Ensure visual is updated after nodes are ready
+	update_visual()
+
+
 # Initialize tile with value, power, and grid position
 func initialize(val: int, power: String = "", grid_pos: Vector2i = Vector2i.ZERO):
 	value         = val
 	power_type    = power
 	grid_position = grid_pos
 
-	update_visual()
+	# Defer visual update to next frame to ensure nodes are ready
+	call_deferred("update_visual")
 	spawn_animation()
 
 
@@ -58,17 +71,31 @@ func update_visual():
 	if value_label:
 		value_label.text = str(value)
 
-	# Update power icon
-	if power_icon:
-		if power_type != "":
+	# Update power icon and label
+	if power_type != "" and power_type != "empty":
+		# Get power data from PowerManager
+		var power_data = PowerManager.POWER_DATA.get(power_type, {})
+		var power_name = power_data.get("name", power_type)
+		
+		# Show icon
+		if power_icon:
 			var icon_path = "res://assets/icons/power_%s.png" % power_type
 			if ResourceLoader.exists(icon_path):
 				power_icon.texture = load(icon_path)
 				power_icon.visible = true
 			else:
 				power_icon.visible = false
-		else:
+		
+		# Show power name label
+		if power_label:
+			power_label.text = power_name
+			power_label.visible = true
+	else:
+		# Hide power elements if no power or empty power
+		if power_icon:
 			power_icon.visible = false
+		if power_label:
+			power_label.visible = false
 
 
 # Check if tile can merge with another tile

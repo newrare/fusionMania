@@ -371,14 +371,14 @@ func process_fusions(fusions: Array):
 
 
 # Process movement
-func process_movement(direction: Direction):
+func process_movement(direction: Direction) -> bool:
 	if not can_move:
-		return
+		return false
 
 	# Check if direction is blocked
 	if direction in blocked_directions:
 		print("Direction blocked by freeze power!")
-		return
+		return false
 
 	can_move = false
 	var moved = false
@@ -417,3 +417,93 @@ func process_movement(direction: Direction):
 
 	can_move = true
 	movement_completed.emit(direction)
+	return moved
+
+
+# ============================
+# Power Support Methods
+# ============================
+
+var frozen_directions: Dictionary = {}  # {Direction: turns_remaining}
+var blind_mode: bool              = false
+var blind_turns: int              = 0
+
+
+# Swap two tiles positions
+func swap_tiles(tile1, tile2):
+	var pos1 = tile1.grid_position
+	var pos2 = tile2.grid_position
+	
+	# Swap in grid
+	grid[pos1.y][pos1.x] = tile2
+	grid[pos2.y][pos2.x] = tile1
+	
+	# Update tiles
+	tile1.grid_position = pos2
+	tile2.grid_position = pos1
+	
+	# Animate movement
+	var grid_node = get_tree().get_first_node_in_group("grid")
+	if grid_node:
+		tile1.move_to_position(grid_node.calculate_screen_position(pos2))
+		tile2.move_to_position(grid_node.calculate_screen_position(pos1))
+	
+	print("Swapped tiles at %s and %s" % [pos1, pos2])
+
+
+# Freeze a direction for N turns
+func freeze_direction(direction: Direction, turns: int):
+	frozen_directions[direction] = turns
+	print("Direction %s frozen for %d turns" % [Direction.keys()[direction], turns])
+
+
+# Check if direction is frozen
+func is_direction_frozen(direction: Direction) -> bool:
+	return frozen_directions.has(direction) and frozen_directions[direction] > 0
+
+
+# Decrement frozen direction counters (called after each move)
+func update_frozen_directions():
+	var to_remove = []
+	for dir in frozen_directions.keys():
+		frozen_directions[dir] -= 1
+		if frozen_directions[dir] <= 0:
+			to_remove.append(dir)
+	
+	for dir in to_remove:
+		frozen_directions.erase(dir)
+		print("Direction %s unfrozen" % Direction.keys()[dir])
+
+
+# Set blind mode
+func set_blind_mode(enabled: bool, turns: int = 0):
+	blind_mode  = enabled
+	blind_turns = turns
+	
+	if enabled:
+		print("👁️ Blind mode enabled for %d turns" % turns)
+	else:
+		print("👁️ Blind mode disabled")
+
+
+# Update blind mode (called after each move)
+func update_blind_mode():
+	if blind_mode and blind_turns > 0:
+		blind_turns -= 1
+		if blind_turns <= 0:
+			set_blind_mode(false)
+
+
+# Check if tile with specific value exists
+func has_tile_value(value: int) -> bool:
+	for y in range(grid_size):
+		for x in range(grid_size):
+			var tile = grid[y][x]
+			if tile != null and tile.value == value:
+				return true
+	return false
+
+
+# Check if game is over (no valid moves)
+func is_game_over() -> bool:
+	return not has_valid_moves()

@@ -1,0 +1,60 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8kq7wxoptions"]
+
+[ext_resource type="Script" path="res://overlays/OptionsMenu.gd" id="1_options"]
+[ext_resource type="PackedScene" uid="uid://b9kq8wxbhbtn1" path="res://widgets/UIButton.tscn" id="2_uibtn"]
+
+[node name="OptionsMenu" type="CanvasLayer"]
+script = ExtResource("1_options")
+
+[node name="OverlayBackground" type="ColorRect" parent="."]
+offset_right = 1080.0
+offset_bottom = 1920.0
+color = Color(0, 0, 0, 0.8)
+
+[node name="MenuContainer" type="VBoxContainer" parent="."]
+offset_left = 240.0
+offset_top = 500.0
+offset_right = 840.0
+offset_bottom = 1400.0
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="MenuContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 56
+text = "⚙️ OPTIONS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer1" type="Control" parent="MenuContainer"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="ButtonsContainer" type="VBoxContainer" parent="MenuContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BtnMusic" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 70)
+text = "🎵 MUSIC: ON"
+
+[node name="BtnSfx" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 70)
+text = "🔊 SFX: ON"
+
+[node name="BtnLanguage" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 70)
+text = "🌍 ENGLISH"
+
+[node name="BtnResetRanking" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 70)
+text = "🗑️ RESET RANKING"
+
+[node name="BtnBack" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 70)
+text = "← BACK"
