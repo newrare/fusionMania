@@ -1,0 +1,63 @@
+[gd_scene load_steps=3 format=3 uid="uid://d5kq9wxbhtitle"]
+
+[ext_resource type="Script" path="res://overlays/TitleMenu.gd" id="1_title01"]
+[ext_resource type="PackedScene" uid="uid://b9kq8wxbhbtn1" path="res://widgets/UIButton.tscn" id="2_uibtn"]
+
+[node name="TitleMenu" type="CanvasLayer"]
+script = ExtResource("1_title01")
+
+[node name="OverlayBackground" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="MenuContainer" type="VBoxContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -250.0
+offset_right = 150.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Logo" type="Label" parent="MenuContainer"]
+layout_mode = 2
+text = "FUSION MANIA"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer1" type="Control" parent="MenuContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="ButtonsContainer" type="VBoxContainer" parent="MenuContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BtnNewGame" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+text = "NEW GAME"
+
+[node name="BtnResume" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+text = "RESUME"
+
+[node name="BtnRanking" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+text = "RANKING"
+
+[node name="BtnOptions" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+text = "OPTIONS"
+
+[node name="BtnQuit" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+text = "QUIT"

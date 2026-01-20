@@ -2,6 +2,9 @@
 # Manages the 20 power types and their activation
 extends Node
 
+# Load PowerEffect for visual effects
+const PowerEffect = preload("res://visuals/PowerEffect.gd")
+
 # Power data with spawn rates
 const POWER_DATA = {
 	"empty":        {"name": "Empty",           "spawn_rate": 30, "type": "none"},
@@ -76,18 +79,177 @@ func resolve_power_merge(power1: String, power2: String) -> String:
 		return power1
 
 
-# Activate a power (placeholder - will be implemented in Phase 3)
+# Activate a power
 func activate_power(power_type: String, tile, grid_manager):
-	if power_type == "":
+	if power_type == "" or power_type == "empty":
 		return
-	
+
 	print("🔥 Activating power: %s" % power_type)
 	power_activated.emit(power_type, tile)
 	AudioManager.play_sfx_power()
-	
-	# TODO: Implement individual power effects in Phase 3
-	
+
+	# Switch case for all 20 powers (placeholder implementations for Phase 2)
+	match power_type:
+		"fire_h":
+			activate_fire_horizontal(tile, grid_manager)
+		"fire_v":
+			activate_fire_vertical(tile, grid_manager)
+		"fire_cross":
+			activate_fire_cross(tile, grid_manager)
+		"bomb":
+			activate_bomb(tile, grid_manager)
+		"ice":
+			activate_ice(tile, grid_manager)
+		"switch_h":
+			activate_switch_horizontal(tile, grid_manager)
+		"switch_v":
+			activate_switch_vertical(tile, grid_manager)
+		"teleport":
+			activate_teleport(tile, grid_manager)
+		"expel_h":
+			activate_expel_horizontal(tile, grid_manager)
+		"expel_v":
+			activate_expel_vertical(tile, grid_manager)
+		"freeze_up":
+			activate_freeze_direction(GridManager.Direction.UP, grid_manager)
+		"freeze_down":
+			activate_freeze_direction(GridManager.Direction.DOWN, grid_manager)
+		"freeze_left":
+			activate_freeze_direction(GridManager.Direction.LEFT, grid_manager)
+		"freeze_right":
+			activate_freeze_direction(GridManager.Direction.RIGHT, grid_manager)
+		"lightning":
+			activate_lightning(tile, grid_manager)
+		"nuclear":
+			activate_nuclear(tile, grid_manager)
+		"blind":
+			activate_blind(tile, grid_manager)
+		"bowling":
+			activate_bowling(tile, grid_manager)
+		"ads":
+			activate_ads(tile, grid_manager)
+
 	power_effect_completed.emit(power_type)
+
+
+# ============================
+# Power Implementations
+# (Placeholder for Phase 2)
+# ============================
+
+# Fire Horizontal - Destroys entire row
+func activate_fire_horizontal(tile, grid_manager):
+	var row = tile.grid_position.y
+
+	# Destroy entire row
+	for x in range(grid_manager.grid_size):
+		var target = grid_manager.get_tile_at(Vector2i(x, row))
+		if target != null and target != tile:
+			grid_manager.destroy_tile(target)
+
+	# Visual effect
+	PowerEffect.fire_line_effect(row, true)  # true = horizontal
+
+
+# Fire Vertical - Destroys entire column
+func activate_fire_vertical(tile, grid_manager):
+	var col = tile.grid_position.x
+
+	# Destroy entire column
+	for y in range(grid_manager.grid_size):
+		var target = grid_manager.get_tile_at(Vector2i(col, y))
+		if target != null and target != tile:
+			grid_manager.destroy_tile(target)
+
+	# Visual effect
+	PowerEffect.fire_line_effect(col, false)  # false = vertical
+
+
+# Fire Cross - Destroys row AND column
+func activate_fire_cross(tile, grid_manager):
+	var row = tile.grid_position.y
+	var col = tile.grid_position.x
+
+	# Destroy entire row
+	for x in range(grid_manager.grid_size):
+		var target = grid_manager.get_tile_at(Vector2i(x, row))
+		if target != null and target != tile:
+			grid_manager.destroy_tile(target)
+
+	# Destroy entire column
+	for y in range(grid_manager.grid_size):
+		var target = grid_manager.get_tile_at(Vector2i(col, y))
+		if target != null and target != tile:
+			grid_manager.destroy_tile(target)
+
+	# Visual effects
+	PowerEffect.fire_line_effect(row, true)   # horizontal
+	PowerEffect.fire_line_effect(col, false)  # vertical
+
+
+# Bomb - Destroys adjacent tiles (8 directions)
+func activate_bomb(tile, grid_manager):
+	print("  [TODO] Bomb not implemented yet")
+
+
+# Ice - Freezes tile for 5 turns
+func activate_ice(tile, grid_manager):
+	print("  [TODO] Ice not implemented yet")
+
+
+# Switch Horizontal - Swaps 2 horizontal tiles
+func activate_switch_horizontal(tile, grid_manager):
+	print("  [TODO] Switch Horizontal not implemented yet")
+
+
+# Switch Vertical - Swaps 2 vertical tiles
+func activate_switch_vertical(tile, grid_manager):
+	print("  [TODO] Switch Vertical not implemented yet")
+
+
+# Teleport - Player chooses 2 tiles to swap
+func activate_teleport(tile, grid_manager):
+	print("  [TODO] Teleport not implemented yet")
+
+
+# Expel Horizontal - Ejects edge tile
+func activate_expel_horizontal(tile, grid_manager):
+	print("  [TODO] Expel Horizontal not implemented yet")
+
+
+# Expel Vertical - Ejects edge tile
+func activate_expel_vertical(tile, grid_manager):
+	print("  [TODO] Expel Vertical not implemented yet")
+
+
+# Freeze Direction - Blocks movement in one direction for 2 turns
+func activate_freeze_direction(direction, grid_manager):
+	print("  [TODO] Freeze Direction not implemented yet")
+
+
+# Lightning - Destroys 4 random tiles
+func activate_lightning(tile, grid_manager):
+	print("  [TODO] Lightning not implemented yet")
+
+
+# Nuclear - Destroys all tiles
+func activate_nuclear(tile, grid_manager):
+	print("  [TODO] Nuclear not implemented yet")
+
+
+# Blind - Black grid for 2 turns
+func activate_blind(tile, grid_manager):
+	print("  [TODO] Blind not implemented yet")
+
+
+# Bowling - Ball crosses and destroys
+func activate_bowling(tile, grid_manager):
+	print("  [TODO] Bowling not implemented yet")
+
+
+# Ads - Shows ad for X seconds
+func activate_ads(tile, grid_manager):
+	print("  [TODO] Ads not implemented yet")
 
 
 # Get power data

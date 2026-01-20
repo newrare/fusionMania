@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://b9kq8wxbhbtn1"]
+
+[ext_resource type="Script" path="res://widgets/UIButton.gd" id="1_btn01"]
+
+[node name="UIButton" type="Button"]
+offset_right = 200.0
+offset_bottom = 60.0
+text = "Button"
+script = ExtResource("1_btn01")
