@@ -38,6 +38,11 @@ layout_mode = 2
 custom_minimum_size = Vector2(400, 70)
 text = "NEW GAME"
 
+[node name="BtnFreeMode" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 70)
+text = "FREE MODE"
+
 [node name="BtnResume" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
 custom_minimum_size = Vector2(400, 70)

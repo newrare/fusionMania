@@ -18,6 +18,7 @@ var blocked_directions: Array		= []
 # Signals
 signal tile_spawned(tile, position: Vector2i)
 signal movement_completed(direction: Direction)
+signal tiles_moved()
 signal fusion_occurred(tile1, tile2, new_tile)
 signal no_moves_available()
 signal game_over()
@@ -40,6 +41,11 @@ func initialize_grid():
 
 # Start a new game
 func start_new_game():
+	# Clear all existing tiles from visual grid
+	var grid_node = get_tree().get_first_node_in_group("grid")
+	if grid_node:
+		grid_node.clear_all_tiles()
+	
 	initialize_grid()
 	move_count = 0
 	blocked_directions.clear()
@@ -330,7 +336,13 @@ func move_tiles_right(fusions: Array) -> bool:
 func process_fusions(fusions: Array):
 	if fusions.is_empty():
 		return
-
+	
+	var power_to_activate = null
+	var power_tile = null
+	var highest_priority_value = -1
+	var highest_priority_y = 999
+	var highest_priority_x = 999
+	
 	for fusion_data in fusions:
 		var tile1        = fusion_data.tile1
 		var tile2        = fusion_data.tile2
@@ -363,11 +375,35 @@ func process_fusions(fusions: Array):
 		new_tile.merge_animation()
 		AudioManager.play_sfx_fusion()
 
-		# Activate power if match
+		# Track power for priority activation (only one power per movement)
 		if merge_result.power_activated:
-			PowerManager.activate_power(merge_result.power, new_tile, self)
+			var should_replace = false
+			
+			# Priority 1: Highest value
+			if merge_result.value > highest_priority_value:
+				should_replace = true
+			# Priority 2: Same value, highest position (lowest y)
+			elif merge_result.value == highest_priority_value and position.y < highest_priority_y:
+				should_replace = true
+			# Priority 3: Same value and y, leftmost (lowest x)
+			elif merge_result.value == highest_priority_value and position.y == highest_priority_y and position.x < highest_priority_x:
+				should_replace = true
+			
+			if should_replace:
+				power_to_activate = merge_result.power
+				power_tile = new_tile
+				highest_priority_value = merge_result.value
+				highest_priority_y = position.y
+				highest_priority_x = position.x
 
 		fusion_occurred.emit(tile1, tile2, new_tile)
+	
+	# Wait for all merge animations to complete before activating power
+	await get_tree().create_timer(0.3).timeout
+	
+	# Activate only the highest priority power
+	if power_to_activate != null and power_tile != null:
+		await PowerManager.activate_power(power_to_activate, power_tile, self)
 
 
 # Process movement
@@ -398,15 +434,19 @@ func process_movement(direction: Direction) -> bool:
 	# If at least one tile moved
 	if moved:
 		move_count += 1
+		tiles_moved.emit()
 		AudioManager.play_sfx_move()
 
-		# Wait for animations to finish
+		# Decrease freeze turns for all tiles
+		update_freeze_turns()
+
+		# Wait for movement animations to finish
 		await get_tree().create_timer(0.3).timeout
 
-		# Process fusions
-		process_fusions(fusions)
+		# Process fusions and wait for all animations (merge + power) to complete
+		await process_fusions(fusions)
 
-		# Spawn new tile
+		# Spawn new tile only after all animations are done
 		spawn_random_tile()
 
 		# Check game over
@@ -492,6 +532,15 @@ func update_blind_mode():
 		blind_turns -= 1
 		if blind_turns <= 0:
 			set_blind_mode(false)
+
+
+# Update freeze turns for all tiles (called after each move)
+func update_freeze_turns():
+	for y in range(grid_size):
+		for x in range(grid_size):
+			var tile = grid[y][x]
+			if tile != null and tile.has_method("decrease_freeze_turns"):
+				tile.decrease_freeze_turns()
 
 
 # Check if tile with specific value exists

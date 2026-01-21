@@ -9,17 +9,16 @@ Fusion Mania features 20 unique powers that activate when two tiles with the sam
 
 | Power | Code | Spawn % | Type | Description |
 |-------|------|---------|------|-------------|
-| **Empty** | `empty` | 30% | - | No power |
-| **Fire Horizontal** | `fire_h` | 5% | 🟢 Bonus | Destroys entire row |
-| **Fire Vertical** | `fire_v` | 5% | 🟢 Bonus | Destroys entire column |
+| **Fire Horizontal** | `fire_h` | 10% | 🟢 Bonus | Destroys entire row |
+| **Fire Vertical** | `fire_v` | 10% | 🟢 Bonus | Destroys entire column |
 | **Fire Cross** | `fire_cross` | 5% | 🟢 Bonus | Destroys row AND column |
-| **Bomb** | `bomb` | 5% | 🟢 Bonus | Destroys adjacent tiles |
+| **Bomb** | `bomb` | 10% | 🟢 Bonus | Destroys adjacent tiles |
 | **Ice** | `ice` | 6% | 🔴 Malus | Freezes tile for 5 turns |
 | **Switch H** | `switch_h` | 5% | 🟢 Bonus | Swaps 2 horizontal tiles |
 | **Switch V** | `switch_v` | 5% | 🟢 Bonus | Swaps 2 vertical tiles |
 | **Teleport** | `teleport` | 2% | 🟢 Bonus | Player chooses 2 tiles to swap |
-| **Expel H** | `expel_h` | 5% | 🟢 Bonus | Ejects edge tile |
-| **Expel V** | `expel_v` | 5% | 🟢 Bonus | Ejects edge tile |
+| **Expel H** | `expel_h` | 10% | 🟢 Bonus | Ejects edge tile |
+| **Expel V** | `expel_v` | 10% | 🟢 Bonus | Ejects edge tile |
 | **Freeze Up** | `freeze_up` | 5% | 🔴 Malus | Blocks UP movement for 2 turns |
 | **Freeze Down** | `freeze_down` | 5% | 🔴 Malus | Blocks DOWN movement for 2 turns |
 | **Freeze Left** | `freeze_left` | 5% | 🔴 Malus | Blocks LEFT movement for 2 turns |
@@ -28,7 +27,7 @@ Fusion Mania features 20 unique powers that activate when two tiles with the sam
 | **Nuclear** | `nuclear` | 1% | 🟢 Bonus | Destroys all tiles |
 | **Blind** | `blind` | 2% | 🔴 Malus | Black grid for 2 turns |
 | **Bowling** | `bowling` | 2% | 🟢 Bonus | Ball crosses and destroys |
-| **Ads** | `ads` | 5% | 🔴 Malus | Shows ad for X seconds |
+| **Ads** | `ads` | 10% | 🔴 Malus | Shows ad for X seconds |
 
 ---
 

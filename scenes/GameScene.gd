@@ -2,20 +2,33 @@
 # Main game scene with grid and overlays
 extends Node2D
 
-@onready var grid           = $Grid
-@onready var title_menu     = $TitleMenu
-@onready var options_menu   = $OptionsMenu
-@onready var ranking_menu   = $RankingMenu
-@onready var game_over_menu = $GameOverMenu
+@onready var grid                     = $Grid
+@onready var title_menu               = $TitleMenu
+@onready var power_choice_menu        = $PowerChoiceMenu
+@onready var options_menu             = $OptionsMenu
+@onready var ranking_menu             = $RankingMenu
+@onready var game_over_menu           = $GameOverMenu
+@onready var score_label              = $ScoreLabel
+@onready var move_count_label         = $MoveCountLabel
+@onready var power_message_container  = $PowerMessageContainer
+@onready var effects_container        = $EffectsContainer
+@onready var ui_effect                = $UIEffect
+@onready var blind_overlay            = $BlindOverlay
 
 # Swipe detection
 var swipe_start:     Vector2 = Vector2.ZERO
 var swipe_threshold: float   = 50.0
 var is_swiping:      bool    = false
 
+# Move counter
+var move_count: int = 0
+
 
 func _ready():
 	print("\n=== Fusion Mania - Game Scene Ready ===\n")
+
+	# Setup UIEffect
+	ui_effect.set_container(effects_container)
 
 	# Connect to GameManager signals
 	GameManager.game_started.connect(_on_game_started)
@@ -24,13 +37,29 @@ func _ready():
 
 	# Connect to GridManager signals
 	GridManager.game_over.connect(_on_grid_game_over)
+	GridManager.fusion_occurred.connect(_on_fusion_occurred)
+	GridManager.tiles_moved.connect(_on_tiles_moved)
+
+	# Connect to ScoreManager signals
+	ScoreManager.score_changed.connect(_on_score_changed)
+
+	# Connect to PowerManager signals
+	PowerManager.power_activated.connect(_on_power_activated)
+	PowerManager.blind_started.connect(_on_blind_started)
+	PowerManager.blind_ended.connect(_on_blind_ended)
 
 	# Connect to TitleMenu signals
 	title_menu.new_game_pressed.connect(_on_new_game_pressed)
+	title_menu.free_mode_pressed.connect(_on_free_mode_pressed)
 	title_menu.resume_pressed.connect(_on_resume_pressed)
 	title_menu.ranking_pressed.connect(_on_ranking_pressed)
 	title_menu.options_pressed.connect(_on_options_pressed)
 	title_menu.quit_pressed.connect(_on_quit_pressed)
+
+	# Connect to PowerChoiceMenu signals
+	if power_choice_menu:
+		power_choice_menu.powers_selected.connect(_on_powers_selected)
+		power_choice_menu.back_pressed.connect(_on_power_choice_back)
 
 	# Connect to OptionsMenu signals
 	options_menu.back_pressed.connect(_on_options_back)
@@ -50,6 +79,7 @@ func _ready():
 # Hide all overlays
 func hide_all_overlays():
 	title_menu.hide_menu()
+	power_choice_menu.hide_menu()
 	options_menu.hide_menu()
 	ranking_menu.hide_menu()
 	game_over_menu.hide_menu()
@@ -59,7 +89,19 @@ func hide_all_overlays():
 func _on_new_game_pressed():
 	print("🎮 Starting new game...")
 	hide_all_overlays()
+	# Reset UI counters
+	move_count = 0
+	update_move_count()
+	update_score_display()
+	# Reset PowerManager to default spawn rates
+	PowerManager.reset_to_default_spawn_rates()
 	GameManager.start_new_game()
+
+
+func _on_free_mode_pressed():
+	print("🎮 Opening Free Mode power selection...")
+	title_menu.hide_menu()
+	power_choice_menu.show_menu()
 
 
 func _on_resume_pressed():
@@ -68,6 +110,9 @@ func _on_resume_pressed():
 	var save_data = SaveManager.load_game()
 	if not save_data.is_empty():
 		SaveManager.restore_game(save_data)
+		# Restore move count if saved
+		move_count = save_data.get("move_count", 0)
+		update_move_count()
 	GameManager.resume_game()
 
 
@@ -86,6 +131,24 @@ func _on_options_pressed():
 func _on_quit_pressed():
 	print("👋 Quitting game...")
 	get_tree().quit()
+
+
+# PowerChoiceMenu signal handlers
+func _on_powers_selected(selected_powers: Array):
+	print("🎮 Starting Free Mode with %d selected powers" % selected_powers.size())
+	hide_all_overlays()
+	# Reset UI counters
+	move_count = 0
+	update_move_count()
+	update_score_display()
+	# Set custom spawn rates
+	PowerManager.set_custom_spawn_rates(selected_powers)
+	GameManager.start_new_game()
+
+
+func _on_power_choice_back():
+	power_choice_menu.hide_menu()
+	title_menu.show_menu()
 
 
 # Options menu signal handlers
@@ -139,6 +202,52 @@ func _on_game_paused():
 func _on_game_ended(victory: bool):
 	print("Game ended - victory: %s" % victory)
 	game_over_menu.show_menu()
+
+
+# GridManager signal handlers
+func _on_fusion_occurred(tile1, tile2, new_tile):
+	# Get the world position of the new tile
+	var tile_world_pos = grid.position + new_tile.position
+	# Show floating score
+	ui_effect.show_floating_score(new_tile.value, tile_world_pos)
+
+
+func _on_tiles_moved():
+	# Increment move counter when tiles actually moved
+	move_count += 1
+	update_move_count()
+
+
+# ScoreManager signal handlers
+func _on_score_changed(new_score: int):
+	score_label.text = "Score: %d" % new_score
+
+
+# PowerManager signal handlers
+func _on_power_activated(power_type: String, tile):
+	var power_data = PowerManager.POWER_DATA.get(power_type, {})
+	var power_name = power_data.get("name", power_type)
+	ui_effect.show_power_message(power_name, power_message_container)
+
+
+func _on_blind_started():
+	blind_overlay.visible = true
+	print("🕶️ Blind overlay activated")
+
+
+func _on_blind_ended():
+	blind_overlay.visible = false
+	print("👁️ Blind overlay removed")
+
+
+# Update move count label
+func update_move_count():
+	move_count_label.text = "Moves: %d" % move_count
+
+
+# Update score display
+func update_score_display():
+	score_label.text = "Score: %d" % ScoreManager.get_current_score()
 
 
 # Handle input

@@ -1,0 +1,64 @@
+[gd_scene load_steps=3 format=3 uid="uid://bpowerchoicemenu"]
+
+[ext_resource type="Script" path="res://overlays/PowerChoiceMenu.gd" id="1_powerchoice"]
+[ext_resource type="PackedScene" uid="uid://b9kq8wxbhbtn1" path="res://widgets/UIButton.tscn" id="2_uibtn"]
+
+[node name="PowerChoiceMenu" type="CanvasLayer"]
+script = ExtResource("1_powerchoice")
+
+[node name="OverlayBackground" type="ColorRect" parent="."]
+offset_right = 1080.0
+offset_bottom = 1920.0
+color = Color(0, 0, 0, 0.8)
+
+[node name="MenuContainer" type="VBoxContainer" parent="."]
+offset_left = 90.0
+offset_top = 200.0
+offset_right = 990.0
+offset_bottom = 1700.0
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="MenuContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "FREE MODE - SELECT POWERS"
+horizontal_alignment = 1
+
+[node name="SelectionInfo" type="Label" parent="MenuContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.843137, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "No powers selected - All powers will spawn"
+horizontal_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MenuContainer"]
+custom_minimum_size = Vector2(0, 1100)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="CenterContainer" type="CenterContainer" parent="MenuContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PowersGrid" type="GridContainer" parent="MenuContainer/ScrollContainer/CenterContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 4
+
+[node name="BottomButtons" type="HBoxContainer" parent="MenuContainer"]
+layout_mode = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="BtnBack" parent="MenuContainer/BottomButtons" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 70)
+text = "BACK"
+
+[node name="BtnStart" parent="MenuContainer/BottomButtons" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 70)
+text = "START GAME"

@@ -10,16 +10,33 @@ offset_right = 240.0
 offset_bottom = 240.0
 script = ExtResource("1_tile_script")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="Panel" parent="."]
+z_index = 0
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(1, 1, 1, 1)
+
+[node name="PowerIcon" type="TextureRect" parent="."]
+visible = false
+z_index = 1
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -70.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 70.0
+grow_horizontal = 0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ValueLabel" type="Label" parent="."]
+z_index = 2
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -32,28 +49,17 @@ offset_right = 120.0
 offset_bottom = 30.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 48
 text = "2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PowerIcon" type="TextureRect" parent="."]
-visible = false
-z_index = 10
-layout_mode = 1
-anchors_preset = 15
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-expand_mode = 1
-stretch_mode = 5
-
 [node name="PowerLabel" type="Label" parent="."]
 visible = false
+z_index = 2
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.0
@@ -63,10 +69,10 @@ anchor_bottom = 1.0
 offset_top = -50.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 24
 text = "Power Name"
 horizontal_alignment = 1
 vertical_alignment = 1

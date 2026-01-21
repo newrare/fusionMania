@@ -1,23 +1,21 @@
 # PowerManager for Fusion Mania
-# Manages the 20 power types and their activation
 extends Node
 
 # Load PowerEffect for visual effects
 const PowerEffect = preload("res://visuals/PowerEffect.gd")
 
-# Power data with spawn rates
+# Power data with spawn rates (total = 100%)
 const POWER_DATA = {
-	"empty":        {"name": "Empty",           "spawn_rate": 30, "type": "none"},
-	"fire_h":       {"name": "Fire Row",        "spawn_rate": 5,  "type": "bonus"},
-	"fire_v":       {"name": "Fire Column",     "spawn_rate": 5,  "type": "bonus"},
+	"fire_h":       {"name": "Fire Row",        "spawn_rate": 10, "type": "bonus"},
+	"fire_v":       {"name": "Fire Column",     "spawn_rate": 10, "type": "bonus"},
 	"fire_cross":   {"name": "Fire Cross",      "spawn_rate": 5,  "type": "bonus"},
-	"bomb":         {"name": "Bomb",            "spawn_rate": 5,  "type": "bonus"},
+	"bomb":         {"name": "Bomb",            "spawn_rate": 10, "type": "bonus"},
 	"ice":          {"name": "Ice",             "spawn_rate": 6,  "type": "malus"},
 	"switch_h":     {"name": "Switch H",        "spawn_rate": 5,  "type": "bonus"},
 	"switch_v":     {"name": "Switch V",        "spawn_rate": 5,  "type": "bonus"},
 	"teleport":     {"name": "Teleport",        "spawn_rate": 2,  "type": "bonus"},
-	"expel_h":      {"name": "Expel H",         "spawn_rate": 5,  "type": "bonus"},
-	"expel_v":      {"name": "Expel V",         "spawn_rate": 5,  "type": "bonus"},
+	"expel_h":      {"name": "Expel H",         "spawn_rate": 10, "type": "bonus"},
+	"expel_v":      {"name": "Expel V",         "spawn_rate": 10, "type": "bonus"},
 	"freeze_up":    {"name": "Freeze Up",       "spawn_rate": 5,  "type": "malus"},
 	"freeze_down":  {"name": "Freeze Down",     "spawn_rate": 5,  "type": "malus"},
 	"freeze_left":  {"name": "Freeze Left",     "spawn_rate": 5,  "type": "malus"},
@@ -26,32 +24,79 @@ const POWER_DATA = {
 	"nuclear":      {"name": "Nuclear",         "spawn_rate": 1,  "type": "bonus"},
 	"blind":        {"name": "Blind",           "spawn_rate": 2,  "type": "malus"},
 	"bowling":      {"name": "Bowling",         "spawn_rate": 2,  "type": "bonus"},
-	"ads":          {"name": "Ads",             "spawn_rate": 5,  "type": "malus"}
+	"ads":          {"name": "Ads",             "spawn_rate": 10, "type": "malus"}
 }
+
+# Current active spawn rates (can be modified for Free Mode)
+var active_spawn_rates: Dictionary = {}
 
 # Signals
 signal power_activated(power_type: String, tile)
 signal power_effect_completed(power_type: String)
+signal blind_started()
+signal blind_ended()
 
 func _ready():
 	print("⚡ PowerManager ready with %d powers" % POWER_DATA.size())
+	reset_to_default_spawn_rates()
+
+
+# Get default spawn rates from POWER_DATA
+func get_default_spawn_rates() -> Dictionary:
+	var default_rates = {}
+	for power_key in POWER_DATA.keys():
+		default_rates[power_key] = POWER_DATA[power_key].get("spawn_rate", 0)
+	return default_rates
 
 
 # Get a random power based on spawn rates
 func get_random_power() -> String:
 	var total_rate = 0
-	for power_key in POWER_DATA.keys():
-		total_rate += POWER_DATA[power_key].spawn_rate
+	for power_key in active_spawn_rates.keys():
+		total_rate += active_spawn_rates[power_key]
+
+	# If all spawn rates are 0%, return empty (no power)
+	if total_rate == 0:
+		return "empty"
 
 	var random_value = randf() * total_rate
 	var current_sum = 0
 
-	for power_key in POWER_DATA.keys():
-		current_sum += POWER_DATA[power_key].spawn_rate
+	for power_key in active_spawn_rates.keys():
+		current_sum += active_spawn_rates[power_key]
 		if random_value <= current_sum:
-			return power_key if power_key != "empty" else ""
+			return power_key
 
-	return ""  # Default: no power
+	# Default: return empty (should never happen if rates are correct)
+	return "empty"
+
+
+# Set custom spawn rates for Free Mode
+func set_custom_spawn_rates(selected_powers: Array):
+	if selected_powers.is_empty():
+		# No selection = all powers at 0% (no powers spawn)
+		active_spawn_rates.clear()
+		for power_key in POWER_DATA.keys():
+			active_spawn_rates[power_key] = 0.0
+		print("🎲 Free Mode: No powers selected - all spawn rates set to 0%")
+	else:
+		# Equal distribution among selected powers, others at 0%
+		active_spawn_rates.clear()
+		var rate_per_power = 100.0 / selected_powers.size()
+
+		for power_key in POWER_DATA.keys():
+			if power_key in selected_powers:
+				active_spawn_rates[power_key] = rate_per_power
+			else:
+				active_spawn_rates[power_key] = 0.0
+
+		print("🎲 Free Mode: %d powers active, %.1f%% each" % [selected_powers.size(), rate_per_power])
+
+
+# Reset to default spawn rates
+func reset_to_default_spawn_rates():
+	active_spawn_rates = get_default_spawn_rates()
+	print("🎲 Spawn rates reset to default")
 
 
 # Resolve which power to keep when merging two tiles
@@ -81,7 +126,7 @@ func resolve_power_merge(power1: String, power2: String):
 
 # Activate a power
 func activate_power(power_type: String, tile, grid_manager):
-	if power_type == "" or power_type == "empty":
+	if power_type == "":
 		return
 
 	print("🔥 Activating power: %s" % power_type)
@@ -91,11 +136,11 @@ func activate_power(power_type: String, tile, grid_manager):
 	# Switch case for all 20 powers (placeholder implementations for Phase 2)
 	match power_type:
 		"fire_h":
-			activate_fire_horizontal(tile, grid_manager)
+			await activate_fire_horizontal(tile, grid_manager)
 		"fire_v":
-			activate_fire_vertical(tile, grid_manager)
+			await activate_fire_vertical(tile, grid_manager)
 		"fire_cross":
-			activate_fire_cross(tile, grid_manager)
+			await activate_fire_cross(tile, grid_manager)
 		"bomb":
 			activate_bomb(tile, grid_manager)
 		"ice":
@@ -119,50 +164,53 @@ func activate_power(power_type: String, tile, grid_manager):
 		"freeze_right":
 			activate_freeze_direction(GridManager.Direction.RIGHT, grid_manager)
 		"lightning":
-			activate_lightning(tile, grid_manager)
+			await activate_lightning(tile, grid_manager)
 		"nuclear":
 			activate_nuclear(tile, grid_manager)
 		"blind":
-			activate_blind(tile, grid_manager)
+			await activate_blind(tile, grid_manager)
 		"bowling":
 			activate_bowling(tile, grid_manager)
 		"ads":
 			activate_ads(tile, grid_manager)
 
+	# Remove power from tile after activation
+	if tile != null and is_instance_valid(tile):
+		tile.power_type = ""
+		tile.update_visual()
+
 	power_effect_completed.emit(power_type)
 
 
-# ============================
-# Power Implementations
-# (Placeholder for Phase 2)
-# ============================
 
 # Fire Horizontal - Destroys entire row
 func activate_fire_horizontal(tile, grid_manager):
 	var row = tile.grid_position.y
 
-	# Destroy entire row
+	# Collect tiles to destroy (excluding emitter tile)
+	var targets = []
 	for x in range(grid_manager.grid_size):
 		var target = grid_manager.get_tile_at(Vector2i(x, row))
 		if target != null and target != tile:
-			grid_manager.destroy_tile(target)
+			targets.append(target)
 
-	# Visual effect
-	PowerEffect.fire_line_effect(row, true)  # true = horizontal
+	# Start sequenced visual effect and wait for completion
+	await PowerEffect.fire_line_sequence(tile, targets, true, grid_manager)  # true = horizontal
 
 
 # Fire Vertical - Destroys entire column
 func activate_fire_vertical(tile, grid_manager):
 	var col = tile.grid_position.x
 
-	# Destroy entire column
+	# Collect tiles to destroy (excluding emitter tile)
+	var targets = []
 	for y in range(grid_manager.grid_size):
 		var target = grid_manager.get_tile_at(Vector2i(col, y))
 		if target != null and target != tile:
-			grid_manager.destroy_tile(target)
+			targets.append(target)
 
-	# Visual effect
-	PowerEffect.fire_line_effect(col, false)  # false = vertical
+	# Start sequenced visual effect and wait for completion
+	await PowerEffect.fire_line_sequence(tile, targets, false, grid_manager)  # false = vertical
 
 
 # Fire Cross - Destroys row AND column
@@ -170,21 +218,23 @@ func activate_fire_cross(tile, grid_manager):
 	var row = tile.grid_position.y
 	var col = tile.grid_position.x
 
-	# Destroy entire row
+	# Collect all tiles to destroy (excluding emitter tile)
+	var targets = []
+
+	# Collect row tiles
 	for x in range(grid_manager.grid_size):
 		var target = grid_manager.get_tile_at(Vector2i(x, row))
-		if target != null and target != tile:
-			grid_manager.destroy_tile(target)
+		if target != null and target != tile and target not in targets:
+			targets.append(target)
 
-	# Destroy entire column
+	# Collect column tiles
 	for y in range(grid_manager.grid_size):
 		var target = grid_manager.get_tile_at(Vector2i(col, y))
-		if target != null and target != tile:
-			grid_manager.destroy_tile(target)
+		if target != null and target != tile and target not in targets:
+			targets.append(target)
 
-	# Visual effects
-	PowerEffect.fire_line_effect(row, true)   # horizontal
-	PowerEffect.fire_line_effect(col, false)  # vertical
+	# Start sequenced visual effect and wait for completion
+	await PowerEffect.fire_cross_sequence(tile, targets, grid_manager)
 
 
 # Bomb - Destroys adjacent tiles (8 directions)
@@ -209,11 +259,13 @@ func activate_bomb(tile, grid_manager):
 	PowerEffect.explosion_effect(tile.position)
 
 
-# Ice - Freezes tile for 5 turns
+# Ice - Freezes tile for 2 turns
 func activate_ice(tile, grid_manager):
-	if tile.has_method("set_frozen"):
-		tile.set_frozen(true, 5)
+	# Visual effect first (immediate)
 	PowerEffect.freeze_effect(tile)
+	# Then freeze the tile
+	if tile.has_method("set_frozen"):
+		tile.set_frozen(true, 2)
 
 
 # Switch Horizontal - Swaps 2 random horizontal adjacent tiles
@@ -298,22 +350,33 @@ func activate_freeze_direction(direction, grid_manager):
 # Lightning - Destroys 4 random tiles
 func activate_lightning(tile, grid_manager):
 	var all_tiles = []
+	var emitter_pos = tile.grid_position
 
 	# Get all tiles except source
 	for y in range(grid_manager.grid_size):
 		for x in range(grid_manager.grid_size):
 			var t = grid_manager.get_tile_at(Vector2i(x, y))
 			if t != null and t != tile:
+				# Exclude tiles in same column below emitter
+				if x == emitter_pos.x and y > emitter_pos.y:
+					continue  # Skip tiles below in same column
 				all_tiles.append(t)
 
 	# Choose up to 4 random tiles
 	all_tiles.shuffle()
 	var targets = all_tiles.slice(0, mini(4, all_tiles.size()))
 
-	# Destroy with effect
+	# Launch all lightning strike effects in parallel
 	for target in targets:
 		PowerEffect.lightning_strike_effect(target)
-		grid_manager.destroy_tile(target)
+
+	# Wait for animation to complete (0.3 second)
+	await get_tree().create_timer(0.3).timeout
+
+	# Destroy tiles after animation
+	for target in targets:
+		if is_instance_valid(target):
+			grid_manager.destroy_tile(target)
 
 
 # Nuclear - Destroys all tiles
@@ -330,8 +393,12 @@ func activate_nuclear(tile, grid_manager):
 
 # Blind - Black grid for 2 turns
 func activate_blind(tile, grid_manager):
-	grid_manager.set_blind_mode(true, 2)
-	PowerEffect.blind_overlay(2.0)
+	blind_started.emit()
+
+	# Wait for 2 turns (approximately 4 seconds)
+	await get_tree().create_timer(4.0).timeout
+
+	blind_ended.emit()
 
 
 # Bowling - Ball crosses and destroys tiles in a line
@@ -349,8 +416,7 @@ func activate_bowling(tile, grid_manager):
 
 	# Destroy tiles in that direction
 	var current = Vector2i(pos.x + dx, pos.y + dy)
-	while current.x >= 0 and current.x < grid_manager.grid_size and \
-		  current.y >= 0 and current.y < grid_manager.grid_size:
+	while current.x >= 0 and current.x < grid_manager.grid_size and current.y >= 0 and current.y < grid_manager.grid_size:
 		var target = grid_manager.get_tile_at(current)
 		if target != null:
 			grid_manager.destroy_tile(target)

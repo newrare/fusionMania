@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://bk8jywx5c5nnx"]
+[gd_scene load_steps=9 format=3 uid="uid://bk8jywx5c5nnx"]
 
 [ext_resource type="Script" path="res://scenes/GameScene.gd" id="1_gamescene"]
 [ext_resource type="PackedScene" uid="uid://c5nnx8y3r1s4ci" path="res://objects/Grid.tscn" id="2_grid"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" uid="uid://c8kq7wxoptions" path="res://overlays/OptionsMenu.tscn" id="4_options"]
 [ext_resource type="PackedScene" uid="uid://d7kq6wxranking" path="res://overlays/RankingMenu.tscn" id="5_ranking"]
 [ext_resource type="PackedScene" uid="uid://e9kq5wxgameover" path="res://overlays/GameOverMenu.tscn" id="6_gameover"]
+[ext_resource type="Script" path="res://visuals/UIEffect.gd" id="7_uieffect"]
+[ext_resource type="PackedScene" uid="uid://bpowerchoicemenu" path="res://overlays/PowerChoiceMenu.tscn" id="8_powerchoice"]
 
 [node name="GameScene" type="Node2D"]
 script = ExtResource("1_gamescene")
@@ -18,7 +20,59 @@ color = Color(0.12, 0.12, 0.15, 1)
 [node name="Grid" parent="." instance=ExtResource("2_grid")]
 position = Vector2(10, 430)
 
+[node name="BlindOverlay" type="ColorRect" parent="."]
+visible = false
+z_index = 50
+offset_left = 10.0
+offset_top = 430.0
+offset_right = 1070.0
+offset_bottom = 1490.0
+color = Color(0, 0, 0, 0.95)
+
+[node name="EffectsContainer" type="Node2D" parent="."]
+z_index = 100
+
+[node name="ScoreLabel" type="Label" parent="."]
+offset_left = 340.0
+offset_top = 50.0
+offset_right = 740.0
+offset_bottom = 130.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 64
+text = "Score: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MoveCountLabel" type="Label" parent="."]
+offset_left = 390.0
+offset_top = 1480.0
+offset_right = 690.0
+offset_bottom = 1540.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 40
+text = "Moves: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PowerMessageContainer" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 140.0
+offset_top = 1400.0
+offset_right = 940.0
+offset_bottom = 1450.0
+
+[node name="UIEffect" type="Node" parent="."]
+script = ExtResource("7_uieffect")
+
 [node name="TitleMenu" parent="." instance=ExtResource("3_title")]
+visible = false
+
+[node name="PowerChoiceMenu" parent="." instance=ExtResource("8_powerchoice")]
 visible = false
 
 [node name="OptionsMenu" parent="." instance=ExtResource("4_options")]

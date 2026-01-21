@@ -59,3 +59,18 @@ func get_grid_pixel_size() -> Vector2:
 	var width  = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
 	var height = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
 	return Vector2(width, height)
+
+
+# Clear all tiles from the grid
+func clear_all_tiles():
+	# Remove all children that are tiles (not cell backgrounds)
+	var tiles_to_remove = []
+	for child in get_children():
+		if child not in cell_backgrounds:
+			tiles_to_remove.append(child)
+	
+	# Free them immediately
+	for tile in tiles_to_remove:
+		tile.free()  # Use free() instead of queue_free() for immediate removal
+	
+	print("🧹 Grid cleared of %d tiles" % tiles_to_remove.size())

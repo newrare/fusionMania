@@ -7,10 +7,12 @@ A unique twist on the classic 2048 puzzle game with magical powers! Each tile ha
 
 - **Classic 2048 Mechanics**: Familiar sliding and merging gameplay
 - **Magical Power System**: 20 different powers that trigger strategic effects
-- **Color-Coded Tiles**: Beautiful gradient from white (2) to dark purple (2048)
+- **Free Mode**: Custom power selection for personalized gameplay
+- **Color-Coded Tiles**: Beautiful neon glow effects with rounded borders
 - **Multi-language Support**: Available in French and English
 - **Score Tracking**: High score system and ranking
 - **Strategic Depth**: Power priority system and turn-based effects
+- **Visual Effects**: Floating scores, power messages, and animations
 - **🎯 Touch Support**: Full touch/mouse support for PC and mobile (Android/iOS)
   - Swipe to move tiles
   - All buttons work with touch and mouse
@@ -142,10 +144,19 @@ godot --export-debug "Android" ./fusionMania.apk
 - **Movement**: Swipe in 4 directions to slide all tiles
 - **Fusion**: Tiles with same number merge when colliding
 - **Score**: Each fusion increases the score (same system as 2048)
+- **Move Counter**: Tracks total number of moves made
 - **Game Over**: Triggered when the grid is completely full
 
-### Tile Colors
-Each tile value has a unique color:
+### Visual Effects
+- **Neon Glow Tiles**: Each tile features a glowing border in its signature color
+- **Floating Score**: When tiles merge, the fusion score (+value) appears above the tile in neon blue, floating upward before fading
+- **Power Messages**: Power activations display a message at the bottom of the grid for 5 seconds
+- **Rounded Borders**: Smooth, modern tile appearance with rounded corners
+- **Color-Coded Icons**: Power icons in top-right corner (green for bonus, red for malus)
+- **Blind Overlay**: Black overlay covers the grid when Blind power activates
+
+### Tile Visual Design
+Each tile has:
 - **2**: #FFFFFF (White)
 - **4**: #D9D9D9 (Light Gray)
 - **8**: #00FF00 (Green)
@@ -160,29 +171,63 @@ Each tile value has a unique color:
 
 ### 🔥 Power System
 
-Each tile displays a power icon in the bottom-right corner. When two tiles with the **same power icon** merge, the power activates!
+Each tile displays a power icon in the top-right corner with color coding (green for bonus, red for malus). When two tiles with the **same power icon** merge, the power activates!
 
-#### Power List (with spawn rates)
-- **[Empty]** (30%): No power
-- **[Fire -]** (5%): Horizontal fire - destroys an entire row (bonus: green icon)
-- **[Fire |]** (5%): Vertical fire - destroys an entire column (bonus: green icon)
+#### Normal Mode
+In normal mode, all powers spawn with their default rates (total 100%):
+
+- **[Fire -]** (10%): Horizontal fire - destroys an entire row (bonus: green icon)
+- **[Fire |]** (10%): Vertical fire - destroys an entire column (bonus: green icon)
 - **[Fire +]** (5%): Cross fire - destroys a row AND a column (bonus: green icon)
-- **[Bomb]** (5%): Explosion - destroys adjacent tiles (bonus: green icon)
+- **[Bomb]** (10%): Explosion - destroys adjacent tiles (bonus: green icon)
 - **[Ice]** (6%): Freezes the tile for 5 movements (malus: red icon)
 - **[Switch ↔]** (5%): Swap two horizontal tiles (bonus: green icon)
 - **[Switch ↕]** (5%): Swap two vertical tiles (bonus: green icon)
 - **[Teleport]** (2%): Player chooses 2 tiles to swap (bonus: green icon)
-- **[Expel → ←]** (5%): Horizontal expulsion - edge tile exits the grid (bonus: green icon)
-- **[Expel ↓ ↑]** (5%): Vertical expulsion - edge tile exits the grid (bonus: green icon)
+- **[Expel → ←]** (10%): Horizontal expulsion - edge tile exits the grid (bonus: green icon)
+- **[Expel ↓ ↑]** (10%): Vertical expulsion - edge tile exits the grid (bonus: green icon)
 - **[Freeze ↑]** (5%): Blocks UP movement for 2 turns (malus: red icon)
 - **[Freeze ↓]** (5%): Blocks DOWN movement for 2 turns (malus: red icon)
 - **[Freeze ←]** (5%): Blocks LEFT movement for 2 turns (malus: red icon)
 - **[Freeze →]** (5%): Blocks RIGHT movement for 2 turns (malus: red icon)
 - **[Lightning]** (2%): 4 random tiles are struck and destroyed (bonus: green icon)
 - **[Nuclear]** (1%): All tiles are destroyed (bonus: green icon)
+- **[Blind]** (2%): Grid becomes black for 4 seconds (malus: red icon)
+- **[Bowling]** (2%): A ball crosses the grid randomly, destroying tiles (bonus: green icon)
+- **[Ads]** (10%): Launches an ad for X seconds (malus: red icon)
+
+#### 🎯 Free Mode
+
+Free Mode allows you to customize which powers will appear in your game:
+
+1. **Launch Free Mode**: From the main menu, select "FREE MODE"
+2. **Select Powers**: A grid displays all 19 power icons with checkboxes
+   - Each icon is color-coded: **Green** = Bonus, **Red** = Malus
+   - Check/uncheck powers to include/exclude them
+3. **Spawn Rate Distribution**:
+   - **No powers selected**: All 19 powers spawn with default rates (normal mode)
+   - **1 power selected**: That power spawns at 100%
+   - **2 powers selected**: Each spawns at 50%
+   - **N powers selected**: Each spawns at (100/N)%
+4. **Start Game**: Click "START GAME" to begin with your custom power selection
+
+**Example Scenarios**:
+- Select only **Fire** powers for a destruction-focused game
+- Select only **malus** powers for extreme difficulty
+- Select a single power to guarantee specific gameplay mechanics
+- Mix bonus and malus for balanced but focused gameplay
+
+**Strategic Uses**:
+- Practice specific power combinations
+- Create themed challenges (e.g., "Ice Age" with only freeze powers)
+- Simplify gameplay for new players by selecting only bonus powers
+- Increase difficulty by selecting only malus powers
+- **[Freeze →]** (5%): Blocks RIGHT movement for 2 turns (malus: red icon)
+- **[Lightning]** (2%): 4 random tiles are struck and destroyed (bonus: green icon)
+- **[Nuclear]** (1%): All tiles are destroyed (bonus: green icon)
 - **[Blind]** (2%): Grid becomes black for 2 turns (malus: red icon)
 - **[Bowling]** (2%): A ball crosses the grid randomly, destroying tiles (bonus: green icon)
-- **[Ads]** (5%): Launches an ad for X seconds (malus: red icon)
+- **[Ads]** (10%): Launches an ad for X seconds (malus: red icon)
 
 #### Power Rules
 1. **Matching Powers**: Both tiles must have the same power icon to activate

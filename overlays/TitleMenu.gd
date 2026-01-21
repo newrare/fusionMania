@@ -4,6 +4,7 @@ extends CanvasLayer
 
 # Signals for each button action
 signal new_game_pressed()
+signal free_mode_pressed()
 signal resume_pressed()
 signal ranking_pressed()
 signal options_pressed()
@@ -14,6 +15,7 @@ signal quit_pressed()
 @onready var menu_container     = $MenuContainer
 @onready var logo_label          = $MenuContainer/Logo
 @onready var btn_new_game        = $MenuContainer/ButtonsContainer/BtnNewGame
+@onready var btn_free_mode       = $MenuContainer/ButtonsContainer/BtnFreeMode
 @onready var btn_resume          = $MenuContainer/ButtonsContainer/BtnResume
 @onready var btn_ranking         = $MenuContainer/ButtonsContainer/BtnRanking
 @onready var btn_options         = $MenuContainer/ButtonsContainer/BtnOptions
@@ -26,6 +28,7 @@ func _ready():
 
 	# Connect button signals
 	btn_new_game.button_clicked.connect(_on_new_game_clicked)
+	btn_free_mode.button_clicked.connect(_on_free_mode_clicked)
 	btn_resume.button_clicked.connect(_on_resume_clicked)
 	btn_ranking.button_clicked.connect(_on_ranking_clicked)
 	btn_options.button_clicked.connect(_on_options_clicked)
@@ -61,6 +64,7 @@ func hide_menu():
 func update_translations():
 	logo_label.text    = tr("FUSION_MANIA")
 	btn_new_game.text  = tr("NEW_GAME")
+	btn_free_mode.text = tr("FREE_MODE")
 	btn_resume.text    = tr("RESUME")
 	btn_ranking.text   = tr("RANKING")
 	btn_options.text   = tr("OPTIONS")
@@ -78,6 +82,11 @@ func update_resume_button():
 func _on_new_game_clicked():
 	print("TitleMenu: New Game clicked")
 	new_game_pressed.emit()
+
+
+func _on_free_mode_clicked():
+	print("TitleMenu: Free Mode clicked")
+	free_mode_pressed.emit()
 
 
 func _on_resume_clicked():

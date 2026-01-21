@@ -18,15 +18,18 @@ var freeze_turns: int   = 0      # Remaining freeze turns
 
 ### Visual Nodes
 ```
-Tile (Node2D or Control)
-├── Background (ColorRect)         # Colored background based on value
-├── ValueLabel (Label)             # Displays value (2, 4, 8...)
-└── PowerIcon (TextureRect)        # Power icon (bottom right)
+Tile (Control)
+├── Background (Panel, z-index=0)     # Neon glow border + attenuated background
+├── PowerIcon (TextureRect, z-index=1) # Power icon (top-right, green=bonus, red=malus)
+├── ValueLabel (Label, z-index=2)     # Displays value (2, 4, 8... - font scales with value)
+└── PowerLabel (Label, z-index=2)     # Power name (bottom center)
 ```
 
 ---
 
-## 🌈 Tile Colors
+## 🌈 Tile Colors (Neon Glow)
+
+The tile colors are used for the neon glow border effect. The background uses the same color but heavily attenuated (15% brightness).
 
 ```gdscript
 const TILE_COLORS = {
@@ -42,6 +45,30 @@ const TILE_COLORS = {
     1024: Color("#700570"),  # Darker Purple
     2048: Color("#440344")   # Deep Purple
 }
+
+# Styling constants
+const BORDER_RADIUS = 20
+const GLOW_SIZE = 8
+const BACKGROUND_ATTENUATION = 0.15
+
+# Font sizes (scales with value, fits within tile)
+const VALUE_FONT_SIZES = {
+    2:    48,
+    4:    52,
+    8:    56,
+    16:   60,
+    32:   64,
+    64:   68,
+    128:  56,   # 3 digits
+    256:  56,
+    512:  56,
+    1024: 48,   # 4 digits
+    2048: 48
+}
+
+# Power icon colors
+const BONUS_COLOR = Color("#00FF00")  # Green
+const MALUS_COLOR = Color("#FF0000")  # Red
 ```
 
 ---
@@ -53,28 +80,32 @@ const TILE_COLORS = {
 - Each power has defined spawn rate (see PowerManager)
 - A tile can have a power or be empty
 
-### Power Icons
+### Power Icons (SVG only)
+Icons are displayed in the top-right corner with color modulation:
+- **Green** for bonus powers
+- **Red** for malus powers
+
 ```
 assets/icons/
-├── power_fire_h.png          # Fire horizontal
-├── power_fire_v.png          # Fire vertical
-├── power_fire_cross.png      # Fire cross
-├── power_bomb.png            # Bomb
-├── power_ice.png             # Ice
-├── power_switch_h.png        # Switch horizontal
-├── power_switch_v.png        # Switch vertical
-├── power_teleport.png        # Teleport
-├── power_expel_h.png         # Expel horizontal
-├── power_expel_v.png         # Expel vertical
-├── power_freeze_up.png       # Freeze up
-├── power_freeze_down.png     # Freeze down
-├── power_freeze_left.png     # Freeze left
-├── power_freeze_right.png    # Freeze right
-├── power_lightning.png       # Lightning
-├── power_nuclear.png         # Nuclear
-├── power_blind.png           # Blind
-├── power_bowling.png         # Bowling
-└── power_ads.png             # Ads
+├── power_fire_h.svg          # Fire horizontal (bonus)
+├── power_fire_v.svg          # Fire vertical (bonus)
+├── power_fire_cross.svg      # Fire cross (bonus)
+├── power_bomb.svg            # Bomb (bonus)
+├── power_ice.svg             # Ice (malus)
+├── power_switch_h.svg        # Switch horizontal (bonus)
+├── power_switch_v.svg        # Switch vertical (bonus)
+├── power_teleport.svg        # Teleport (bonus)
+├── power_expel_h.svg         # Expel horizontal (bonus)
+├── power_expel_v.svg         # Expel vertical (bonus)
+├── power_freeze_up.svg       # Freeze up (malus)
+├── power_freeze_down.svg     # Freeze down (malus)
+├── power_freeze_left.svg     # Freeze left (malus)
+├── power_freeze_right.svg    # Freeze right (malus)
+├── power_lightning.svg       # Lightning (bonus)
+├── power_nuclear.svg         # Nuclear (bonus)
+├── power_blind.svg           # Blind (malus)
+├── power_bowling.svg         # Bowling (bonus)
+└── power_ads.svg             # Ads (malus)
 ```
 
 ---

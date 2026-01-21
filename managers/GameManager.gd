@@ -43,9 +43,9 @@ func start_new_game():
 		"tiles":      []
 	}
 	
-	# Reset score and grid
+	# Reset score and grid (this clears visual tiles and spawns new ones)
 	ScoreManager.start_game()
-	GridManager.initialize_grid()
+	GridManager.start_new_game()
 	
 	# Change state
 	change_state(GameState.PLAYING)
