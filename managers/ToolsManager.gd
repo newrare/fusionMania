@@ -18,12 +18,12 @@ func detect_platform():
 
 
 # Get if running on mobile
-func get_is_mobile() -> bool:
+func get_is_mobile():
 	return is_mobile
 
 
 # Format number with separators (e.g., 1000000 -> 1,000,000)
-func format_number(number: int) -> String:
+func format_number(number: int):
 	var text		= str(number)
 	var formatted	= ""
 	var count		= 0
@@ -40,19 +40,19 @@ func format_number(number: int) -> String:
 
 
 # Format time (seconds to MM:SS)
-func format_time(seconds: int) -> String:
+func format_time(seconds: int):
 	var minutes	= seconds / 60
 	var secs	= seconds % 60
 	return "%02d:%02d" % [minutes, secs]
 
 
 # Clamp value between min and max
-func clamp_value(value: float, min_val: float, max_val: float) -> float:
+func clamp_value(value: float, min_val: float, max_val: float):
 	return clampf(value, min_val, max_val)
 
 
 # Linear interpolation
-func lerp_value(from: float, to: float, weight: float) -> float:
+func lerp_value(from: float, to: float, weight: float):
 	return lerpf(from, to, weight)
 
 
@@ -64,7 +64,7 @@ func get_random_element(array: Array):
 
 
 # Shuffle an array
-func shuffle_array(array: Array) -> Array:
+func shuffle_array(array: Array):
 	var shuffled = array.duplicate()
 	shuffled.shuffle()
 	return shuffled

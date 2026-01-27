@@ -8,20 +8,29 @@ var volume_reduced: float = -40.0
 
 # Sound dictionary - adapted for Fusion Mania
 var sounds = {
-	"music_background":	{"stream": null, "audio": null, "file": "res://assets/sounds/music_background.mp3", 	"volume": -19.0},
+	"music_background":	{"stream": null, "audio": null, "file": "res://assets/sounds/music_background.mp3", "volume": -19.0},
 	"sfx_move":			{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_move.wav",			"volume": -10.0},
-	"sfx_fusion":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_fusion.wav",			"volume": -5.0},
-	"sfx_power":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_power.wav",			"volume": -5.0},
-	"sfx_game_over":	{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_game_over.mp3",		"volume": -5.0},
-	"sfx_win":			{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_win.mp3",				"volume": -5.0},
-	"sfx_button_hover":	{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_button_hover.wav",		"volume": -10.0},
-	"sfx_button_click":	{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_button_click.wav",		"volume": -10.0}
+	"sfx_fusion":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_fusion.wav",		"volume": -5.0},
+	"sfx_game_over":	{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_game_over.wav",	"volume": -5.0},
+	"sfx_hover":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_hover.wav",		"volume": -10.0},
+	"sfx_click":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_click.wav",		"volume": -10.0},
+	"sfx_fire":			{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_fire.mp3",			"volume": -5.0},
+	"sfx_bomb":			{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_bomb.wav",			"volume": -5.0},
+	"sfx_ice":			{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_ice.wav",			"volume": -5.0},
+	"sfx_switch":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_switch.wav",		"volume": -5.0},
+	"sfx_teleport":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_teleport.wav",		"volume": -5.0},
+	"sfx_expel":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_expel.wav",		"volume": -5.0},
+	"sfx_freeze":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_freeze.wav",		"volume": -5.0},
+	"sfx_lightning":	{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_lightning.wav",	"volume": -5.0},
+	"sfx_nuclear":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_nuclear.wav",		"volume": -5.0},
+	"sfx_blind":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_blind.wav",		"volume": -5.0},
+	"sfx_bowling":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_bowling.wav",		"volume": -5.0}
 }
 
 # Mute state flags
-var is_music_muted:		bool = false
-var is_sfx_muted:		bool = false
-var is_cleaned_up:		bool = false
+var is_music_muted:	bool = false
+var is_sfx_muted:	bool = false
+var is_cleaned_up:	bool = false
 
 # Settings file path
 const SETTINGS_PATH = "user://audio_settings.cfg"
@@ -196,24 +205,53 @@ func play_sfx_fusion():
 
 	fusion["audio"].play()
 
-# Play sfx power (power activation)
-func play_sfx_power():
+# Play sfx power (power activation) - takes power_type to play specific SFX
+func play_sfx_power(power_type: String = ""):
 	if is_sfx_muted:
 		return
-
-	var power = sounds["sfx_power"]
-	if not power["audio"] or not power["stream"]:
-		print("❌ Cannot play power sfx: missing audio player or stream")
+	
+	# Map power types to their SFX
+	var sfx_key = ""
+	match power_type:
+		"fire_h", "fire_v", "fire_cross":
+			sfx_key = "sfx_fire"
+		"bomb":
+			sfx_key = "sfx_bomb"
+		"ice":
+			sfx_key = "sfx_ice"
+		"switch_h", "switch_v":
+			sfx_key = "sfx_switch"
+		"teleport":
+			sfx_key = "sfx_teleport"
+		"expel_h", "expel_v":
+			sfx_key = "sfx_expel"
+		"freeze_up", "freeze_down", "freeze_left", "freeze_right":
+			sfx_key = "sfx_freeze"
+		"lightning":
+			sfx_key = "sfx_lightning"
+		"nuclear":
+			sfx_key = "sfx_nuclear"
+		"blind":
+			sfx_key = "sfx_blind"
+		"bowling":
+			sfx_key = "sfx_bowling"
+		_:
+			# No SFX for this power (e.g., "ads")
+			return
+	
+	var power_sfx = sounds.get(sfx_key)
+	if not power_sfx or not power_sfx["audio"] or not power_sfx["stream"]:
+		print("❌ Cannot play power sfx %s: missing audio player or stream" % sfx_key)
 		return
-
-	power["audio"].play()
+	
+	power_sfx["audio"].play()
 
 # Play sfx button hover
 func play_sfx_button_hover():
 	if is_sfx_muted:
 		return
 
-	var hover = sounds["sfx_button_hover"]
+	var hover = sounds["sfx_hover"]
 
 	if not hover["audio"] or not hover["stream"]:
 		print("❌ Cannot play button hover sfx: missing audio player or stream")
@@ -226,7 +264,7 @@ func play_sfx_button_click():
 	if is_sfx_muted:
 		return
 
-	var click = sounds["sfx_button_click"]
+	var click = sounds["sfx_click"]
 
 	if not click["audio"] or not click["stream"]:
 		print("❌ Cannot play button click sfx: missing audio player or stream")
@@ -246,19 +284,6 @@ func play_sfx_game_over():
 		return
 
 	game_over["audio"].play()
-
-# Play win sound
-func play_sfx_win():
-	if is_sfx_muted:
-		return
-
-	var win = sounds["sfx_win"]
-
-	if not win["audio"] or not win["stream"]:
-		print("❌ Cannot play win sfx: missing audio player or stream")
-		return
-
-	win["audio"].play()
 
 # Music control
 func toggle_music():

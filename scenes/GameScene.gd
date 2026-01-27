@@ -26,6 +26,9 @@ var move_count: int = 0
 
 func _ready():
 	print("\n=== Fusion Mania - Game Scene Ready ===\n")
+	
+	# Add to group for visual effects to find this scene
+	add_to_group("game_scene")
 
 	# Setup UIEffect
 	ui_effect.set_container(effects_container)
@@ -45,8 +48,12 @@ func _ready():
 
 	# Connect to PowerManager signals
 	PowerManager.power_activated.connect(_on_power_activated)
-	PowerManager.blind_started.connect(_on_blind_started)
-	PowerManager.blind_ended.connect(_on_blind_ended)
+	
+	# Connect to GameManager persistent power signals
+	GameManager.blind_started.connect(_on_blind_started)
+	GameManager.blind_ended.connect(_on_blind_ended)
+	GameManager.direction_frozen.connect(_on_direction_frozen)
+	GameManager.direction_unfrozen.connect(_on_direction_unfrozen)
 
 	# Connect to TitleMenu signals
 	title_menu.new_game_pressed.connect(_on_new_game_pressed)
@@ -225,8 +232,8 @@ func _on_score_changed(new_score: int):
 
 # PowerManager signal handlers
 func _on_power_activated(power_type: String, tile):
-	var power_data = PowerManager.POWER_DATA.get(power_type, {})
-	var power_name = power_data.get("name", power_type)
+	var power = PowerManager.POWERS.get(power_type, {})
+	var power_name = power.get("name", power_type)
 	ui_effect.show_power_message(power_name, power_message_container)
 
 
@@ -238,6 +245,22 @@ func _on_blind_started():
 func _on_blind_ended():
 	blind_overlay.visible = false
 	print("👁️ Blind overlay removed")
+
+
+# Freeze direction signal handlers
+func _on_direction_frozen(direction: int, turns: int):
+	print("🧊 Direction %d frozen for %d turns" % [direction, turns])
+	# Add visual indicator for frozen direction (via PowerEffect)
+	var PowerEffect = preload("res://visuals/PowerEffect.gd")
+	PowerEffect.create_wind_effect(direction)
+	PowerEffect.create_wind_sprites(direction)
+
+
+func _on_direction_unfrozen(direction: int):
+	print("🧊 Direction %d unfrozen" % direction)
+	# Remove visual indicator
+	var PowerEffect = preload("res://visuals/PowerEffect.gd")
+	PowerEffect.remove_wind_effect(direction)
 
 
 # Update move count label

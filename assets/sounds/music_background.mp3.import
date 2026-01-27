@@ -2,12 +2,13 @@
 
 importer="mp3"
 type="AudioStreamMP3"
-uid="uid://crir1imgv708e"
-valid=false
+uid="uid://dwaj47707keve"
+path="res://.godot/imported/music_background.mp3-2a51fd71a68ce7d14f8c56af4c540bd7.mp3str"
 
 [deps]
 
 source_file="res://assets/sounds/music_background.mp3"
+dest_files=["res://.godot/imported/music_background.mp3-2a51fd71a68ce7d14f8c56af4c540bd7.mp3str"]
 
 [params]
 

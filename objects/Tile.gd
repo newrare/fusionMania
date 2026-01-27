@@ -1,10 +1,10 @@
 extends Control
 
 # Tile constants
-const TILE_SIZE    = 240
-const TILE_SPACING = 20
+const TILE_SIZE    	= 240
+const TILE_SPACING 	= 20
 const BORDER_RADIUS = 20
-const GLOW_SIZE = 8
+const GLOW_SIZE 	= 8
 
 # Tile neon color mapping (for glow border)
 const TILE_COLORS = {
@@ -44,31 +44,41 @@ const BONUS_COLOR = Color("#00FF00")  # Green for bonus
 const MALUS_COLOR = Color("#FF0000")  # Red for malus
 
 # Tile properties
-var value: int         = 2
-var power_type: String = ""
-var grid_position: Vector2i
-var is_frozen: bool    = false
-var freeze_turns: int  = 0
+var value: 			int		= 2
+var power_type: 	String 	= ""
+var is_frozen: 		bool	= false
+var freeze_turns: 	int		= 0
+var expel_direction: String	= ""  # "h" for horizontal, "v" for vertical, "" for none
+var grid_position: 	Vector2i
+var is_new_tile:	bool	= false  # Only true for randomly spawned tiles
 
 # Visual node references
-var background:  Panel
-var value_label: Label
-var power_icon:  TextureRect
-var power_label: Label
+var background:			Control
+var tile_center:		TextureRect
+var tile_corner_tl:		TextureRect
+var tile_corner_tr:		TextureRect
+var tile_corner_bl:		TextureRect
+var tile_corner_br:		TextureRect
+var value_label: 		Label
+var power_icon: 		TextureRect
+var power_label: 		Label
 
 # Signals
-signal tile_clicked(tile)
-signal tile_moved(from: Vector2i, to: Vector2i)
 signal tile_merged(tile, merged_value: int)
 signal tile_destroyed(tile)
 
 
 func _ready():
 	# Get child node references
-	background  = $Background
-	value_label = $ValueLabel
-	power_icon  = $PowerIcon
-	power_label = $PowerLabel
+	background     = $Background
+	tile_center    = $Background/TileCenter
+	tile_corner_tl = $Background/TileCornerTopLeft
+	tile_corner_tr = $Background/TileCornerTopRight
+	tile_corner_bl = $Background/TileCornerBottomLeft
+	tile_corner_br = $Background/TileCornerBottomRight
+	value_label    = $ValueLabel
+	power_icon     = $PowerIcon
+	power_label    = $PowerLabel
 
 	# Ensure visual is updated after nodes are ready
 	update_visual()
@@ -87,7 +97,6 @@ func initialize(val: int, power: String = "", grid_pos: Vector2i = Vector2i.ZERO
 
 # Create attenuated background color from neon color
 func get_background_color(neon_color: Color):
-	# Create a very dark version of the neon color
 	return Color(
 		neon_color.r * BACKGROUND_ATTENUATION,
 		neon_color.g * BACKGROUND_ATTENUATION,
@@ -96,64 +105,69 @@ func get_background_color(neon_color: Color):
 	)
 
 
-# Create StyleBoxFlat with neon glow effect
-func create_neon_style(neon_color: Color):
-	var style = StyleBoxFlat.new()
-
-	# Background color (very attenuated neon)
-	style.bg_color = get_background_color(neon_color)
-
-	# Rounded corners
-	style.corner_radius_top_left = BORDER_RADIUS
-	style.corner_radius_top_right = BORDER_RADIUS
-	style.corner_radius_bottom_left = BORDER_RADIUS
-	style.corner_radius_bottom_right = BORDER_RADIUS
-
-	# Neon border
-	style.border_width_left = 3
-	style.border_width_right = 3
-	style.border_width_top = 3
-	style.border_width_bottom = 3
-	style.border_color = neon_color
-
-	# Glow effect using shadow
-	style.shadow_color = Color(neon_color.r, neon_color.g, neon_color.b, 0.8)
-	style.shadow_size = GLOW_SIZE
-	style.shadow_offset = Vector2.ZERO
-
-	return style
+# Apply tile textures with color modulation
+func apply_tile_textures(neon_color: Color, is_transparent: bool = false):
+	var bg_color = get_background_color(neon_color) if not is_transparent else Color(0, 0, 0, 0)
+	
+	# Load and apply textures
+	if tile_center:
+		tile_center.texture = load("res://assets/images/tile_center.png")
+		tile_center.modulate = bg_color
+	
+	if tile_corner_tl:
+		tile_corner_tl.texture = load("res://assets/images/tile_corner_top_left.png")
+		tile_corner_tl.modulate = neon_color  # Use neon color for borders
+	
+	if tile_corner_tr:
+		tile_corner_tr.texture = load("res://assets/images/tile_corner_top_right.png")
+		tile_corner_tr.modulate = neon_color
+	
+	if tile_corner_bl:
+		tile_corner_bl.texture = load("res://assets/images/tile_corner_bottom_left.png")
+		tile_corner_bl.modulate = neon_color
+	
+	if tile_corner_br:
+		tile_corner_br.texture = load("res://assets/images/tile_corner_bottom_right.png")
+		tile_corner_br.modulate = neon_color
 
 
 # Update tile visual appearance (color, label, icon)
 func update_visual():
 	var neon_color = TILE_COLORS.get(value, Color.WHITE)
 
-	# Update background with neon style
+	# Update background with tile textures
 	if background:
-		background.add_theme_stylebox_override("panel", create_neon_style(neon_color))
+		apply_tile_textures(neon_color, is_new_tile)
+
+	# Apply transparency for tiles with expel effect
+	if expel_direction != "":
+		modulate.a = 0.7  # 30% transparency
+	else:
+		modulate.a = 1.0  # Full opacity
 
 	# Update value label with scaled font size
 	if value_label:
-		value_label.text = str(value)
-		var font_size = VALUE_FONT_SIZES.get(value, 48)
+		value_label.text 	= str(value)
+		var font_size 		= VALUE_FONT_SIZES.get(value, 48)
 		value_label.add_theme_font_size_override("font_size", font_size)
 
 	# Update power icon and label
 	if power_type != "" and power_type != "empty":
-		# Get power data from PowerManager
-		var power_data = PowerManager.POWER_DATA.get(power_type, {})
-		var power_name = power_data.get("name", power_type)
-		var power_type_category = power_data.get("type", "none")
+		var power 				= PowerManager.POWERS.get(power_type, {})
+		var power_name 			= power.get("name", power_type)
+		var power_type_category = power.get("type", "none")
 
 		# Show SVG icon
 		if power_icon:
 			var icon_path = "res://assets/icons/power_%s.svg" % power_type
+
 			if ResourceLoader.exists(icon_path):
 				power_icon.texture = load(icon_path)
 				power_icon.visible = true
 
 				# Determine color based on bonus/malus
 				var icon_color = Color.WHITE
+
 				if power_type_category == "bonus":
 					icon_color = BONUS_COLOR
 				elif power_type_category == "malus":
@@ -181,7 +195,7 @@ void fragment() {
 
 		# Show power name label
 		if power_label:
-			power_label.text = power_name
+			power_label.text 	= power_name
 			power_label.visible = true
 	else:
 		# Hide power elements if no power or empty power
@@ -192,7 +206,7 @@ void fragment() {
 
 
 # Check if tile can merge with another tile
-func can_merge_with(other_tile) -> bool:
+func can_merge_with(other_tile):
 	return value == other_tile.value and not is_frozen and not other_tile.is_frozen
 
 
@@ -207,6 +221,13 @@ func merge_with(other_tile):
 	# Check if power should be activated
 	var power_activated = (power_type == other_tile.power_type and power_type != "")
 
+	# Reset expel state when merging (fusion cancels expel effect)
+	var expel_was_active = (expel_direction != "" or other_tile.expel_direction != "")
+	expel_direction = ""  # Cancel expel effect on fusion
+	if expel_was_active:
+		print("  ✨ Fusion cancels expel effect")
+		modulate.a = 1.0  # Restore full opacity
+
 	# Return merge result
 	return {
 		"value":           new_value,
@@ -215,17 +236,11 @@ func merge_with(other_tile):
 	}
 
 
-# Calculate screen position from grid position
-func calculate_screen_position(grid_pos: Vector2i) -> Vector2:
-	var x = TILE_SPACING + grid_pos.x * (TILE_SIZE + TILE_SPACING)
-	var y = TILE_SPACING + grid_pos.y * (TILE_SIZE + TILE_SPACING)
-	return Vector2(x, y)
-
-
 # Spawn animation (scale from 0 to 1)
 func spawn_animation():
-	scale = Vector2.ZERO
-	var tween = create_tween()
+	scale 		= Vector2.ZERO
+	var tween 	= create_tween()
+
 	tween.tween_property(self, "scale", Vector2.ONE, 0.2)
 	tween.set_ease(Tween.EASE_OUT)
 	tween.set_trans(Tween.TRANS_BACK)
@@ -234,6 +249,7 @@ func spawn_animation():
 # Merge animation (scale up then down)
 func merge_animation():
 	var tween = create_tween()
+
 	tween.tween_property(self, "scale", Vector2(1.2, 1.2), 0.1)
 	tween.tween_property(self, "scale", Vector2.ONE, 0.1)
 
@@ -242,12 +258,14 @@ func merge_animation():
 
 # Move to target position with animation
 func move_to_position(target_pos: Vector2, duration: float = 0.2):
-	var from_pos = grid_position
+	var from_pos 	= grid_position
+	var tween 		= create_tween()
 
-	var tween = create_tween()
 	tween.tween_property(self, "position", target_pos, duration)
 	tween.set_ease(Tween.EASE_OUT)
 	tween.set_trans(Tween.TRANS_QUAD)
+	
+	return tween
 
 
 # Destroy animation (fade out and scale down)
@@ -255,6 +273,7 @@ func destroy_animation():
 	var tween = create_tween()
 	tween.parallel().tween_property(self, "modulate:a", 0.0, 0.2)
 	tween.parallel().tween_property(self, "scale", Vector2.ZERO, 0.2)
+
 	tween.tween_callback(func():
 		emit_signal("tile_destroyed", self)
 		queue_free()
@@ -263,8 +282,9 @@ func destroy_animation():
 
 # Set frozen state with number of turns
 func set_frozen(frozen: bool, turns: int = 0):
-	is_frozen = frozen
-	freeze_turns = turns
+	is_frozen 		= frozen
+	freeze_turns 	= turns
+
 	if frozen:
 		apply_freeze_effect()
 	else:
@@ -277,32 +297,28 @@ func apply_freeze_effect():
 
 	# Remove any existing ice overlay first
 	var existing_ice = get_node_or_null("IceOverlay")
+
 	if existing_ice:
 		existing_ice.queue_free()
 		await get_tree().process_frame  # Wait for queue_free to process
 
 	# Load and apply ice tile texture as overlay ON TOP of tile
 	var ice_texture = load("res://assets/images/ice_tile.jpg")
+
 	if ice_texture != null:
-		# Create a TextureRect for the ice overlay
-		var ice_overlay = TextureRect.new()
-		ice_overlay.texture = ice_texture
-		ice_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		ice_overlay.stretch_mode = TextureRect.STRETCH_SCALE
+		var ice_overlay 				= TextureRect.new()
+		ice_overlay.texture 			= ice_texture
+		ice_overlay.expand_mode 		= TextureRect.EXPAND_IGNORE_SIZE
+		ice_overlay.stretch_mode 		= TextureRect.STRETCH_SCALE
 		ice_overlay.custom_minimum_size = Vector2(TILE_SIZE, TILE_SIZE)
-		ice_overlay.size = Vector2(TILE_SIZE, TILE_SIZE)
-		ice_overlay.position = Vector2.ZERO
-		ice_overlay.name = "IceOverlay"
-		ice_overlay.modulate = Color(1, 1, 1, 0.9)  # 90% visible
-		ice_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ice_overlay.size 				= Vector2(TILE_SIZE, TILE_SIZE)
+		ice_overlay.position 			= Vector2.ZERO
+		ice_overlay.name 				= "IceOverlay"
+		ice_overlay.modulate 			= Color(1, 1, 1, 0.9)  # 90% visible
+		ice_overlay.mouse_filter 		= Control.MOUSE_FILTER_IGNORE
 
 		# Add ON TOP of all other elements
 		add_child(ice_overlay)
-
-		print("✅ Ice overlay applied on top of tile at ", grid_position)
-	else:
-		print("⚠️ Ice tile texture not found")
-
 
 # Remove freeze effect (fade out ice overlay)
 func remove_freeze_effect():
@@ -310,8 +326,10 @@ func remove_freeze_effect():
 
 	# Find and fade out ice overlay
 	var ice_overlay = get_node_or_null("IceOverlay")
+
 	if ice_overlay != null:
 		var tween = create_tween()
+
 		tween.tween_property(ice_overlay, "modulate:a", 0.0, 0.3)
 		tween.tween_callback(ice_overlay.queue_free)
 
@@ -320,12 +338,88 @@ func remove_freeze_effect():
 func decrease_freeze_turns():
 	if freeze_turns > 0:
 		freeze_turns -= 1
+
 		if freeze_turns == 0:
 			remove_freeze_effect()
 
 
+# ============================
+# Power Visual Effect Methods
+# ============================
+
+var _emitter_tween: Tween = null
+var _target_tween: Tween = null
+
+# Start emitter visual effect (blue label + blinking power icon)
+func start_emitter_effect(duration: float = 2.0):
+	stop_emitter_effect()  # Clean up any existing effect
+	
+	_emitter_tween = create_tween()
+	_emitter_tween.set_parallel(true)
+	
+	# Change value label to blue
+	if value_label:
+		var original_color = value_label.modulate
+		_emitter_tween.tween_property(value_label, "modulate", Color(0.3, 0.5, 1, 1), 0.1)
+		_emitter_tween.chain().tween_interval(duration - 0.2)
+		_emitter_tween.chain().tween_property(value_label, "modulate", original_color, 0.1)
+	
+	# Blink power icon by scaling
+	if power_icon != null and power_icon.visible:
+		var original_scale = power_icon.scale
+		var blink_count = int(duration / 0.2)
+		
+		for i in range(blink_count):
+			_emitter_tween.tween_property(power_icon, "scale", original_scale * 1.3, 0.1).set_delay(i * 0.2)
+			_emitter_tween.tween_property(power_icon, "scale", original_scale, 0.1).set_delay(i * 0.2 + 0.1)
+
+
+# Stop emitter visual effect immediately
+func stop_emitter_effect():
+	if _emitter_tween != null and _emitter_tween.is_valid():
+		_emitter_tween.kill()
+		_emitter_tween = null
+	
+	# Reset to original state
+	if value_label:
+		value_label.modulate = Color.WHITE
+	if power_icon and power_icon.visible:
+		power_icon.scale = Vector2.ONE
+
+
+# Start target visual effect (blink/flash the entire tile)
+func start_target_effect(duration: float = 2.0):
+	stop_target_effect()  # Clean up any existing effect
+	
+	_target_tween = create_tween()
+	var original_modulate = modulate
+	var blink_count = int(duration / 0.2)
+	
+	for i in range(blink_count):
+		_target_tween.tween_property(self, "modulate", Color(1.5, 1.5, 1.5, 1), 0.1)
+		_target_tween.tween_property(self, "modulate", original_modulate, 0.1)
+	
+	_target_tween.tween_property(self, "modulate", original_modulate, 0.0)
+
+
+# Stop target visual effect immediately
+func stop_target_effect():
+	if _target_tween != null and _target_tween.is_valid():
+		_target_tween.kill()
+		_target_tween = null
+	
+	# Reset to original state
+	modulate = Color.WHITE
+
+
+# Stop all power visual effects
+func stop_all_power_effects():
+	stop_emitter_effect()
+	stop_target_effect()
+
+
 # Debug string representation
-func _to_string() -> String:
+func _to_string():
 	return "Tile[value=%d, power=%s, pos=%s, frozen=%s]" % [
 		value, power_type, grid_position, is_frozen
 	]

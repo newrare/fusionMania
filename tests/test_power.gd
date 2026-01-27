@@ -18,7 +18,7 @@ func _ready():
 func test_power_data():
 	print("Test 1: Power data structure")
 
-	var power_count = PowerManager.POWER_DATA.size()
+	var power_count = PowerManager.POWERS.size()
 	print("  ✅ Total powers: %d" % power_count)
 
 	# Verify all 20 powers exist
@@ -30,7 +30,7 @@ func test_power_data():
 	]
 
 	for power_key in expected_powers:
-		if not PowerManager.POWER_DATA.has(power_key):
+		if not PowerManager.POWERS.has(power_key):
 			print("  ❌ Missing power: %s" % power_key)
 			return
 
@@ -38,8 +38,8 @@ func test_power_data():
 
 	# Verify spawn rates sum to 100
 	var total_rate = 0
-	for power_key in PowerManager.POWER_DATA.keys():
-		total_rate += PowerManager.POWER_DATA[power_key].spawn_rate
+	for power_key in PowerManager.POWERS.keys():
+		total_rate += PowerManager.POWERS[power_key].spawn_rate
 
 	print("  ✅ Total spawn rate: %d%%" % total_rate)
 
@@ -65,7 +65,7 @@ func test_random_power_distribution():
 	print("  Power distribution:")
 	for power_key in samples.keys():
 		var percentage = (samples[power_key] / float(total_samples)) * 100.0
-		var expected = PowerManager.POWER_DATA[power_key].spawn_rate
+		var expected = PowerManager.POWERS[power_key].spawn_rate
 		print("    %s: %.1f%% (expected: %d%%)" % [power_key, percentage, expected])
 
 	print("  ✅ Random power generation working")

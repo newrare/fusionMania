@@ -43,10 +43,10 @@ func create_power_buttons():
 	power_buttons.clear()
 
 	# Create a button for each power
-	for power_key in PowerManager.POWER_DATA.keys():
-		var power_data = PowerManager.POWER_DATA[power_key]
-		var power_name = power_data.get("name", power_key)
-		var power_type = power_data.get("type", "none")
+	for power_key in PowerManager.POWERS.keys():
+		var power = PowerManager.POWERS[power_key]
+		var power_name = power.get("name", power_key)
+		var power_type = power.get("type", "none")
 
 		# Create container for icon + label
 		var power_container = VBoxContainer.new()

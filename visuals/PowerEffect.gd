@@ -5,7 +5,8 @@ extends Node
 # Preload textures to avoid loading delays
 const ICE_OVERLAY_TEXTURE = preload("res://assets/images/ice_overlay.png")
 
-# Fire line sequence (new version with particles and blinking)
+# Fire line sequence (new version with fireball sprites)
+# Note: Tile visual effects (emitter/target) are now handled by PowerManager via Tile.gd methods
 static func fire_line_sequence(emitter_tile, target_tiles: Array, is_horizontal: bool, grid_manager):
 	print("  🔥 Fire line sequence: %s, %d targets" % ["horizontal" if is_horizontal else "vertical", target_tiles.size()])
 
@@ -16,26 +17,23 @@ static func fire_line_sequence(emitter_tile, target_tiles: Array, is_horizontal:
 	if grid_node == null:
 		return
 
-	# Start blinking target tiles (1 second total)
-	for target in target_tiles:
-		_blink_tile(target, 1.0)
+	# Launch fireballs in both directions
+	if is_horizontal:
+		_create_fireball(grid_node, emitter_tile, Vector2.RIGHT)  # Right
+		_create_fireball(grid_node, emitter_tile, Vector2.LEFT)   # Left
+	else:
+		_create_fireball(grid_node, emitter_tile, Vector2.DOWN)   # Down
+		_create_fireball(grid_node, emitter_tile, Vector2.UP)     # Up
 
-	# Phase 1: Fire ray effect (0.5 second)
-	_create_fire_ray(grid_node, emitter_tile, is_horizontal)
-
-	# Phase 2: Particle explosions after 0.5 second
-	await grid_node.get_tree().create_timer(0.5).timeout
-	for target in target_tiles:
-		_create_explosion_particles(grid_node, target)
-
-	# Phase 3: Destroy tiles after 1 second total
-	await grid_node.get_tree().create_timer(0.5).timeout
+	# Wait then destroy tiles
+	await grid_node.get_tree().create_timer(1.0).timeout
 	for target in target_tiles:
 		if is_instance_valid(target):
 			grid_manager.destroy_tile(target)
 
 
 # Fire cross sequence (horizontal + vertical)
+# Note: Tile visual effects (emitter/target) are now handled by PowerManager via Tile.gd methods
 static func fire_cross_sequence(emitter_tile, target_tiles: Array, grid_manager):
 	print("  🔥 Fire cross sequence: %d targets" % target_tiles.size())
 
@@ -46,154 +44,149 @@ static func fire_cross_sequence(emitter_tile, target_tiles: Array, grid_manager)
 	if grid_node == null:
 		return
 
-	# Start blinking target tiles (1 second total)
-	for target in target_tiles:
-		_blink_tile(target, 1.0)
+	# Launch fireballs in all 4 directions
+	_create_fireball(grid_node, emitter_tile, Vector2.RIGHT)  # Right
+	_create_fireball(grid_node, emitter_tile, Vector2.LEFT)   # Left
+	_create_fireball(grid_node, emitter_tile, Vector2.DOWN)   # Down
+	_create_fireball(grid_node, emitter_tile, Vector2.UP)     # Up
 
-	# Phase 1: Fire rays (both horizontal and vertical) (0.5 second)
-	var emitter_pos = emitter_tile.grid_position
-	_create_fire_ray(grid_node, emitter_tile, true)   # horizontal
-	_create_fire_ray(grid_node, emitter_tile, false)  # vertical
-
-	# Phase 2: Particle explosions after 0.5 second
-	await grid_node.get_tree().create_timer(0.5).timeout
-	for target in target_tiles:
-		_create_explosion_particles(grid_node, target)
-
-	# Phase 3: Destroy tiles after 1 second total
-	await grid_node.get_tree().create_timer(0.5).timeout
+	# Wait then destroy tiles
+	await grid_node.get_tree().create_timer(1.0).timeout
 	for target in target_tiles:
 		if is_instance_valid(target):
 			grid_manager.destroy_tile(target)
 
 
-# Create fire ray on entire line/column except emitter cell
-static func _create_fire_ray(grid_node: Node, emitter_tile, is_horizontal: bool):
+# Create animated fireball sprite moving in a direction
+static func _create_fireball(grid_node: Node, emitter_tile, direction: Vector2):
 	if emitter_tile == null:
 		return
 
 	const TILE_SIZE = 240
 	const TILE_SPACING = 20
 	const CELL_SIZE = TILE_SIZE + TILE_SPACING
-	const RAY_THICKNESS = 40
-	const GRID_SIZE = 4
+	const FIREBALL_SIZE = 120  # Size of fireball sprite
+	const FIREBALL_SPEED = 800  # Pixels per second
 
+	# Calculate center of emitter tile
 	var emitter_pos = emitter_tile.grid_position
-
-	if is_horizontal:
-		# Horizontal ray - two parts: left and right of emitter
-		var center_y = emitter_pos.y * CELL_SIZE + TILE_SIZE / 2
-
-		# Left part (from 0 to emitter cell)
-		if emitter_pos.x > 0:
-			var ray_left = ColorRect.new()
-			ray_left.color = Color(1, 0.3, 0, 0.9)  # Orange fire
-			ray_left.size = Vector2(emitter_pos.x * CELL_SIZE, RAY_THICKNESS)
-			ray_left.position = Vector2(0, center_y - RAY_THICKNESS / 2.0)
-			grid_node.add_child(ray_left)
-
-			var tween_left = grid_node.create_tween()
-			tween_left.tween_property(ray_left, "modulate:a", 0.0, 0.5)
-			tween_left.tween_callback(ray_left.queue_free)
-
-		# Right part (from emitter cell + 1 to end)
-		if emitter_pos.x < GRID_SIZE - 1:
-			var start_x = (emitter_pos.x + 1) * CELL_SIZE
-			var end_x = GRID_SIZE * CELL_SIZE - TILE_SPACING
-			var ray_right = ColorRect.new()
-			ray_right.color = Color(1, 0.3, 0, 0.9)  # Orange fire
-			ray_right.size = Vector2(end_x - start_x, RAY_THICKNESS)
-			ray_right.position = Vector2(start_x, center_y - RAY_THICKNESS / 2.0)
-			grid_node.add_child(ray_right)
-
-			var tween_right = grid_node.create_tween()
-			tween_right.tween_property(ray_right, "modulate:a", 0.0, 0.5)
-			tween_right.tween_callback(ray_right.queue_free)
-	else:
-		# Vertical ray - two parts: top and bottom of emitter
-		var center_x = emitter_pos.x * CELL_SIZE + TILE_SIZE / 2
-
-		# Top part (from 0 to emitter cell)
-		if emitter_pos.y > 0:
-			var ray_top = ColorRect.new()
-			ray_top.color = Color(1, 0.3, 0, 0.9)  # Orange fire
-			ray_top.size = Vector2(RAY_THICKNESS, emitter_pos.y * CELL_SIZE)
-			ray_top.position = Vector2(center_x - RAY_THICKNESS / 2.0, 0)
-			grid_node.add_child(ray_top)
-
-			var tween_top = grid_node.create_tween()
-			tween_top.tween_property(ray_top, "modulate:a", 0.0, 0.5)
-			tween_top.tween_callback(ray_top.queue_free)
-
-		# Bottom part (from emitter cell + 1 to end)
-		if emitter_pos.y < GRID_SIZE - 1:
-			var start_y = (emitter_pos.y + 1) * CELL_SIZE
-			var end_y = GRID_SIZE * CELL_SIZE - TILE_SPACING
-			var ray_bottom = ColorRect.new()
-			ray_bottom.color = Color(1, 0.3, 0, 0.9)  # Orange fire
-			ray_bottom.size = Vector2(RAY_THICKNESS, end_y - start_y)
-			ray_bottom.position = Vector2(center_x - RAY_THICKNESS / 2.0, start_y)
-			grid_node.add_child(ray_bottom)
-
-			var tween_bottom = grid_node.create_tween()
-			tween_bottom.tween_property(ray_bottom, "modulate:a", 0.0, 0.5)
-			tween_bottom.tween_callback(ray_bottom.queue_free)
-
-
-# Create explosion particles (red) - 32 small particles
-static func _create_explosion_particles(grid_node: Node, tile):
-	if not is_instance_valid(tile):
-		return
-
-	const TILE_SIZE = 240
-	const TILE_SPACING = 20
-	const CELL_SIZE = TILE_SIZE + TILE_SPACING
-
-	# Get tile center position
-	var tile_center = Vector2(
-		tile.grid_position.x * CELL_SIZE + TILE_SIZE / 2,
-		tile.grid_position.y * CELL_SIZE + TILE_SIZE / 2
+	var center_pos = Vector2(
+		emitter_pos.x * CELL_SIZE + TILE_SIZE / 2.0,
+		emitter_pos.y * CELL_SIZE + TILE_SIZE / 2.0
 	)
 
-	# Create 32 small particles
-	for i in range(32):
-		var particle = ColorRect.new()
-		particle.color = Color(1, 0, 0, 0.8)  # Red
-		var size = randf_range(5, 10)  # 4x smaller
-		particle.size = Vector2(size, size)
-		particle.pivot_offset = Vector2(size / 2, size / 2)
+	# Calculate starting position (at edge of tile based on direction)
+	var start_pos = center_pos
+	var rotation_degrees = 0.0
 
-		# Random offset from center
-		var angle = randf() * TAU
-		var distance = randf_range(0, 30)
-		var offset = Vector2(cos(angle), sin(angle)) * distance
-		particle.position = tile_center + offset - Vector2(size / 2, size / 2)
+	if direction == Vector2.RIGHT:
+		start_pos.x += TILE_SIZE / 2.0  # Right edge
+		rotation_degrees = 180.0
+	elif direction == Vector2.LEFT:
+		start_pos.x -= TILE_SIZE / 2.0  # Left edge
+		rotation_degrees = 0.0
+	elif direction == Vector2.UP:
+		start_pos.y -= TILE_SIZE / 2.0  # Top edge
+		rotation_degrees = 90.0
+	elif direction == Vector2.DOWN:
+		start_pos.y += TILE_SIZE / 2.0  # Bottom edge
+		rotation_degrees = 270.0
 
-		grid_node.add_child(particle)
+	# Calculate end position (far outside the scene)
+	var scene_size = 4 * CELL_SIZE  # Grid is 4x4
+	var travel_distance = scene_size * 2  # Go twice the grid size to ensure it's off-screen
+	var end_pos = start_pos + direction * travel_distance
 
-		# Animate: move outward far (can go beyond grid), scale down, fade out
-		var tween = grid_node.create_tween()
-		var end_distance = randf_range(150, 300)  # Much farther
-		var end_offset = Vector2(cos(angle), sin(angle)) * end_distance
-		tween.tween_property(particle, "position", tile_center + end_offset - Vector2(size / 2, size / 2), 0.5)
-		tween.parallel().tween_property(particle, "scale", Vector2(0.1, 0.1), 0.5)
-		tween.parallel().tween_property(particle, "modulate:a", 0.0, 0.5)
-		tween.tween_callback(particle.queue_free)
+	# Create animated sprite
+	var fireball = AnimatedSprite2D.new()
+	fireball.position = start_pos
+	fireball.rotation_degrees = rotation_degrees
+
+	# Create sprite frames
+	var sprite_frames = SpriteFrames.new()
+	sprite_frames.add_animation("burn")
+
+	# Load all 8 fire frames
+	for i in range(1, 9):
+		var texture = load("res://assets/images/fire_%d.png" % i)
+		sprite_frames.add_frame("burn", texture)
+
+	sprite_frames.set_animation_speed("burn", 12.0)  # 12 FPS animation
+	sprite_frames.set_animation_loop("burn", true)
+
+	fireball.sprite_frames = sprite_frames
+	fireball.animation = "burn"
+	fireball.scale = Vector2(FIREBALL_SIZE / 512.0, FIREBALL_SIZE / 512.0)  # Assuming original is 512x512
+	fireball.centered = true
+
+	grid_node.add_child(fireball)
+	fireball.play("burn")
+
+	# Animate movement
+	var duration = travel_distance / FIREBALL_SPEED
+	var tween = grid_node.create_tween()
+	tween.tween_property(fireball, "position", end_pos, duration)
+	tween.tween_callback(fireball.queue_free)
 
 
-# Make tile blink for duration
+# ============================
+# Deprecated - Tile effects now in Tile.gd
+# ============================
+
+# Note: _blink_tile and highlight_emitter_tile are deprecated
+# Use Tile.start_target_effect() and Tile.start_emitter_effect() instead
+# Keeping for backwards compatibility with existing code that hasn't been migrated
+
+# Make tile blink for duration (DEPRECATED - use Tile.start_target_effect)
 static func _blink_tile(tile, duration: float):
 	if not is_instance_valid(tile):
 		return
+	
+	# Delegate to new Tile method if available
+	if tile.has_method("start_target_effect"):
+		tile.start_target_effect(duration)
+		return
 
-	var original_modulate = tile.modulate
-	var blink_count = int(duration / 0.2)  # Blink every 0.2s
+	var original_modulate 	= tile.modulate
+	var blink_count 		= int(duration / 0.2)
+	var tween 				= tile.create_tween()
 
-	var tween = tile.create_tween()
 	for i in range(blink_count):
 		tween.tween_property(tile, "modulate", Color(1.5, 1.5, 1.5, 1), 0.1)
 		tween.tween_property(tile, "modulate", original_modulate, 0.1)
-	tween.tween_property(tile, "modulate", original_modulate, 0.0)  # Ensure it ends at original
+
+	tween.tween_property(tile, "modulate", original_modulate, 0.0)
+
+
+# Highlight emitter tile (DEPRECATED - use Tile.start_emitter_effect)
+static func highlight_emitter_tile(emitter_tile, duration: float):
+	if not is_instance_valid(emitter_tile):
+		return
+	
+	# Delegate to new Tile method if available
+	if emitter_tile.has_method("start_emitter_effect"):
+		emitter_tile.start_emitter_effect(duration)
+		return
+
+	# Legacy implementation for backwards compatibility
+	if emitter_tile.power_icon != null and emitter_tile.power_icon.visible:
+		var original_scale 	= emitter_tile.power_icon.scale
+		var blink_count		= int(duration / 0.2)
+		var icon_tween 		= emitter_tile.power_icon.create_tween()
+
+		for i in range(blink_count):
+			icon_tween.tween_property(emitter_tile.power_icon, "scale", original_scale * 1.3, 0.1)
+			icon_tween.tween_property(emitter_tile.power_icon, "scale", original_scale, 0.1)
+
+		icon_tween.tween_property(emitter_tile.power_icon, "scale", original_scale, 0.0)
+
+	if emitter_tile.value_label != null:
+		var original_label_color 	= emitter_tile.value_label.modulate
+		var label_tween 			= emitter_tile.value_label.create_tween()
+
+		label_tween.tween_property(emitter_tile.value_label, "modulate", Color(0.3, 0.5, 1, 1), 0.1)
+		label_tween.tween_interval(duration - 0.2)
+		label_tween.tween_property(emitter_tile.value_label, "modulate", original_label_color, 0.1)
 
 
 # Explosion effect at position
@@ -226,11 +219,12 @@ static func freeze_effect(tile):
 	if tile == null:
 		return
 
-	# Get viewport root
-	var viewport_root = tile.get_tree().root
+	# Highlight emitter tile (icon blink + blue text for 3 seconds)
+	highlight_emitter_tile(tile, 3.0)
 
-	# Create ice overlay covering entire viewport
-	var ice_overlay = TextureRect.new()
+	# Create ice overlay
+	var viewport_root 	= tile.get_tree().root
+	var ice_overlay 	= TextureRect.new()
 
 	if ICE_OVERLAY_TEXTURE != null:
 		ice_overlay.texture = ICE_OVERLAY_TEXTURE
@@ -247,11 +241,8 @@ static func freeze_effect(tile):
 
 		# Animation: hold for 2 seconds, then fade out
 		var tween = viewport_root.create_tween()
-		# Hold for 2 seconds
 		tween.tween_interval(2.0)
-		# Fade out over 1 second
 		tween.tween_property(ice_overlay, "modulate:a", 0.0, 1.0)
-		# Remove after animation
 		tween.tween_callback(ice_overlay.queue_free)
 	else:
 		print("  ⚠️ Ice overlay texture not found")
@@ -268,11 +259,14 @@ static func lightning_strike_effect(tile):
 	if grid_node == null:
 		return
 
-	const TILE_SIZE = 240
-	const TILE_SPACING = 20
-	const CELL_SIZE = TILE_SIZE + TILE_SPACING
-	const ANIMATION_DURATION = 0.3
-	const FRAME_COUNT = 5
+	# Highlight emitter tile (icon blink + blue text for 0.3 seconds)
+	highlight_emitter_tile(tile, 0.3)
+
+	const TILE_SIZE 			= 240
+	const TILE_SPACING 			= 20
+	const CELL_SIZE 			= TILE_SIZE + TILE_SPACING
+	const ANIMATION_DURATION 	= 0.3
+	const FRAME_COUNT 			= 5
 
 	# Calculate tile center position (relative to grid)
 	var tile_center_x = tile.grid_position.x * CELL_SIZE + TILE_SIZE / 2
@@ -334,24 +328,79 @@ static func lightning_strike_effect(tile):
 
 
 # Nuclear flash effect
-static func nuclear_flash():
+static func nuclear_flash(emitter_tile, target_tiles: Array = [], grid_manager = null):
 	print("  ☢️ Nuclear flash")
 
 	var grid_node = Engine.get_main_loop().root.get_tree().get_first_node_in_group("grid")
 	if grid_node == null:
 		return
 
-	# Create white flash overlay
+	# Highlight emitter tile (icon blink + blue text for 1.5 seconds)
+	if emitter_tile != null:
+		highlight_emitter_tile(emitter_tile, 1.5)
+
+	# Start blinking target tiles for animation + flash duration (1s animation + 0.5s flash fade = 1.5s)
+	for target in target_tiles:
+		_blink_tile(target, 1.5)
+
+	# Play nuclear animation first (1 second)
+	await _play_nuclear_animation(grid_node)
+
+	# Then create white flash overlay
 	var flash = ColorRect.new()
 	flash.color    = Color(1, 1, 1, 0.9)
 	flash.size     = grid_node.size
 	flash.position = Vector2.ZERO
 	grid_node.add_child(flash)
 
-	# Fade out
+	# Fade out flash
 	var tween = grid_node.create_tween()
 	tween.tween_property(flash, "modulate:a", 0.0, 0.5)
 	tween.tween_callback(flash.queue_free)
+
+	# Destroy target tiles after flash fades
+	tween.tween_callback(func():
+		if grid_manager != null:
+			for target in target_tiles:
+				if is_instance_valid(target):
+					grid_manager.destroy_tile(target)
+	)
+
+
+# Play nuclear explosion animation (10 frames over 1 second)
+static func _play_nuclear_animation(grid_node: Node):
+	print("  💥 Nuclear animation sequence")
+
+	var viewport_root = grid_node.get_tree().root
+
+	# Create nuclear animation sprite covering entire screen
+	var nuclear_sprite = TextureRect.new()
+	nuclear_sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	nuclear_sprite.stretch_mode = TextureRect.STRETCH_SCALE
+
+	# Get viewport size
+	var viewport_size = viewport_root.get_viewport().get_visible_rect().size
+	nuclear_sprite.size = viewport_size
+	nuclear_sprite.position = Vector2(0, -300)  # Move up 300px
+
+	viewport_root.add_child(nuclear_sprite)
+
+	# Animate through frames 1-10 over 1 second
+	const FRAME_COUNT = 10
+	const ANIMATION_DURATION = 1.0
+	var frame_duration = ANIMATION_DURATION / FRAME_COUNT
+
+	for i in range(FRAME_COUNT):
+		var frame_number = i + 1
+		var frame_texture = load("res://assets/images/nuclear_%d.png" % frame_number)
+
+		if frame_texture != null:
+			nuclear_sprite.texture = frame_texture
+
+		await viewport_root.get_tree().create_timer(frame_duration).timeout
+
+	# Remove animation sprite
+	nuclear_sprite.queue_free()
 
 
 # Blind overlay effect
@@ -372,5 +421,77 @@ static func blind_overlay(duration: float):
 
 	grid_node.add_child(blind)
 
-	# Note: Actual removal will be handled by GridManager.update_blind_mode()
 
+# ============================
+# Wind Effect Methods
+# ============================
+
+# Create wind effect for a frozen direction
+static func create_wind_effect(direction: int):
+	print("  💨 Creating wind effect for direction: %d" % direction)
+	
+	var game_scene = Engine.get_main_loop().root.get_tree().get_first_node_in_group("game_scene")
+	if game_scene == null:
+		return
+	
+	var wind_name = "WindEffect_Direction%d" % direction
+	var existing = game_scene.get_node_or_null(wind_name)
+	if existing != null:
+		existing.queue_free()
+	
+	var wind = ColorRect.new()
+	wind.name = wind_name
+	wind.color = Color(0.5, 0.8, 1.0, 0.3)
+	wind.size = Vector2(50, 50)
+	
+	game_scene.add_child(wind)
+
+
+# Remove wind effect for a direction
+static func remove_wind_effect(direction: int):
+	print("  💨 Removing wind effect for direction: %d" % direction)
+	
+	var game_scene = Engine.get_main_loop().root.get_tree().get_first_node_in_group("game_scene")
+	if game_scene == null:
+		return
+	
+	var wind_name = "WindEffect_Direction%d" % direction
+	var wind = game_scene.get_node_or_null(wind_name)
+	if wind != null:
+		wind.queue_free()
+	
+	_remove_wind_sprites(direction)
+
+
+# Clear all wind effects (called when starting new game)
+static func clear_all_wind_effects():
+	print("  💨 Clearing all wind effects")
+	
+	await Engine.get_main_loop().process_frame
+	
+	var scene_root = Engine.get_main_loop().root.get_tree().get_first_node_in_group("game_scene")
+	if scene_root == null:
+		return
+	
+	var removed_count = 0
+	for dir in range(4):
+		var wind_name = "WindEffect_Direction%d" % dir
+		var wind = scene_root.get_node_or_null(wind_name)
+		if wind != null:
+			wind.queue_free()
+			removed_count += 1
+		_remove_wind_sprites(dir)
+	
+	print("  ✅ Cleared %d wind effect(s)" % removed_count)
+
+
+# Create wind sprites on edge tiles
+static func create_wind_sprites(direction: int):
+	print("  💨 Creating wind sprites for direction: %d" % direction)
+	# Placeholder - sprites are complex, just create simple indicator for now
+
+
+# Remove wind sprites for a direction
+static func _remove_wind_sprites(direction: int):
+	# Placeholder - cleanup if sprites were created
+	pass

@@ -10,7 +10,7 @@ offset_right = 240.0
 offset_bottom = 240.0
 script = ExtResource("1_tile_script")
 
-[node name="Background" type="Panel" parent="."]
+[node name="Background" type="Control" parent="."]
 z_index = 0
 layout_mode = 1
 anchors_preset = 15
@@ -18,6 +18,51 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="TileCenter" type="TextureRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 1
+
+[node name="TileCornerTopLeft" type="TextureRect" parent="Background"]
+layout_mode = 0
+offset_right = 20.0
+offset_bottom = 20.0
+
+[node name="TileCornerTopRight" type="TextureRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -20.0
+offset_right = 0.0
+offset_bottom = 20.0
+grow_horizontal = 0
+
+[node name="TileCornerBottomLeft" type="TextureRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -20.0
+offset_right = 20.0
+grow_vertical = 0
+
+[node name="TileCornerBottomRight" type="TextureRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -20.0
+grow_horizontal = 0
+grow_vertical = 0
 
 [node name="PowerIcon" type="TextureRect" parent="."]
 visible = false

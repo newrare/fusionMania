@@ -12,6 +12,9 @@ var cell_backgrounds: Array = []
 func _ready():
 	add_to_group("grid")
 	
+	# Disable clipping to allow tiles to move outside grid bounds
+	clip_contents = false
+	
 	# Set grid size
 	var grid_pixel_size = get_grid_pixel_size()
 	custom_minimum_size = grid_pixel_size
@@ -48,14 +51,14 @@ func add_tile(tile):
 
 
 # Calculate screen position from grid position
-func calculate_screen_position(grid_pos: Vector2i) -> Vector2:
+func calculate_screen_position(grid_pos: Vector2i):
 	var x = TILE_SPACING + grid_pos.x * (TILE_SIZE + TILE_SPACING)
 	var y = TILE_SPACING + grid_pos.y * (TILE_SIZE + TILE_SPACING)
 	return Vector2(x, y)
 
 
 # Get grid size (for layout calculations)
-func get_grid_pixel_size() -> Vector2:
+func get_grid_pixel_size():
 	var width  = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
 	var height = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
 	return Vector2(width, height)

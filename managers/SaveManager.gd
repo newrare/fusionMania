@@ -63,7 +63,7 @@ func save_game():
 
 
 # Load a saved game
-func load_game() -> Dictionary:
+func load_game():
 	if not FileAccess.file_exists(SAVE_FILE):
 		print("❌ No saved game to load")
 		return {}
@@ -145,5 +145,5 @@ func auto_save():
 
 
 # Check if saved game exists
-func has_save() -> bool:
+func has_save():
 	return has_saved_game
