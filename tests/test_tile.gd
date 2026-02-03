@@ -20,9 +20,9 @@ func _ready():
 	await get_tree().create_timer(0.5).timeout
 	test_tile_with_power()
 
-	# Test 5: Test freeze effect
+	# Test 5: Test ice effect
 	await get_tree().create_timer(0.5).timeout
-	test_freeze_effect()
+	test_ice_effect()
 
 	# Test 6: Test merge
 	await get_tree().create_timer(0.5).timeout
@@ -85,24 +85,24 @@ func test_tile_with_power():
 	print("  ✅ Power icon should be visible: %s" % tile.power_icon.visible)
 
 
-# Test 5: Test freeze effect
-func test_freeze_effect():
-	print("\n📝 Test 5: Test freeze effect")
+# Test 5: Test ice effect
+func test_ice_effect():
+	print("\n📝 Test 5: Test ice effect")
 
 	var tile = preload("res://objects/Tile.tscn").instantiate()
 	tile.initialize(16, "", Vector2i(1, 2))
 	tile.position = Vector2(400, 700)
 	add_child(tile)
 
-	# Apply freeze
-	tile.apply_freeze_effect()
-	print("  ✅ Freeze effect applied (blue tint)")
-	print("  ✅ Is frozen: %s" % tile.is_frozen)
+	# Apply ice
+	tile.apply_ice_effect()
+	print("  ✅ Ice effect applied (blue tint)")
+	print("  ✅ Is iced: %s" % tile.is_iced)
 
-	# Remove freeze after 1 second
+	# Remove ice after 1 second
 	await get_tree().create_timer(1.0).timeout
-	tile.remove_freeze_effect()
-	print("  ✅ Freeze effect removed")
+	tile.remove_ice_effect()
+	print("  ✅ Ice effect removed")
 
 
 # Test 6: Test tile merge

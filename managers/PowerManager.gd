@@ -16,10 +16,10 @@ const POWERS = {
 	"teleport":     {"name": "Teleport",        "spawn_rate": 2,  "type": "bonus", "duration": 0.3},
 	"expel_h":      {"name": "Expel H",         "spawn_rate": 10, "type": "bonus", "duration": 0.3},
 	"expel_v":      {"name": "Expel V",         "spawn_rate": 10, "type": "bonus", "duration": 0.3},
-	"freeze_up":    {"name": "Freeze Up",       "spawn_rate": 5,  "type": "malus", "duration": 1.0},
-	"freeze_down":  {"name": "Freeze Down",     "spawn_rate": 5,  "type": "malus", "duration": 1.0},
-	"freeze_left":  {"name": "Freeze Left",     "spawn_rate": 5,  "type": "malus", "duration": 1.0},
-	"freeze_right": {"name": "Freeze Right",	"spawn_rate": 5,  "type": "malus", "duration": 1.0},
+	"block_up":     {"name": "Block Up",        "spawn_rate": 5,  "type": "malus", "duration": 1.0},
+	"block_down":   {"name": "Block Down",      "spawn_rate": 5,  "type": "malus", "duration": 1.0},
+	"block_left":   {"name": "Block Left",      "spawn_rate": 5,  "type": "malus", "duration": 1.0},
+	"block_right":  {"name": "Block Right",     "spawn_rate": 5,  "type": "malus", "duration": 1.0},
 	"lightning":    {"name": "Lightning",       "spawn_rate": 2,  "type": "bonus", "duration": 0.3},
 	"nuclear":      {"name": "Nuclear",         "spawn_rate": 1,  "type": "bonus", "duration": 1.5},
 	"blind":        {"name": "Blind",           "spawn_rate": 2,  "type": "malus", "duration": 4.0},
@@ -195,7 +195,7 @@ func get_power_targets(power_type: String, emitter_tile, grid_manager):
 		"bowling":
 			targets = _get_bowling_line_targets(emitter_tile, grid_manager)
 		_:
-			targets = []  # freeze_*, blind, ads don't have tile targets
+			targets = []  # block_*, blind, ads don't have tile targets
 
 	return {"emitter": emitter_tile, "targets": targets}
 
@@ -384,14 +384,14 @@ func activate_power(power_type: String, tile, grid_manager):
 			await _execute_expel_power(emitter, "expel_h", grid_manager)
 		"expel_v":
 			await _execute_expel_power(emitter, "expel_v", grid_manager)
-		"freeze_up":
-			_execute_freeze_direction_power(GridManager.Direction.UP)
-		"freeze_down":
-			_execute_freeze_direction_power(GridManager.Direction.DOWN)
-		"freeze_left":
-			_execute_freeze_direction_power(GridManager.Direction.LEFT)
-		"freeze_right":
-			_execute_freeze_direction_power(GridManager.Direction.RIGHT)
+		"block_up":
+			_execute_block_direction_power(GridManager.Direction.UP)
+		"block_down":
+			_execute_block_direction_power(GridManager.Direction.DOWN)
+		"block_left":
+			_execute_block_direction_power(GridManager.Direction.LEFT)
+		"block_right":
+			_execute_block_direction_power(GridManager.Direction.RIGHT)
 		"lightning":
 			await _execute_lightning_power(emitter, targets, grid_manager)
 		"nuclear":
@@ -536,15 +536,15 @@ func _execute_bomb_power(emitter, targets: Array, grid_manager):
 
 # Ice power
 func _execute_ice_power(emitter, grid_manager):
-	print("  ❄️ Ice: freezing emitter")
+	print("  ❄️ Ice: icing emitter")
 
 	if emitter != null and is_instance_valid(emitter):
 		emitter.start_emitter_effect(3.0)
 
-	PowerEffect.freeze_effect(emitter)
+	PowerEffect.ice_effect(emitter)
 
-	if emitter != null and emitter.has_method("set_frozen"):
-		emitter.set_frozen(true, 2)
+	if emitter != null and emitter.has_method("set_iced"):
+		emitter.set_iced(true, 2)
 
 
 # Switch power (uses factorized swap helper)
@@ -589,10 +589,10 @@ func _execute_expel_power(emitter, power_type: String, grid_manager):
 		print("  🚀 Emitter tile can now exit the grid on %s movements" % ("horizontal" if direction == "h" else "vertical"))
 
 
-# Freeze direction power (uses GameManager for state)
-func _execute_freeze_direction_power(direction: int):
-	print("  🧊 Freeze direction: %d" % direction)
-	GameManager.freeze_direction(direction, GameManager.DEFAULT_FREEZE_TURNS)
+# Block direction power (uses GameManager for state)
+func _execute_block_direction_power(direction: int):
+	print("  🧊 Block direction: %d" % direction)
+	GameManager.block_direction(direction, GameManager.DEFAULT_BLOCK_TURNS)
 
 
 # Lightning power

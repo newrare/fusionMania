@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cs6h6v4qs5bya"
-path="res://.godot/imported/power_freeze_down.svg-4dee7f68f2ae6341fce78e765e66092a.ctex"
+uid="uid://ditidmmp5y7i"
+path="res://.godot/imported/tile_bottom.png-23b27852a6e374c34fa7304e850d608b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/power_freeze_down.svg"
-dest_files=["res://.godot/imported/power_freeze_down.svg-4dee7f68f2ae6341fce78e765e66092a.ctex"]
+source_file="res://assets/images/tile_bottom.png"
+dest_files=["res://.godot/imported/tile_bottom.png-23b27852a6e374c34fa7304e850d608b.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=4.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

@@ -171,7 +171,7 @@ static func highlight_emitter_tile(emitter_tile, duration: float):
 	# Legacy implementation for backwards compatibility
 	if emitter_tile.power_icon != null and emitter_tile.power_icon.visible:
 		var original_scale 	= emitter_tile.power_icon.scale
-		var blink_count		= int(duration / 0.2)
+		var blink_count		= max(1, int(duration / 0.2))  # At least 1 blink
 		var icon_tween 		= emitter_tile.power_icon.create_tween()
 
 		for i in range(blink_count):
@@ -185,7 +185,7 @@ static func highlight_emitter_tile(emitter_tile, duration: float):
 		var label_tween 			= emitter_tile.value_label.create_tween()
 
 		label_tween.tween_property(emitter_tile.value_label, "modulate", Color(0.3, 0.5, 1, 1), 0.1)
-		label_tween.tween_interval(duration - 0.2)
+		label_tween.tween_interval(max(0.0, duration - 0.2))  # Ensure non-negative
 		label_tween.tween_property(emitter_tile.value_label, "modulate", original_label_color, 0.1)
 
 
@@ -212,15 +212,14 @@ static func explosion_effect(position: Vector2):
 	tween.tween_callback(explosion.queue_free)
 
 
-# Freeze effect on tile
-static func freeze_effect(tile):
-	print("  ❄️ Freeze effect on tile")
+# Ice effect on tile
+static func ice_effect(tile):
+	print("  ❄️ Ice effect on tile")
 
 	if tile == null:
 		return
 
-	# Highlight emitter tile (icon blink + blue text for 3 seconds)
-	highlight_emitter_tile(tile, 3.0)
+	# Note: emitter visual effect is handled by PowerManager calling start_emitter_effect directly
 
 	# Create ice overlay
 	var viewport_root 	= tile.get_tree().root

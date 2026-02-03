@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bk8jywx5c5nnx"]
+[gd_scene load_steps=10 format=3 uid="uid://bk8jywx5c5nnx"]
 
 [ext_resource type="Script" path="res://scenes/GameScene.gd" id="1_gamescene"]
 [ext_resource type="PackedScene" uid="uid://c5nnx8y3r1s4ci" path="res://objects/Grid.tscn" id="2_grid"]
@@ -8,11 +8,74 @@
 [ext_resource type="PackedScene" uid="uid://e9kq5wxgameover" path="res://overlays/GameOverMenu.tscn" id="6_gameover"]
 [ext_resource type="Script" path="res://visuals/UIEffect.gd" id="7_uieffect"]
 [ext_resource type="PackedScene" uid="uid://bpowerchoicemenu" path="res://overlays/PowerChoiceMenu.tscn" id="8_powerchoice"]
+[ext_resource type="Texture2D" path="res://assets/images/background_1.png" id="9_bg1"]
+[ext_resource type="Texture2D" path="res://assets/images/background_2.png" id="10_bg2"]
+[ext_resource type="Texture2D" path="res://assets/images/background_3.png" id="11_bg3"]
+[ext_resource type="Texture2D" path="res://assets/images/background_4.png" id="12_bg4"]
+[ext_resource type="Texture2D" path="res://assets/images/background_5.png" id="13_bg5"]
 
 [node name="GameScene" type="Node2D"]
 script = ExtResource("1_gamescene")
 
+[node name="BackgroundLayer" type="Node2D" parent="."]
+
+[node name="Layer1_A" type="Sprite2D" parent="BackgroundLayer"]
+texture = ExtResource("9_bg1")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer1_B" type="Sprite2D" parent="BackgroundLayer"]
+position = Vector2(3413, 0)
+texture = ExtResource("9_bg1")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer2_A" type="Sprite2D" parent="BackgroundLayer"]
+texture = ExtResource("10_bg2")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer2_B" type="Sprite2D" parent="BackgroundLayer"]
+position = Vector2(3413, 0)
+texture = ExtResource("10_bg2")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer3_A" type="Sprite2D" parent="BackgroundLayer"]
+texture = ExtResource("11_bg3")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer3_B" type="Sprite2D" parent="BackgroundLayer"]
+position = Vector2(3413, 0)
+texture = ExtResource("11_bg3")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer4_A" type="Sprite2D" parent="BackgroundLayer"]
+texture = ExtResource("12_bg4")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer4_B" type="Sprite2D" parent="BackgroundLayer"]
+position = Vector2(3413, 0)
+texture = ExtResource("12_bg4")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer5_A" type="Sprite2D" parent="BackgroundLayer"]
+texture = ExtResource("13_bg5")
+centered = false
+scale = Vector2(5.926, 5.926)
+
+[node name="Layer5_B" type="Sprite2D" parent="BackgroundLayer"]
+position = Vector2(3413, 0)
+texture = ExtResource("13_bg5")
+centered = false
+scale = Vector2(5.926, 5.926)
+
 [node name="Background" type="ColorRect" parent="."]
+visible = false
 offset_right = 1080.0
 offset_bottom = 1920.0
 color = Color(0.12, 0.12, 0.15, 1)
@@ -68,6 +131,20 @@ offset_bottom = 1450.0
 
 [node name="UIEffect" type="Node" parent="."]
 script = ExtResource("7_uieffect")
+
+[node name="EnemyContainer" type="Node2D" parent="."]
+
+[node name="DebugLabel" type="Label" parent="."]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 300.0
+theme_override_colors/font_color = Color(0, 1, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 20
+text = "[DEBUG MODE]"
+vertical_alignment = 0
 
 [node name="TitleMenu" parent="." instance=ExtResource("3_title")]
 visible = false

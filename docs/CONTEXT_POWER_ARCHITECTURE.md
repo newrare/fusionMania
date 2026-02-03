@@ -35,8 +35,8 @@ Once visual animations complete:
 - Power effects handled by `GridManager` (tile manipulation) or `GameManager` (state changes)
 
 ### 5. Persistent Effects (Multi-turn powers)
-For powers that last multiple movements (blind, freeze_up, etc.):
-- State/counter stored in `GameManager` (e.g., `blind_turns_remaining`, `frozen_directions`)
+For powers that last multiple movements (blind, block_up, etc.):
+- State/counter stored in `GameManager` (e.g., `blind_turns_remaining`, `blocked_directions`)
 - Counter decremented after each move
 - If same power activated again: reset counter to default value
 - On new game: reset all persistent power states
@@ -84,14 +84,14 @@ var current_state: GameState
 # Persistent power states (reset on new game)
 var blind_turns_remaining: int = 0
 var is_blind_active: bool = false
-var frozen_directions: Dictionary = {}  # {Direction: turns_remaining}
+var blocked_directions: Dictionary = {}  # {Direction: turns_remaining}
 
 # Methods
 func reset_power_states():
     """Reset all persistent power states (called on new game)"""
     blind_turns_remaining = 0
     is_blind_active = false
-    frozen_directions.clear()
+    blocked_directions.clear()
 
 func decrement_power_counters():
     """Called after each move to update power counters"""
@@ -106,8 +106,8 @@ func activate_blind(turns: int):
         blind_turns_remaining = turns
     blind_started.emit()
 
-func freeze_direction(direction: Direction, turns: int):
-    """Freeze a movement direction for N turns"""
+func block_direction(direction: Direction, turns: int):
+    """Block a movement direction for N turns"""
 ```
 
 ### GridManager.gd
@@ -195,8 +195,8 @@ static func create_nuclear_flash():
 
 # Overlay effects
 static func show_blind_overlay(duration: float):
-static func show_freeze_direction_indicator(direction: Direction):
-static func remove_freeze_direction_indicator(direction: Direction):
+static func show_block_direction_indicator(direction: Direction):
+static func remove_block_direction_indicator(direction: Direction):
 ```
 
 ### Tile.gd
@@ -206,8 +206,8 @@ static func remove_freeze_direction_indicator(direction: Direction):
 # Tile state
 var value: int
 var power_type: String
-var is_frozen: bool
-var freeze_turns: int
+var is_iced: bool
+var ice_turns: int
 var grid_position: Vector2i
 
 # Visual effect methods (NEW)
@@ -233,7 +233,7 @@ func update_visual():
 func spawn_animation():
 func merge_animation():
 func destroy_animation():
-func set_frozen(frozen: bool, turns: int):
+func set_iced(iced: bool, turns: int):
 ```
 
 ### Grid.gd
@@ -264,7 +264,7 @@ Each power has a specific method to determine targets:
 | teleport | Fusion tile | 2 random tiles (player choice or random) |
 | expel_h | Fusion tile | Edge tile in same row |
 | expel_v | Fusion tile | Edge tile in same column |
-| freeze_* | Fusion tile | None (affects game state) |
+| block_* | Fusion tile | None (affects game state) |
 | lightning | Fusion tile | 4 random tiles |
 | nuclear | Fusion tile | All tiles (except emitter) |
 | blind | Fusion tile | None (affects game state) |

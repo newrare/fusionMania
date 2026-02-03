@@ -39,6 +39,7 @@ fusionMania/
 │   └── icons/                  # Power icons
 ├── managers/                   # Manager scripts
 │   ├── AudioManager.gd         # Audio system management
+│   ├── EnemyManager.gd         # Enemy spawning and combat management
 │   ├── GameManager.gd          # Game state management
 │   ├── GridManager.gd          # Grid and tile management
 │   ├── LanguageManager.gd      # Localization system
@@ -61,7 +62,9 @@ fusionMania/
 │   ├── Tile.gd                 # Tile behavior and properties
 │   ├── Tile.tscn               # Tile scene
 │   ├── Grid.gd                 # Grid logic
-│   └── Grid.tscn               # Grid scene
+│   ├── Grid.tscn               # Grid scene
+│   ├── Enemy.gd                # Enemy behavior and combat
+│   └── Enemy.tscn              # Enemy scene (sprite, health bar, labels)
 ├── visuals/                    # Global visual effects
 │   └── PowerEffect.gd          # Power visual effects
 ├── scenes/                     # Main game scene
@@ -146,6 +149,58 @@ godot --export-debug "Android" ./fusionMania.apk
 - **Score**: Each fusion increases the score (same system as 2048)
 - **Move Counter**: Tracks total number of moves made
 - **Game Over**: Triggered when the grid is completely full
+
+### 👾 Enemy System
+
+The game features an enemy system that adds combat mechanics to the puzzle gameplay:
+
+#### Enemy Basics
+- **Spawn**: Enemy appears after the player's first fusion
+- **Position**: Top-right corner with 10% margin from edges
+- **Sprites**: Randomly selected from multiple variants per level type
+  - Normal enemies (2-512): `enemy_idle_01.png` to `enemy_idle_12.png` (192x48px, 48x48 per frame)
+  - Sub-Boss (1024): `enemy_subboss_01.png`, `enemy_subboss_02.png`, etc.
+  - Main Boss (2048): `enemy_mainboss_01.png`, `enemy_mainboss_02.png`, etc.
+- **Glow Effect**: Each sprite has a colored glow matching its level color (color swap effect)
+- **Health Bar**: Red bar on gray background (300x10px), centered above sprite
+- **Name Display**: Random math-themed name + colored level number below sprite
+
+#### Combat Mechanics
+- **Damage**: Fusing tiles damages the enemy (fusion result ÷ 2 = damage)
+  - Example: 2+2=4 → 4÷2 = **2 damage**
+  - Example: 8+8=16 → 16÷2 = **8 damage**
+- **Defeat**: When HP reaches 0, enemy is destroyed
+- **Score Bonus**: Defeating an enemy grants bonus points (Total Score × Enemy Level)
+  - Example: Score 1000, Enemy Lv.8 → Bonus: **8,000 points**
+  - Example: Score 5000, Enemy Lv.64 → Bonus: **320,000 points**
+  - Example: Score 10000, Enemy Lv.2048 → Bonus: **20,480,000 points**
+- **Respawn**: After 10 moves, a new enemy spawns
+
+#### Enemy Levels
+Enemies have levels matching tile values with corresponding colors:
+
+| Level | Color | Type |
+|-------|-------|------|
+| 2-512 | Same as tiles | Normal |
+| 1024 | #700570 (Darker Purple) | **Sub-Boss** |
+| 2048 | #440344 (Deep Purple) | **Main Boss** |
+
+#### Level Selection
+The enemy's maximum possible level equals the highest tile value on the grid.
+
+#### Enemy Powers
+Enemies can use powers against the player, unlocking more powers at higher levels:
+- **Level 2**: Block directions (up, down, left, right)
+- **Level 4**: + Fire horizontal/vertical
+- **Level 8**: + Teleport
+- **Level 16**: + Ice
+- **Level 32**: + Switch horizontal/vertical
+- **Level 64**: + Bomb
+- **Level 128**: + Expel horizontal/vertical
+- **Level 256**: + Blind
+- **Level 512**: + Lightning
+- **Level 1024** (Sub-Boss): + Fire Cross
+- **Level 2048** (Boss): + Nuclear
 
 ### Visual Effects
 - **Neon Glow Tiles**: Each tile features a glowing border in its signature color
@@ -265,6 +320,7 @@ Free Mode allows you to customize which powers will appear in your game:
 - **Grid Management**: 4x4 grid with tile spawning logic
 - **Power Management**: 20 different power effects with spawn rate control
 - **Fusion Logic**: Tile merging with power inheritance
+- **Enemy System**: Animated enemies with health bars, level-based powers, and respawn mechanics
 - **Score Tracking**: Persistent high score system
 - **Save System**: Auto-save when pausing, resume functionality
 - **Overlay Management**: Dynamic show/hide of modal menus over the grid

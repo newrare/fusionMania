@@ -11,18 +11,18 @@ var cell_backgrounds: Array = []
 
 func _ready():
 	add_to_group("grid")
-	
+
 	# Disable clipping to allow tiles to move outside grid bounds
 	clip_contents = false
-	
+
 	# Set grid size
 	var grid_pixel_size = get_grid_pixel_size()
 	custom_minimum_size = grid_pixel_size
 	size                = grid_pixel_size
-	
+
 	# Create cell backgrounds for visual grid
 	create_cell_backgrounds()
-	
+
 	print("Grid visual container ready (%dx%d pixels)" % [int(grid_pixel_size.x), int(grid_pixel_size.y)])
 
 
@@ -31,7 +31,7 @@ func create_cell_backgrounds():
 	for y in range(GRID_SIZE):
 		for x in range(GRID_SIZE):
 			var cell = ColorRect.new()
-			cell.color    = Color(0.4, 0.4, 0.45, 1.0)  # Dark gray cell
+			cell.color    = Color(0.4, 0.4, 0.45, 0.4)  # Dark gray cell avec 60% de transparence
 			cell.size     = Vector2(TILE_SIZE, TILE_SIZE)
 			cell.position = Vector2(
 				TILE_SPACING + x * (TILE_SIZE + TILE_SPACING),
@@ -71,9 +71,9 @@ func clear_all_tiles():
 	for child in get_children():
 		if child not in cell_backgrounds:
 			tiles_to_remove.append(child)
-	
+
 	# Free them immediately
 	for tile in tiles_to_remove:
 		tile.free()  # Use free() instead of queue_free() for immediate removal
-	
+
 	print("🧹 Grid cleared of %d tiles" % tiles_to_remove.size())

@@ -25,7 +25,7 @@ func test_power_data():
 	var expected_powers = [
 		"empty", "fire_h", "fire_v", "fire_cross", "bomb", "ice",
 		"switch_h", "switch_v", "teleport", "expel_h", "expel_v",
-		"freeze_up", "freeze_down", "freeze_left", "freeze_right",
+		"block_up", "block_down", "block_left", "block_right",
 		"lightning", "nuclear", "blind", "bowling", "ads"
 	]
 

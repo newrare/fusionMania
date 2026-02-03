@@ -46,6 +46,37 @@ func show_floating_score(score: int, world_position: Vector2):
 	tween.tween_callback(label.queue_free)
 
 
+# Show floating damage above enemy position (in red with negative sign)
+func show_floating_damage(damage: int, world_position: Vector2):
+	if not effects_container:
+		print("⚠️ No effects container set for UIEffect")
+		return
+
+	# Create label
+	var label = Label.new()
+	label.text = "-%d" % damage
+	label.position = world_position + Vector2(120, -40)  # Centered above enemy
+	label.z_index = 100
+
+	# Styling - Red for damage
+	label.add_theme_color_override("font_color", Color("#FF0000"))
+	label.add_theme_color_override("font_outline_color", Color("#800000"))
+	label.add_theme_constant_override("outline_size", 5)
+	label.add_theme_font_size_override("font_size", 60)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
+	effects_container.add_child(label)
+
+	# Animation: move up and fade out (faster than score)
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 100, 0.8).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	tween.set_parallel(false)
+	tween.tween_callback(label.queue_free)
+
+
 # Show power activation message at bottom of grid
 func show_power_message(power_name: String, message_container: Control):
 	if not message_container:

@@ -1,0 +1,81 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8j7yv3qwx4qm"]
+
+[ext_resource type="Script" path="res://objects/Enemy.gd" id="1_enemy"]
+
+[node name="Enemy" type="Node2D"]
+script = ExtResource("1_enemy")
+
+[node name="ContentContainer" type="Node2D" parent="."]
+
+[node name="IdleSprite" type="AnimatedSprite2D" parent="ContentContainer"]
+position = Vector2(96, 122)
+scale = Vector2(4, 4)
+material = null
+
+[node name="LevelLabel" type="RichTextLabel" parent="ContentContainer"]
+offset_left = 0.0
+offset_top = 240.0
+offset_right = 384.0
+offset_bottom = 270.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/normal_font_size = 24
+bbcode_enabled = true
+text = "Lv 2"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+horizontal_alignment = 0
+vertical_alignment = 0
+
+[node name="NameLabel" type="RichTextLabel" parent="ContentContainer"]
+offset_left = 0.0
+offset_top = 270.0
+offset_right = 384.0
+offset_bottom = 300.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "Enemy Name"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+horizontal_alignment = 0
+vertical_alignment = 0
+
+[node name="DamageLabel" type="RichTextLabel" parent="ContentContainer"]
+offset_left = 0.0
+offset_top = 300.0
+offset_right = 384.0
+offset_bottom = 330.0
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0.5, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = ""
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+horizontal_alignment = 0
+vertical_alignment = 0
+
+[node name="HealthBarContainer" type="Node2D" parent="ContentContainer"]
+position = Vector2(0, 330)
+
+[node name="HealthBarBg" type="ColorRect" parent="ContentContainer/HealthBarContainer"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 384.0
+offset_bottom = 16.0
+color = Color(0.4, 0.4, 0.4, 1)
+
+[node name="HealthBar" type="ColorRect" parent="ContentContainer/HealthBarContainer"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 384.0
+offset_bottom = 16.0
+color = Color(1, 0, 0, 1)

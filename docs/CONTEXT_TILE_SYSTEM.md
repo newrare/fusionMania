@@ -12,8 +12,8 @@ Tiles are the basic objects of Fusion Mania game. Each tile has a value (2, 4, 8
 var value: int          = 2      # Tile value (2, 4, 8, ..., 2048)
 var power_type: String  = ""     # Power type (empty if none)
 var grid_position: Vector2i      # Position in grid (x, y)
-var is_frozen: bool     = false  # If frozen by Ice power
-var freeze_turns: int   = 0      # Remaining freeze turns
+var is_iced: bool       = false  # If iced by Ice power
+var ice_turns: int      = 0      # Remaining ice turns
 ```
 
 ### Visual Nodes
@@ -97,10 +97,10 @@ assets/icons/
 ├── power_teleport.svg        # Teleport (bonus)
 ├── power_expel_h.svg         # Expel horizontal (bonus)
 ├── power_expel_v.svg         # Expel vertical (bonus)
-├── power_freeze_up.svg       # Freeze up (malus)
-├── power_freeze_down.svg     # Freeze down (malus)
-├── power_freeze_left.svg     # Freeze left (malus)
-├── power_freeze_right.svg    # Freeze right (malus)
+├── power_block_up.svg        # Block up (malus)
+├── power_block_down.svg      # Block down (malus)
+├── power_block_left.svg      # Block left (malus)
+├── power_block_right.svg     # Block right (malus)
 ├── power_lightning.svg       # Lightning (bonus)
 ├── power_nuclear.svg         # Nuclear (bonus)
 ├── power_blind.svg           # Blind (malus)
@@ -151,13 +151,13 @@ func destroy_animation():
     tween.tween_callback(queue_free)
 ```
 
-### Freeze Effect
+### Ice Effect
 ```gdscript
-func apply_freeze_effect():
+func apply_ice_effect():
     # Blue tint overlay
     modulate = Color(0.7, 0.7, 1.0, 1.0)
 
-func remove_freeze_effect():
+func remove_ice_effect():
     modulate = Color.WHITE
 ```
 
@@ -216,7 +216,7 @@ func update_visual():
 ### Tile Fusion
 ```gdscript
 func can_merge_with(other_tile: Tile) -> bool:
-    return value == other_tile.value and not is_frozen and not other_tile.is_frozen
+    return value == other_tile.value and not is_iced and not other_tile.is_iced
 
 func merge_with(other_tile: Tile) -> Dictionary:
     # Double value
@@ -323,8 +323,8 @@ stretch_mode = 5
 
 ```gdscript
 func _to_string() -> String:
-    return "Tile[value=%d, power=%s, pos=%s, frozen=%s]" % [
-        value, power_type, grid_position, is_frozen
+    return "Tile[value=%d, power=%s, pos=%s, iced=%s]" % [
+        value, power_type, grid_position, is_iced
     ]
 ```
 
@@ -337,7 +337,7 @@ func _to_string() -> String:
 - [ ] Implement animations (spawn, merge, move, destroy)
 - [ ] Implement `update_visual()` with dynamic colors
 - [ ] Implement `can_merge_with()` and `merge_with()`
-- [ ] Add freeze effects (freeze/unfreeze)
+- [ ] Add ice effects (ice/unice)
 - [ ] Connect power icons
 - [ ] Test each animation individually
 - [ ] Test fusions with different powers

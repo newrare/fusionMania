@@ -20,7 +20,7 @@ var grid: Array[Array]       # 4x4 grid of tiles (or null)
 var grid_size: int = 4       # Grid size
 var can_move: bool = true    # If player can move
 var move_count: int = 0      # Number of moves made
-var blocked_directions: Array = []  # Blocked directions (freeze powers)
+var blocked_directions: Array = []  # Blocked directions (block powers)
 ```
 
 ### Signals
@@ -128,7 +128,7 @@ func process_movement(direction: Direction):
     
     # Check if direction is blocked
     if direction in blocked_directions:
-        print("Direction blocked by freeze power!")
+        print("Direction blocked by block power!")
         return
     
     can_move = false
@@ -160,8 +160,8 @@ func process_movement(direction: Direction):
         # Spawn new tile
         spawn_random_tile()
         
-        # Decrement freeze turns
-        update_freeze_timers()
+        # Decrement ice turns
+        update_ice_timers()
         
         # Check game over
         if not has_valid_moves():
@@ -187,7 +187,7 @@ func move_tiles_up(fusions: Array) -> bool:
                 continue
             
             var tile = grid[y][x]
-            if tile.is_frozen:
+            if tile.is_iced:
                 continue
             
             # Find target position
@@ -288,7 +288,7 @@ func has_valid_moves() -> bool:
     for y in range(grid_size):
         for x in range(grid_size):
             var tile = grid[y][x]
-            if tile == null or tile.is_frozen:
+            if tile == null or tile.is_iced:
                 continue
             
             # Check right
@@ -308,7 +308,7 @@ func has_valid_moves() -> bool:
 
 ---
 
-## 🧊 Freeze System
+## 🧊 Ice System
 
 ### Block Direction
 ```gdscript
@@ -321,17 +321,17 @@ func block_direction(direction: Direction, turns: int):
     blocked_directions.erase(direction)
 ```
 
-### Update Freeze Timers
+### Update Ice Timers
 ```gdscript
-func update_freeze_timers():
+func update_ice_timers():
     for y in range(grid_size):
         for x in range(grid_size):
             var tile = grid[y][x]
-            if tile != null and tile.is_frozen:
-                tile.freeze_turns -= 1
-                if tile.freeze_turns <= 0:
-                    tile.is_frozen = false
-                    tile.remove_freeze_effect()
+            if tile != null and tile.is_iced:
+                tile.ice_turns -= 1
+                if tile.ice_turns <= 0:
+                    tile.is_iced = false
+                    tile.remove_ice_effect()
 ```
 
 ---
@@ -408,7 +408,7 @@ func calculate_screen_position(grid_pos: Vector2i) -> Vector2:
 - [ ] Implement 4 movement functions
 - [ ] Implement `process_fusions()`
 - [ ] Implement `has_valid_moves()`
-- [ ] Implement freeze system
+- [ ] Implement ice system
 - [ ] Test each direction individually
 - [ ] Test simple fusions
 - [ ] Test game over detection

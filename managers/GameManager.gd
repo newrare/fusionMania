@@ -17,11 +17,11 @@ var game_data:     Dictionary = {}  # Stores current game session data
 # ============================
 var blind_turns_remaining: int = 0
 var is_blind_active: bool = false
-var frozen_directions: Dictionary = {}  # {Direction: turns_remaining}
+var blocked_directions: Dictionary = {}  # {Direction: turns_remaining}
 
 # Constants for power durations
 const DEFAULT_BLIND_TURNS: int = 3
-const DEFAULT_FREEZE_TURNS: int = 3
+const DEFAULT_BLOCK_TURNS: int = 3
 
 # Signals
 signal state_changed(new_state: GameState)
@@ -31,8 +31,8 @@ signal game_resumed()
 signal game_ended(victory: bool)
 signal blind_started()
 signal blind_ended()
-signal direction_frozen(direction: int, turns: int)
-signal direction_unfrozen(direction: int)
+signal direction_blocked(direction: int, turns: int)
+signal direction_unblocked(direction: int)
 
 func _ready():
 	print("🎮 GameManager ready")
@@ -42,10 +42,10 @@ func _ready():
 func change_state(new_state: GameState):
 	if current_state == new_state:
 		return
-	
+
 	current_state = new_state
 	state_changed.emit(new_state)
-	
+
 	print("Game state changed to: %s" % GameState.keys()[new_state])
 
 
@@ -53,22 +53,22 @@ func change_state(new_state: GameState):
 func start_new_game():
 	# Reset persistent power states
 	reset_power_states()
-	
+
 	# Reset game data
 	game_data = {
 		"started_at": Time.get_datetime_string_from_system(),
 		"moves":      0,
 		"tiles":      []
 	}
-	
+
 	# Reset score and grid (this clears visual tiles and spawns new ones)
 	ScoreManager.start_game()
 	GridManager.start_new_game()
-	
+
 	# Change state
 	change_state(GameState.PLAYING)
 	game_started.emit()
-	
+
 	print("🎮 New game started")
 
 
@@ -76,7 +76,7 @@ func start_new_game():
 func reset_power_states():
 	blind_turns_remaining = 0
 	is_blind_active = false
-	frozen_directions.clear()
+	blocked_directions.clear()
 	print("🔄 Power states reset")
 
 
@@ -85,7 +85,7 @@ func pause_game():
 	if current_state == GameState.PLAYING:
 		change_state(GameState.PAUSED)
 		game_paused.emit()
-		
+
 		print("⏸️ Game paused")
 
 
@@ -94,7 +94,7 @@ func resume_game():
 	if current_state == GameState.PAUSED:
 		change_state(GameState.PLAYING)
 		game_resumed.emit()
-		
+
 		print("▶️ Game resumed")
 
 
@@ -103,16 +103,16 @@ func end_game(victory: bool):
 	# Save final score
 	var final_score = ScoreManager.get_current_score()
 	var rank        = ScoreManager.add_score(final_score)
-	
+
 	game_data["ended_at"]     = Time.get_datetime_string_from_system()
 	game_data["final_score"]  = final_score
 	game_data["victory"]      = victory
 	game_data["rank"]         = rank
-	
+
 	# Change state
 	change_state(GameState.GAME_OVER)
 	game_ended.emit(victory)
-	
+
 	if victory:
 		print("🏆 Game ended - VICTORY! Score: %d (Rank: %d)" % [final_score, rank])
 	else:
@@ -122,7 +122,7 @@ func end_game(victory: bool):
 # Return to menu
 func return_to_menu():
 	change_state(GameState.MENU)
-	
+
 	print("🏠 Returned to menu")
 
 
@@ -173,7 +173,7 @@ func decrement_blind_counter():
 	if is_blind_active and blind_turns_remaining > 0:
 		blind_turns_remaining -= 1
 		print("👁️ Blind mode: %d movements remaining" % blind_turns_remaining)
-		
+
 		if blind_turns_remaining <= 0:
 			is_blind_active = false
 			blind_ended.emit()
@@ -185,41 +185,53 @@ func is_blind_mode_active():
 	return is_blind_active
 
 
-# Freeze a direction (or reset if already frozen)
-func freeze_direction(direction: int, turns: int = DEFAULT_FREEZE_TURNS):
-	if frozen_directions.has(direction):
-		# Already frozen: reset counter
-		frozen_directions[direction] = turns
-		print("🧊 Direction %d freeze reset to %d turns" % [direction, turns])
+# Block a direction (or reset if already blocked)
+func block_direction(direction: int, turns: int = DEFAULT_BLOCK_TURNS):
+	if blocked_directions.has(direction):
+		# Already blocked: reset counter
+		blocked_directions[direction] = turns
+		print("🧊 Direction %d block reset to %d turns" % [direction, turns])
 	else:
-		frozen_directions[direction] = turns
-		direction_frozen.emit(direction, turns)
-		print("🧊 Direction %d frozen for %d turns" % [direction, turns])
+		blocked_directions[direction] = turns
+		direction_blocked.emit(direction, turns)
+		print("🧊 Direction %d blocked for %d turns" % [direction, turns])
 
 
-# Decrement all frozen direction counters (called after each move)
-func decrement_frozen_counters():
+# Decrement all blocked direction counters (called after each move)
+func decrement_blocked_counters():
 	var to_remove = []
-	
-	for dir in frozen_directions.keys():
-		frozen_directions[dir] -= 1
-		print("🧊 Direction %d: %d movements remaining" % [dir, frozen_directions[dir]])
-		
-		if frozen_directions[dir] <= 0:
+
+	for dir in blocked_directions.keys():
+		blocked_directions[dir] -= 1
+		print("🧊 Direction %d: %d movements remaining" % [dir, blocked_directions[dir]])
+
+		if blocked_directions[dir] <= 0:
 			to_remove.append(dir)
-	
+
 	for dir in to_remove:
-		frozen_directions.erase(dir)
-		direction_unfrozen.emit(dir)
-		print("🧊 Direction %d unfrozen" % dir)
+		blocked_directions.erase(dir)
+		direction_unblocked.emit(dir)
+		print("🧊 Direction %d unblocked" % dir)
 
 
-# Check if a direction is frozen
-func is_direction_frozen(direction: int):
-	return frozen_directions.has(direction) and frozen_directions[direction] > 0
+# Check if a direction is blocked
+func is_direction_blocked(direction: int):
+	return blocked_directions.has(direction) and blocked_directions[direction] > 0
+
+
+# Decrement ice counters for all tiles on the grid
+func decrement_tile_ice_counters():
+	for y in range(GridManager.grid_size):
+		for x in range(GridManager.grid_size):
+			var tile = GridManager.get_tile_at(Vector2i(x, y))
+			if tile != null and tile.ice_turns > 0:
+				tile.ice_turns -= 1
+				if tile.ice_turns == 0:
+					tile.remove_ice_effect()
 
 
 # Decrement all power counters (called after each move)
 func decrement_power_counters():
 	decrement_blind_counter()
-	decrement_frozen_counters()
+	decrement_blocked_counters()
+	decrement_tile_ice_counters()

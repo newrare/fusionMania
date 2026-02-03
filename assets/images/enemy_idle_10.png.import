@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://1xqshxgfm43b"
-path="res://.godot/imported/wind_4.png-5652d278983ace7b75cae9ce32d59eee.ctex"
+uid="uid://dqpn1lyr5tb6a"
+path="res://.godot/imported/enemy_idle_10.png-e28f966e676bfb1535209d1dad73efea.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/wind_4.png"
-dest_files=["res://.godot/imported/wind_4.png-5652d278983ace7b75cae9ce32d59eee.ctex"]
+source_file="res://assets/images/enemy_idle_10.png"
+dest_files=["res://.godot/imported/enemy_idle_10.png-e28f966e676bfb1535209d1dad73efea.ctex"]
 
 [params]
 

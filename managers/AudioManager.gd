@@ -20,7 +20,7 @@ var sounds = {
 	"sfx_switch":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_switch.wav",		"volume": -5.0},
 	"sfx_teleport":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_teleport.wav",		"volume": -5.0},
 	"sfx_expel":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_expel.wav",		"volume": -5.0},
-	"sfx_freeze":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_freeze.wav",		"volume": -5.0},
+	"sfx_block":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_block.wav",		"volume": -5.0},
 	"sfx_lightning":	{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_lightning.wav",	"volume": -5.0},
 	"sfx_nuclear":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_nuclear.wav",		"volume": -5.0},
 	"sfx_blind":		{"stream": null, "audio": null, "file": "res://assets/sounds/sfx_blind.wav",		"volume": -5.0},
@@ -225,8 +225,8 @@ func play_sfx_power(power_type: String = ""):
 			sfx_key = "sfx_teleport"
 		"expel_h", "expel_v":
 			sfx_key = "sfx_expel"
-		"freeze_up", "freeze_down", "freeze_left", "freeze_right":
-			sfx_key = "sfx_freeze"
+		"block_up", "block_down", "block_left", "block_right":
+			sfx_key = "sfx_block"
 		"lightning":
 			sfx_key = "sfx_lightning"
 		"nuclear":

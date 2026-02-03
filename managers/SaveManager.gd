@@ -32,8 +32,8 @@ func save_game():
 				row.append({
 					"value":    tile.value,
 					"power":    tile.power_type,
-					"frozen":   tile.is_frozen if tile.has_method("is_frozen") else false,
-					"frozen_turns": tile.freeze_turns if tile.get("freeze_turns") else 0
+					"iced":   tile.is_iced if tile.has_method("is_iced") else false,
+					"ice_turns": tile.ice_turns if tile.get("ice_turns") else 0
 				})
 			else:
 				row.append(null)
@@ -45,9 +45,10 @@ func save_game():
 		"score":             ScoreManager.get_current_score(),
 		"moves":             GridManager.move_count,
 		"grid":              grid_state,
-		"frozen_directions": GridManager.frozen_directions.duplicate(),
-		"blind_mode":        GridManager.blind_mode,
-		"blind_turns":       GridManager.blind_turns
+		"blocked_directions": GameManager.blocked_directions.duplicate(),
+		"blind_mode":        GameManager.is_blind_active,
+		"blind_turns":       GameManager.blind_turns_remaining,
+		"enemy":             EnemyManager.get_save_data()
 	}
 
 	var file = FileAccess.open(SAVE_FILE, FileAccess.WRITE)
@@ -101,11 +102,11 @@ func restore_game(data: Dictionary):
 	# Restore move count
 	GridManager.move_count = data.get("moves", 0)
 	
-	# Restore frozen directions
-	var frozen_dirs = data.get("frozen_directions", {})
-	GridManager.frozen_directions.clear()
-	for dir_key in frozen_dirs.keys():
-		GridManager.frozen_directions[int(dir_key)] = frozen_dirs[dir_key]
+	# Restore blocked directions
+	var blocked_dirs = data.get("blocked_directions", {})
+	GameManager.blocked_directions.clear()
+	for dir_key in blocked_dirs.keys():
+		GameManager.blocked_directions[int(dir_key)] = blocked_dirs[dir_key]
 	
 	# Restore blind mode
 	GridManager.blind_mode  = data.get("blind_mode", false)
@@ -123,8 +124,13 @@ func restore_game(data: Dictionary):
 					Vector2i(x, y)
 				)
 				# Restore frozen state
-				if tile_data.get("frozen", false) and tile.has_method("set_frozen"):
-					tile.set_frozen(true, tile_data.get("frozen_turns", 0))
+				if tile_data.get("iced", false) and tile.has_method("set_iced"):
+					tile.set_iced(true, tile_data.get("ice_turns", 0))
+	
+	# Restore enemy state
+	var enemy_data = data.get("enemy", {})
+	if not enemy_data.is_empty():
+		EnemyManager.load_save_data(enemy_data)
 	
 	print("✅ Game state restored")
 	return true

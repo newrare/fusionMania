@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d2pp8dx45fnra"
-path="res://.godot/imported/wind_3.png-fafef8d1646ab8783671e587fb49fd27.ctex"
+uid="uid://c7tcb7qfmxgis"
+path="res://.godot/imported/power_block_right.svg-93f09a43e2c3694b8d5390eca87ee7ff.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/wind_3.png"
-dest_files=["res://.godot/imported/wind_3.png-fafef8d1646ab8783671e587fb49fd27.ctex"]
+source_file="res://assets/icons/power_block_right.svg"
+dest_files=["res://.godot/imported/power_block_right.svg-93f09a43e2c3694b8d5390eca87ee7ff.ctex"]
 
 [params]
 
@@ -38,3 +38,6 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
+svg/scale=1.0
+editor/scale_with_editor_scale=false
+editor/convert_colors_with_editor_theme=false

@@ -26,12 +26,14 @@ GridManager="*res://managers/GridManager.gd"
 PowerManager="*res://managers/PowerManager.gd"
 SaveManager="*res://managers/SaveManager.gd"
 ToolsManager="*res://managers/ToolsManager.gd"
+EnemyManager="*res://managers/EnemyManager.gd"
 
 [display]
 
 window/size/viewport_width=1080
 window/size/viewport_height=1920
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 window/handheld/orientation=1
 
 [input]

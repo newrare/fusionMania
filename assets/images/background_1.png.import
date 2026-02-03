@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b587g7mxla68a"
-path="res://.godot/imported/power_freeze_up.svg-fcfe43391bb18eb52354909a1da3b2e7.ctex"
+uid="uid://2cyemcw1i66w"
+path="res://.godot/imported/background_1.png-6e1435c693f4f3b0a77f5632cfa4e413.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/power_freeze_up.svg"
-dest_files=["res://.godot/imported/power_freeze_up.svg-fcfe43391bb18eb52354909a1da3b2e7.ctex"]
+source_file="res://assets/images/background_1.png"
+dest_files=["res://.godot/imported/background_1.png-6e1435c693f4f3b0a77f5632cfa4e413.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=4.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

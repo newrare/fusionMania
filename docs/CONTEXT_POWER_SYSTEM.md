@@ -13,16 +13,16 @@ Fusion Mania features 20 unique powers that activate when two tiles with the sam
 | **Fire Vertical** | `fire_v` | 10% | 🟢 Bonus | Destroys entire column |
 | **Fire Cross** | `fire_cross` | 5% | 🟢 Bonus | Destroys row AND column |
 | **Bomb** | `bomb` | 10% | 🟢 Bonus | Destroys adjacent tiles |
-| **Ice** | `ice` | 6% | 🔴 Malus | Freezes tile for 5 turns |
+| **Ice** | `ice` | 6% | 🔴 Malus | Ices tile for 5 turns |
 | **Switch H** | `switch_h` | 5% | 🟢 Bonus | Swaps 2 horizontal tiles |
 | **Switch V** | `switch_v` | 5% | 🟢 Bonus | Swaps 2 vertical tiles |
 | **Teleport** | `teleport` | 2% | 🟢 Bonus | Player chooses 2 tiles to swap |
 | **Expel H** | `expel_h` | 10% | 🟢 Bonus | Ejects edge tile |
 | **Expel V** | `expel_v` | 10% | 🟢 Bonus | Ejects edge tile |
-| **Freeze Up** | `freeze_up` | 5% | 🔴 Malus | Blocks UP movement for 2 turns |
-| **Freeze Down** | `freeze_down` | 5% | 🔴 Malus | Blocks DOWN movement for 2 turns |
-| **Freeze Left** | `freeze_left` | 5% | 🔴 Malus | Blocks LEFT movement for 2 turns |
-| **Freeze Right** | `freeze_right` | 5% | 🔴 Malus | Blocks RIGHT movement for 2 turns |
+| **Block Up** | `block_up` | 5% | 🔴 Malus | Blocks UP movement for 2 turns |
+| **Block Down** | `block_down` | 5% | 🔴 Malus | Blocks DOWN movement for 2 turns |
+| **Block Left** | `block_left` | 5% | 🔴 Malus | Blocks LEFT movement for 2 turns |
+| **Block Right** | `block_right` | 5% | 🔴 Malus | Blocks RIGHT movement for 2 turns |
 | **Lightning** | `lightning` | 2% | 🟢 Bonus | Destroys 4 random tiles |
 | **Nuclear** | `nuclear` | 1% | 🟢 Bonus | Destroys all tiles |
 | **Blind** | `blind` | 2% | 🔴 Malus | Black grid for 2 turns |
@@ -47,10 +47,10 @@ const POWER_DATA = {
     "teleport":     {"name": "Teleport",        "spawn_rate": 2,  "type": "bonus"},
     "expel_h":      {"name": "Expel H",         "spawn_rate": 5,  "type": "bonus"},
     "expel_v":      {"name": "Expel V",         "spawn_rate": 5,  "type": "bonus"},
-    "freeze_up":    {"name": "Freeze Up",       "spawn_rate": 5,  "type": "malus"},
-    "freeze_down":  {"name": "Freeze Down",     "spawn_rate": 5,  "type": "malus"},
-    "freeze_left":  {"name": "Freeze Left",     "spawn_rate": 5,  "type": "malus"},
-    "freeze_right": {"name": "Freeze Right",    "spawn_rate": 5,  "type": "malus"},
+    "block_up":     {"name": "Block Up",        "spawn_rate": 5,  "type": "malus"},
+    "block_down":   {"name": "Block Down",      "spawn_rate": 5,  "type": "malus"},
+    "block_left":   {"name": "Block Left",      "spawn_rate": 5,  "type": "malus"},
+    "block_right":  {"name": "Block Right",     "spawn_rate": 5,  "type": "malus"},
     "lightning":    {"name": "Lightning",       "spawn_rate": 2,  "type": "bonus"},
     "nuclear":      {"name": "Nuclear",         "spawn_rate": 1,  "type": "bonus"},
     "blind":        {"name": "Blind",           "spawn_rate": 2,  "type": "malus"},
@@ -153,14 +153,14 @@ func activate_power(power_type: String, tile: Tile, grid_manager):
             activate_expel_horizontal(tile, grid_manager)
         "expel_v":
             activate_expel_vertical(tile, grid_manager)
-        "freeze_up":
-            activate_freeze_direction(GridManager.Direction.UP, grid_manager)
-        "freeze_down":
-            activate_freeze_direction(GridManager.Direction.DOWN, grid_manager)
-        "freeze_left":
-            activate_freeze_direction(GridManager.Direction.LEFT, grid_manager)
-        "freeze_right":
-            activate_freeze_direction(GridManager.Direction.RIGHT, grid_manager)
+        "block_up":
+            activate_block_direction(GridManager.Direction.UP, grid_manager)
+        "block_down":
+            activate_block_direction(GridManager.Direction.DOWN, grid_manager)
+        "block_left":
+            activate_block_direction(GridManager.Direction.LEFT, grid_manager)
+        "block_right":
+            activate_block_direction(GridManager.Direction.RIGHT, grid_manager)
         "lightning":
             activate_lightning(tile, grid_manager)
         "nuclear":
@@ -218,12 +218,12 @@ func activate_bomb(tile: Tile, grid_manager):
 ### Ice
 ```gdscript
 func activate_ice(tile: Tile, grid_manager):
-    tile.is_frozen = true
-    tile.freeze_turns = 5
-    tile.apply_freeze_effect()
+    tile.is_iced = true
+    tile.ice_turns = 5
+    tile.apply_ice_effect()
     
     # Visual effect
-    PowerEffect.freeze_effect(tile)
+    PowerEffect.ice_effect(tile)
 ```
 
 ### Teleport
@@ -272,7 +272,7 @@ static func explosion_effect(position: Vector2):
     # Create explosion with particles
     pass
 
-static func freeze_effect(tile: Tile):
+static func ice_effect(tile: Tile):
     # Add blue icy overlay
     pass
 

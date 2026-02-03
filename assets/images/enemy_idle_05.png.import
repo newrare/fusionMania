@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://vlx028p4j7xg"
-path="res://.godot/imported/power_freeze_left.svg-828b9777aee916be7223358b9e429494.ctex"
+uid="uid://b0yu8o06firea"
+path="res://.godot/imported/enemy_idle_05.png-113bdd73255094130f6cb7ad870ebe39.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/power_freeze_left.svg"
-dest_files=["res://.godot/imported/power_freeze_left.svg-828b9777aee916be7223358b9e429494.ctex"]
+source_file="res://assets/images/enemy_idle_05.png"
+dest_files=["res://.godot/imported/enemy_idle_05.png-113bdd73255094130f6cb7ad870ebe39.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=4.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

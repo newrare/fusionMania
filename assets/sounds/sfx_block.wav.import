@@ -2,13 +2,13 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://lgd78t328krh"
-path="res://.godot/imported/sfx_freeze.wav-9078333361e3b428a286d943a516fb34.sample"
+uid="uid://cwmvpg2546it6"
+path="res://.godot/imported/sfx_block.wav-96d9d59b87b715fa261b5f7fa92f0a3e.sample"
 
 [deps]
 
-source_file="res://assets/sounds/sfx_freeze.wav"
-dest_files=["res://.godot/imported/sfx_freeze.wav-9078333361e3b428a286d943a516fb34.sample"]
+source_file="res://assets/sounds/sfx_block.wav"
+dest_files=["res://.godot/imported/sfx_block.wav-96d9d59b87b715fa261b5f7fa92f0a3e.sample"]
 
 [params]
 
