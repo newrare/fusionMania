@@ -50,7 +50,7 @@ func print_grid_state(direction_name: String = ""):
 		header += " (after %s)" % direction_name
 	header += " ==="
 	print(header)
-	
+
 	for y in range(grid_size):
 		var row_str = ""
 		for x in range(grid_size):
@@ -276,21 +276,22 @@ func move_tiles_up(fusions: Array):
 				if above_tile != null and tile.can_merge_with(above_tile) and not above_tile.get("is_merging"):
 					# Fusion possible
 					var fusion_y = target_y - 1
-					
+
 					# Fadeout tile2 during movement
 					var fadeout_tween = create_tween()
 					fadeout_tween.tween_property(above_tile, "modulate:a", 0.0, 0.15)
-					
+
 					# Create new tile IMMEDIATELY at fusion position
 					var merge_result = tile.merge_with(above_tile)
+					print("🔥 Fusion Details - tile1(%d,%d) value=%d power='%s' + tile2(%d,%d) value=%d power='%s'" % [x, y, tile.value, tile.power_type, x, fusion_y, above_tile.value, above_tile.power_type])
 					var new_tile = create_tile(merge_result.value, merge_result.power, Vector2i(x, fusion_y))
 					new_tile.modulate.a = 0  # Hide until animation completes
 					new_tile.is_merging = true  # Prevent double fusion in same move
-					
+
 					# Grid logic: put new tile in grid immediately
 					grid[y][x] = null
 					grid[fusion_y][x] = new_tile  # New tile blocks other tiles
-					
+
 					# Animation: move tile1 to fusion position (where tile2 is)
 					tile.grid_position = Vector2i(x, fusion_y)
 					var grid_node = get_tree().get_first_node_in_group("grid")
@@ -299,7 +300,7 @@ func move_tiles_up(fusions: Array):
 						var tween = tile.move_to_position(screen_pos, 0.2)
 						if tween:
 							animations.append(tween)
-					
+
 					fusions.append({
 						"tile1": tile,
 						"tile2": above_tile,
@@ -376,21 +377,22 @@ func move_tiles_down(fusions: Array):
 				if below_tile != null and tile.can_merge_with(below_tile) and not below_tile.get("is_merging"):
 					# Fusion possible
 					var fusion_y = target_y + 1
-					
+
 					# Fadeout tile2 during movement
 					var fadeout_tween = create_tween()
 					fadeout_tween.tween_property(below_tile, "modulate:a", 0.0, 0.15)
-					
+
 					# Create new tile IMMEDIATELY at fusion position
 					var merge_result = tile.merge_with(below_tile)
+					print("🔥 Fusion Details - tile1(%d,%d) value=%d power='%s' + tile2(%d,%d) value=%d power='%s'" % [x, y, tile.value, tile.power_type, x, fusion_y, below_tile.value, below_tile.power_type])
 					var new_tile = create_tile(merge_result.value, merge_result.power, Vector2i(x, fusion_y))
 					new_tile.modulate.a = 0  # Hide until animation completes
 					new_tile.is_merging = true  # Prevent double fusion in same move
-					
+
 					# Grid logic: put new tile in grid immediately
 					grid[y][x] = null
 					grid[fusion_y][x] = new_tile  # New tile blocks other tiles
-					
+
 					# Animation: move tile1 to fusion position (where tile2 is)
 					tile.grid_position = Vector2i(x, fusion_y)
 					var grid_node = get_tree().get_first_node_in_group("grid")
@@ -399,7 +401,7 @@ func move_tiles_down(fusions: Array):
 						var tween = tile.move_to_position(screen_pos, 0.2)
 						if tween:
 							animations.append(tween)
-					
+
 					fusions.append({
 						"tile1": tile,
 						"tile2": below_tile,
@@ -476,21 +478,22 @@ func move_tiles_left(fusions: Array):
 				if left_tile != null and tile.can_merge_with(left_tile) and not left_tile.get("is_merging"):
 					# Fusion possible
 					var fusion_x = target_x - 1
-					
+
 					# Fadeout tile2 during movement
 					var fadeout_tween = create_tween()
 					fadeout_tween.tween_property(left_tile, "modulate:a", 0.0, 0.15)
-					
+
 					# Create new tile IMMEDIATELY at fusion position
 					var merge_result = tile.merge_with(left_tile)
+					print("🔥 Fusion Details - tile1(%d,%d) value=%d power='%s' + tile2(%d,%d) value=%d power='%s'" % [x, y, tile.value, tile.power_type, fusion_x, y, left_tile.value, left_tile.power_type])
 					var new_tile = create_tile(merge_result.value, merge_result.power, Vector2i(fusion_x, y))
 					new_tile.modulate.a = 0  # Hide until animation completes
 					new_tile.is_merging = true  # Prevent double fusion in same move
-					
+
 					# Grid logic: put new tile in grid immediately
 					grid[y][x] = null
 					grid[y][fusion_x] = new_tile  # New tile blocks other tiles
-					
+
 					# Animation: move tile1 to fusion position (where tile2 is)
 					tile.grid_position = Vector2i(fusion_x, y)
 					var grid_node = get_tree().get_first_node_in_group("grid")
@@ -499,7 +502,7 @@ func move_tiles_left(fusions: Array):
 						var tween = tile.move_to_position(screen_pos, 0.2)
 						if tween:
 							animations.append(tween)
-					
+
 					fusions.append({
 						"tile1": tile,
 						"tile2": left_tile,
@@ -576,21 +579,22 @@ func move_tiles_right(fusions: Array):
 				if right_tile != null and tile.can_merge_with(right_tile) and not right_tile.get("is_merging"):
 					# Fusion possible
 					var fusion_x = target_x + 1
-					
+
 					# Fadeout tile2 during movement
 					var fadeout_tween = create_tween()
 					fadeout_tween.tween_property(right_tile, "modulate:a", 0.0, 0.15)
-					
+
 					# Create new tile IMMEDIATELY at fusion position
 					var merge_result = tile.merge_with(right_tile)
+					print("🔥 Fusion Details - tile1(%d,%d) value=%d power='%s' + tile2(%d,%d) value=%d power='%s'" % [x, y, tile.value, tile.power_type, fusion_x, y, right_tile.value, right_tile.power_type])
 					var new_tile = create_tile(merge_result.value, merge_result.power, Vector2i(fusion_x, y))
 					new_tile.modulate.a = 0  # Hide until animation completes
 					new_tile.is_merging = true  # Prevent double fusion in same move
-					
+
 					# Grid logic: put new tile in grid immediately
 					grid[y][x] = null
 					grid[y][fusion_x] = new_tile  # New tile blocks other tiles
-					
+
 					# Animation: move tile1 to fusion position (where tile2 is)
 					tile.grid_position = Vector2i(fusion_x, y)
 					var grid_node = get_tree().get_first_node_in_group("grid")
@@ -599,7 +603,7 @@ func move_tiles_right(fusions: Array):
 						var tween = tile.move_to_position(screen_pos, 0.2)
 						if tween:
 							animations.append(tween)
-					
+
 					fusions.append({
 						"tile1": tile,
 						"tile2": right_tile,
@@ -667,6 +671,7 @@ func process_fusions(fusions: Array):
 		ScoreManager.add_to_score(merge_result.value)
 
 		# Track power for priority activation (only one power per movement)
+		print("🔍 GridManager Debug - merge_result.power_activated: %s, power_to_activate: '%s'" % [merge_result.power_activated, merge_result.get("power_to_activate", "N/A")])
 		if merge_result.power_activated:
 			var should_replace = false
 
@@ -681,7 +686,7 @@ func process_fusions(fusions: Array):
 				should_replace = true
 
 			if should_replace:
-				power_to_activate = merge_result.power
+				power_to_activate = merge_result.power_to_activate  # Use saved power name instead of tile power
 				power_tile = new_tile
 				highest_priority_value = merge_result.value
 				highest_priority_y = position.y
@@ -692,13 +697,20 @@ func process_fusions(fusions: Array):
 	# Wait for all merge animations to complete before activating power
 	await get_tree().create_timer(0.3).timeout
 
+	print("🔍 GridManager Final Debug - power_to_activate: '%s', power_tile: %s" % [power_to_activate, power_tile])
+
 	# Play fusion SFX only if no power was activated
 	if power_to_activate == null:
 		AudioManager.play_sfx_fusion()
+		print("🔊 Playing fusion SFX (no power)")
 
 	# Activate only the highest priority power
 	if power_to_activate != null and power_tile != null:
+		print("⚡ Activating power '%s' via PowerManager" % power_to_activate)
 		await PowerManager.activate_power(power_to_activate, power_tile, self)
+		print("✅ Power activation completed")
+	else:
+		print("❌ No power to activate - power_to_activate: %s, power_tile: %s" % [power_to_activate, power_tile])
 
 
 # Process movement
@@ -710,7 +722,7 @@ func process_movement(direction: Direction):
 	if GameManager.is_direction_blocked(direction):
 		print("Direction blocked by block power!")
 		return false
-	
+
 	# Interrupt any running power animation
 	PowerManager.interrupt_current_power()
 
@@ -870,11 +882,11 @@ func _expel_tile_off_screen(tile, direction: Direction):
 	# Animate to off-screen position with longer duration
 	var target_screen_pos = grid_node.calculate_screen_position(off_screen_pos)
 	var tween = tile.move_to_position(target_screen_pos, 0.4)
-	
+
 	# Wait for animation to complete
 	if tween:
 		await tween.finished
-	
+
 	# Destroy tile after animation completes
 	if is_instance_valid(tile):
 		tile.queue_free()

@@ -9,7 +9,14 @@ enum GameState {
 	GAME_OVER
 }
 
+enum GameMode {
+	CLASSIC,  # No powers on tiles (no enemy active)
+	FIGHT,    # Enemy assigns powers to tiles
+	FREE      # Player-selected powers spawn on tiles, no enemy
+}
+
 var current_state: GameState = GameState.MENU
+var current_mode: GameMode = GameMode.CLASSIC
 var game_data:     Dictionary = {}  # Stores current game session data
 
 # ============================
@@ -25,6 +32,7 @@ const DEFAULT_BLOCK_TURNS: int = 3
 
 # Signals
 signal state_changed(new_state: GameState)
+signal mode_changed(new_mode: GameMode)
 signal game_started()
 signal game_paused()
 signal game_resumed()
@@ -33,6 +41,7 @@ signal blind_started()
 signal blind_ended()
 signal direction_blocked(direction: int, turns: int)
 signal direction_unblocked(direction: int)
+signal all_tile_powers_cleared()
 
 func _ready():
 	print("🎮 GameManager ready")
@@ -77,7 +86,14 @@ func reset_power_states():
 	blind_turns_remaining = 0
 	is_blind_active = false
 	blocked_directions.clear()
-	print("🔄 Power states reset")
+	# Only reset mode to CLASSIC if not already in FREE mode
+	if current_mode != GameMode.FREE:
+		current_mode = GameMode.CLASSIC
+		# Reset PowerManager to Classic Mode (no powers)
+		PowerManager.set_no_powers()
+	# Reset enemy first fusion flag
+	EnemyManager.first_fusion_occurred = false
+	print("🔄 Power states reset - Mode: %s" % GameMode.keys()[current_mode])
 
 
 # Pause the game
@@ -235,3 +251,99 @@ func decrement_power_counters():
 	decrement_blind_counter()
 	decrement_blocked_counters()
 	decrement_tile_ice_counters()
+
+
+# ============================
+# Game Mode Methods
+# ============================
+
+# Enter Fight Mode (when enemy spawns)
+func enter_fight_mode():
+	if current_mode == GameMode.FIGHT:
+		return
+	
+	current_mode = GameMode.FIGHT
+	mode_changed.emit(GameMode.FIGHT)
+	print("⚔️ Entering FIGHT mode")
+
+
+# Enter Classic Mode (when enemy is defeated)
+func enter_classic_mode():
+	if current_mode == GameMode.CLASSIC:
+		return
+	
+	current_mode = GameMode.CLASSIC
+	
+	# Clear all tile powers
+	clear_all_tile_powers()
+	
+	# Set PowerManager to no powers
+	PowerManager.set_no_powers()
+	
+	mode_changed.emit(GameMode.CLASSIC)
+	print("🎮 Entering CLASSIC mode")
+
+
+# Enter Free Mode (player-selected powers)
+func enter_free_mode(selected_powers: Array = []):
+	if current_mode == GameMode.FREE:
+		return
+	
+	current_mode = GameMode.FREE
+	
+	# Clear all tile powers first
+	clear_all_tile_powers()
+	
+	# Set PowerManager with custom spawn rates for selected powers
+	PowerManager.set_custom_spawn_rates(selected_powers)
+	
+	# In Free Mode, we don't want enemy logic to trigger
+	# So we mark first fusion as occurred to prevent enemy spawn
+	EnemyManager.first_fusion_occurred = true
+	
+	mode_changed.emit(GameMode.FREE)
+	print("🆓 Entering FREE mode with %d selected powers" % selected_powers.size())
+
+
+# Clear all powers from all tiles on the grid
+func clear_all_tile_powers():
+	for y in range(GridManager.grid_size):
+		for x in range(GridManager.grid_size):
+			var tile = GridManager.get_tile_at(Vector2i(x, y))
+			if tile != null and tile.power_type != "":
+				tile.power_type = ""
+				tile.update_visual()
+	
+	all_tile_powers_cleared.emit()
+	print("🧹 All tile powers cleared")
+
+
+# Assign powers to all existing tiles on the grid (for Free Mode)
+func assign_powers_to_existing_tiles():
+	var tiles_with_powers = 0
+	for y in range(GridManager.grid_size):
+		for x in range(GridManager.grid_size):
+			var tile = GridManager.get_tile_at(Vector2i(x, y))
+			if tile != null:
+				var power = PowerManager.get_random_power()
+				if power != "":
+					tile.power_type = power
+					tile.update_visual()
+					tiles_with_powers += 1
+	
+	print("🔮 Assigned powers to %d existing tiles" % tiles_with_powers)
+
+
+# Check if in Fight mode
+func is_fight_mode():
+	return current_mode == GameMode.FIGHT
+
+
+# Check if in Classic mode  
+func is_classic_mode():
+	return current_mode == GameMode.CLASSIC
+
+
+# Check if in Free mode
+func is_free_mode():
+	return current_mode == GameMode.FREE

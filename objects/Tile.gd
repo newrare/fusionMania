@@ -205,7 +205,7 @@ func update_visual():
 		value_label.add_theme_color_override("font_color", neon_color)
 
 	# Update power icon and label
-	if power_type != "" and power_type != "empty":
+	if power_type != "":
 		var power 				= PowerManager.POWERS.get(power_type, {})
 		var power_name 			= power.get("name", power_type)
 		var power_type_category = power.get("type", "none")
@@ -273,11 +273,39 @@ func merge_with(other_tile):
 	# Double value
 	var new_value = value * 2
 
-	# Determine power to keep
-	var new_power = PowerManager.resolve_power_merge(power_type, other_tile.power_type)
+	# Debug: Print power types before fusion
+	print("🔍 Merge Debug - Moving tile: value=%d, power='%s'" % [value, power_type])
+	print("🔍 Merge Debug - Static tile: value=%d, power='%s'" % [other_tile.value, other_tile.power_type])
 
-	# Check if power should be activated
-	var power_activated = (power_type == other_tile.power_type and power_type != "")
+	# Power activation logic according to game rules:
+	# - tile en mouvement avec pouvoir + tile statique avec/sans pouvoir → pouvoir de la tile en mouvement
+	# - tile en mouvement sans pouvoir + tile statique avec pouvoir → pouvoir de la tile statique  
+	# - tile en mouvement sans pouvoir + tile statique sans pouvoir → pas de pouvoir
+	var power_to_activate = ""
+	var moving_tile_has_power = (power_type != "")
+	var static_tile_has_power = (other_tile.power_type != "")
+	
+	print("🔍 Merge Debug - Moving tile has power: %s, Static tile has power: %s" % [moving_tile_has_power, static_tile_has_power])
+	
+	if moving_tile_has_power:
+		# Moving tile has power → use its power (regardless of static tile)
+		power_to_activate = power_type
+		print("🔍 Merge Debug - Using moving tile power: '%s'" % power_to_activate)
+	elif static_tile_has_power:
+		# Moving tile has no power, but static tile has power → use static tile's power
+		power_to_activate = other_tile.power_type
+		print("🔍 Merge Debug - Using static tile power: '%s'" % power_to_activate)
+	else:
+		print("🔍 Merge Debug - No power to activate")
+	# else: both tiles have no power → no power activated
+	
+	# Power is consumed - new tile has no power
+	var new_power = ""
+	
+	# Power activated if any tile had a power
+	var power_activated = (power_to_activate != "")
+	
+	print("🔍 Merge Debug - Final result: power_activated=%s, power_to_activate='%s'" % [power_activated, power_to_activate])
 
 	# Reset expel state when merging (fusion cancels expel effect)
 	var expel_was_active = (expel_direction != "" or other_tile.expel_direction != "")
@@ -291,7 +319,8 @@ func merge_with(other_tile):
 	return {
 		"value":           new_value,
 		"power":           new_power,
-		"power_activated": power_activated
+		"power_activated": power_activated,
+		"power_to_activate": power_to_activate
 	}
 
 

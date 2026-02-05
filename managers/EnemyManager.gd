@@ -88,26 +88,35 @@ signal enemy_spawned(enemy_data: Dictionary)
 signal enemy_damaged(damage: int, remaining_hp: int)
 signal enemy_defeated(enemy_level: int, score_bonus: int)
 signal respawn_timer_updated(moves_remaining: int)
+signal power_applied_to_tile(power_type: String, tile_position: Vector2i)
+signal power_ball_animation_requested(power_type: String, tile_position: Vector2i)
+signal cancel_power_animations()
 
 # Active enemy tracking
 var active_enemy: Dictionary = {}
 var moves_until_respawn: int = 0
 var enemy_defeated_flag: bool = false
 var first_fusion_occurred: bool = false
+var spawn_protection: bool = false
 
 
 func _ready():
 	print("👾 EnemyManager ready")
-	
+
 	# Connect to GameManager signal for reset
 	GameManager.game_started.connect(reset)
 
 
 # Spawn a new enemy based on current grid state
 func spawn_enemy():
+	# Do not spawn enemies in Free Mode
+	if GameManager.is_free_mode():
+		print("🚫 Cannot spawn enemy in FREE mode")
+		return
+
 	# Mark first fusion as occurred
 	first_fusion_occurred = true
-	
+
 	var max_tile = get_max_tile_value()
 	var level = select_random_level(max_tile)
 	var enemy_name = get_random_name()
@@ -126,6 +135,12 @@ func spawn_enemy():
 
 	print("👾 Enemy spawned: %s (Lv.%d, HP:%d)" % [enemy_name, level, max_hp])
 	enemy_spawned.emit(active_enemy)
+
+	# Enter Fight Mode
+	GameManager.enter_fight_mode()
+
+	# Apply first power to a random tile
+	apply_power_to_random_tile()
 
 
 # Get maximum tile value from grid
@@ -242,6 +257,9 @@ func defeat_enemy():
 	enemy_defeated_flag = true
 	moves_until_respawn = 10
 
+	# Return to Classic Mode (this clears all tile powers)
+	GameManager.enter_classic_mode()
+
 	# Emit defeat signal
 	enemy_defeated.emit(enemy_level, score_bonus)
 
@@ -260,6 +278,16 @@ func is_enemy_active():
 # Handle move completion (called after each player move)
 func on_move_completed():
 	print("🎮 on_move_completed called - enemy_defeated_flag=%s, moves_until_respawn=%d" % [enemy_defeated_flag, moves_until_respawn])
+
+	# In Free Mode, no enemy logic
+	if GameManager.is_free_mode():
+		return
+
+	# If enemy is active, apply a new power to a random tile
+	if is_enemy_active():
+		apply_power_to_random_tile()
+
+	# Handle respawn timer
 	if enemy_defeated_flag and moves_until_respawn > 0:
 		moves_until_respawn -= 1
 		print("⏳ Respawn in %d moves" % moves_until_respawn)
@@ -278,6 +306,52 @@ func reset():
 	first_fusion_occurred = false
 	enemy_defeated_flag = false
 	moves_until_respawn = 0
+
+
+# Apply a random power from enemy's available powers to a random tile without power
+func apply_power_to_random_tile():
+	if not is_enemy_active():
+		return
+
+	var available_powers = active_enemy.get("powers", [])
+	if available_powers.is_empty():
+		print("⚠️ Enemy has no available powers")
+		return
+
+	# Get all tiles without power
+	var tiles_without_power = []
+	for y in range(GridManager.grid_size):
+		for x in range(GridManager.grid_size):
+			var tile = GridManager.get_tile_at(Vector2i(x, y))
+			if tile != null and tile.power_type == "":
+				tiles_without_power.append({"tile": tile, "position": Vector2i(x, y)})
+	
+	print("🔍 Debug: Found %d tiles without power out of %d total tiles" % [tiles_without_power.size(), GridManager.grid_size * GridManager.grid_size])
+	
+	# Debug: Print power types of all tiles
+	for y in range(GridManager.grid_size):
+		for x in range(GridManager.grid_size):
+			var tile = GridManager.get_tile_at(Vector2i(x, y))
+			if tile != null:
+				print("  Tile(%d,%d): value=%d, power='%s'" % [x, y, tile.value, tile.power_type])
+
+	if tiles_without_power.is_empty():
+		print("⚠️ No tiles available for power assignment")
+		return
+
+	# Select random tile and power
+	var random_tile_data = tiles_without_power[randi() % tiles_without_power.size()]
+	var random_power = available_powers[randi() % available_powers.size()]
+
+	# Apply power to tile IMMEDIATELY (before animation)
+	random_tile_data.tile.power_type = random_power
+	random_tile_data.tile.update_visual()
+
+	# Emit signal for power ball animation AFTER applying power
+	power_ball_animation_requested.emit(random_power, random_tile_data.position)
+
+	print("⚡ Enemy applied power '%s' to tile at %s" % [random_power, random_tile_data.position])
+	power_applied_to_tile.emit(random_power, random_tile_data.position)
 
 
 # Get save data for persistence

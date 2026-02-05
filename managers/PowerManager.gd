@@ -63,7 +63,7 @@ func get_random_power():
 
 	# If all spawn rates are 0%, return empty (no power)
 	if total_rate == 0:
-		return "empty"
+		return ""
 
 	var random_value = randf() * total_rate
 	var current_sum = 0
@@ -74,7 +74,7 @@ func get_random_power():
 			return power_key
 
 	# Default: return empty (should never happen if rates are correct)
-	return "empty"
+	return ""
 
 
 # Set custom spawn rates for Free Mode
@@ -103,6 +103,12 @@ func set_custom_spawn_rates(selected_powers: Array):
 func reset_to_default_spawn_rates():
 	active_spawn_rates = get_default_spawn_rates()
 	print("🎲 Spawn rates reset to default")
+
+
+# Disable all powers (for Classic Mode)
+func set_no_powers():
+	active_spawn_rates.clear()
+	print("🚫 All powers disabled - Classic Mode")
 
 
 # Resolve which power to keep when merging two tiles

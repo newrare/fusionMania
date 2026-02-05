@@ -221,9 +221,46 @@ func get_display_name() -> String:
 
 ---
 
-## 🔮 Enemy Powers by Level
+## 🔮 Enemy Powers & Fight Mode System
 
-Enemies can use powers against the player. Available powers depend on enemy level:
+### Game Modes Overview
+The game has two distinct modes:
+
+**Classic Mode**:
+- No enemy on the grid
+- No powers available
+- Free fusion exploration
+- Starts by default
+
+**Fight Mode**:
+- Enemy present and actively placing powers
+- 1-4 powers on the grid at any time
+- Powers chosen by the enemy from its available list
+- Activated when enemy spawns
+- Powers clear when enemy is defeated
+
+### Power Assignment in Fight Mode
+
+#### When Enemy Spawns
+1. Game enters **Fight Mode** via `GameManager.enter_fight_mode()`
+2. Enemy immediately selects **one random power** from available list
+3. Power is applied to a **random tile** on grid
+4. Enemy icon visible on tile
+
+#### Each Player Move
+1. After player moves, enemy adds **one new power**
+2. Selected from enemy's available powers (random)
+3. Applied to any **tile without existing power** (if available)
+4. Maximum **4 powers** on grid simultaneously
+
+#### Power Deactivation
+1. When enemy is defeated: `GameManager.enter_classic_mode()`
+2. All powers cleared from grid: `GameManager.clear_all_tile_powers()`
+3. Game returns to Classic Mode
+
+### Available Powers by Level
+
+Powers are assigned dynamically by the active enemy from this pool:
 
 ```gdscript
 const ENEMY_POWERS_BY_LEVEL = {
@@ -241,7 +278,7 @@ const ENEMY_POWERS_BY_LEVEL = {
 }
 ```
 
-### Power Categories by Level
+### Power Categories by Enemy Level
 | Level | New Powers Unlocked |
 |-------|---------------------|
 | 2 | Block directions (up, down, left, right) |
@@ -254,7 +291,50 @@ const ENEMY_POWERS_BY_LEVEL = {
 | 256 | + Blind |
 | 512 | + Lightning |
 | 1024 (Sub-Boss) | + Fire Cross |
-| 2048 (Boss) | + Nuclear |
+| 2048 (Boss) | + Nuclear (20 total powers) |
+
+### Implementation Details
+
+#### In EnemyManager
+```gdscript
+# Select random power from active enemy's available powers
+func get_random_enemy_power() -> String:
+    if not is_enemy_active():
+        return ""
+    
+    var powers = active_enemy.get("powers", [])
+    if powers.is_empty():
+        return ""
+    
+    return powers[randi() % powers.size()]
+
+# Apply power to a tile without power
+func apply_power_to_random_tile() -> bool:
+    if not is_enemy_active():
+        return false
+    
+    var tiles_without_power = get_tiles_without_power()
+    if tiles_without_power.is_empty():
+        return false
+    
+    var random_tile = tiles_without_power[randi() % tiles_without_power.size()]
+    var random_power = get_random_enemy_power()
+    
+    if random_power == "":
+        return false
+    
+    random_tile.power_type = random_power
+    random_tile.update_visual()
+    return true
+
+# Get all tiles without powers
+func get_tiles_without_power() -> Array:
+    var tiles_without = []
+    for tile in GridManager.grid:
+        if tile.power_type == "":
+            tiles_without.append(tile)
+    return tiles_without
+```
 
 ---
 

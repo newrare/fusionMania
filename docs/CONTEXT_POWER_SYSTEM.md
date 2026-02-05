@@ -1,33 +1,50 @@
+````markdown
 # Context: Power System
 
 ## 📋 Overview
-Fusion Mania features 20 unique powers that activate when two tiles with the same power merge.
+Fusion Mania features 20 unique powers that activate strategically. The power system has **two modes**:
+
+### 🎮 Classic Mode
+- **No powers** spawn on tiles
+- Pure puzzle gameplay (like original 2048)
+- Activated when no enemy is active
+- Default mode at game start
+
+### ⚔️ Fight Mode  
+- Triggered when an **enemy spawns** (first fusion)
+- **Enemy assigns powers** to tiles dynamically
+- On enemy spawn: 1 power is applied to a random tile
+- On each player move: Enemy adds another power to a tile without power
+- Powers activate when tiles **with powers merge** (any fusion with a powered tile)
+- Moving tile's power has priority over target tile's power
+- One power per turn activation (highest priority wins)
+- When enemy dies → **All tile powers are cleared** → Returns to Classic Mode
 
 ---
 
 ## ⚡ Complete Power List
 
-| Power | Code | Spawn % | Type | Description |
-|-------|------|---------|------|-------------|
-| **Fire Horizontal** | `fire_h` | 10% | 🟢 Bonus | Destroys entire row |
-| **Fire Vertical** | `fire_v` | 10% | 🟢 Bonus | Destroys entire column |
-| **Fire Cross** | `fire_cross` | 5% | 🟢 Bonus | Destroys row AND column |
-| **Bomb** | `bomb` | 10% | 🟢 Bonus | Destroys adjacent tiles |
-| **Ice** | `ice` | 6% | 🔴 Malus | Ices tile for 5 turns |
-| **Switch H** | `switch_h` | 5% | 🟢 Bonus | Swaps 2 horizontal tiles |
-| **Switch V** | `switch_v` | 5% | 🟢 Bonus | Swaps 2 vertical tiles |
-| **Teleport** | `teleport` | 2% | 🟢 Bonus | Player chooses 2 tiles to swap |
-| **Expel H** | `expel_h` | 10% | 🟢 Bonus | Ejects edge tile |
-| **Expel V** | `expel_v` | 10% | 🟢 Bonus | Ejects edge tile |
-| **Block Up** | `block_up` | 5% | 🔴 Malus | Blocks UP movement for 2 turns |
-| **Block Down** | `block_down` | 5% | 🔴 Malus | Blocks DOWN movement for 2 turns |
-| **Block Left** | `block_left` | 5% | 🔴 Malus | Blocks LEFT movement for 2 turns |
-| **Block Right** | `block_right` | 5% | 🔴 Malus | Blocks RIGHT movement for 2 turns |
-| **Lightning** | `lightning` | 2% | 🟢 Bonus | Destroys 4 random tiles |
-| **Nuclear** | `nuclear` | 1% | 🟢 Bonus | Destroys all tiles |
-| **Blind** | `blind` | 2% | 🔴 Malus | Black grid for 2 turns |
-| **Bowling** | `bowling` | 2% | 🟢 Bonus | Ball crosses and destroys |
-| **Ads** | `ads` | 10% | 🔴 Malus | Shows ad for X seconds |
+| Power | Code | Type | Description |
+|-------|------|------|-------------|
+| **Fire Horizontal** | `fire_h` | 🟢 Bonus | Destroys entire row |
+| **Fire Vertical** | `fire_v` | 🟢 Bonus | Destroys entire column |
+| **Fire Cross** | `fire_cross` | 🟢 Bonus | Destroys row AND column |
+| **Bomb** | `bomb` | 🟢 Bonus | Destroys adjacent tiles |
+| **Ice** | `ice` | 🔴 Malus | Ices tile for 5 turns |
+| **Switch H** | `switch_h` | 🟢 Bonus | Swaps 2 horizontal tiles |
+| **Switch V** | `switch_v` | 🟢 Bonus | Swaps 2 vertical tiles |
+| **Teleport** | `teleport` | 🟢 Bonus | Player chooses 2 tiles to swap |
+| **Expel H** | `expel_h` | 🟢 Bonus | Ejects edge tile |
+| **Expel V** | `expel_v` | 🟢 Bonus | Ejects edge tile |
+| **Block Up** | `block_up` | 🔴 Malus | Blocks UP movement for 2 turns |
+| **Block Down** | `block_down` | 🔴 Malus | Blocks DOWN movement for 2 turns |
+| **Block Left** | `block_left` | 🔴 Malus | Blocks LEFT movement for 2 turns |
+| **Block Right** | `block_right` | 🔴 Malus | Blocks RIGHT movement for 2 turns |
+| **Lightning** | `lightning` | 🟢 Bonus | Destroys 4 random tiles |
+| **Nuclear** | `nuclear` | 🟢 Bonus | Destroys all tiles |
+| **Blind** | `blind` | 🔴 Malus | Black grid for 4 turns |
+| **Bowling** | `bowling` | 🟢 Bonus | Ball crosses and destroys |
+| **Ads** | `ads` | 🔴 Malus | Shows ad for X seconds |
 
 ---
 
@@ -35,27 +52,26 @@ Fusion Mania features 20 unique powers that activate when two tiles with the sam
 
 ### Power Structure
 ```gdscript
-const POWER_DATA = {
-    "empty":        {"name": "Empty",           "spawn_rate": 30, "type": "none"},
-    "fire_h":       {"name": "Fire Row",        "spawn_rate": 5,  "type": "bonus"},
-    "fire_v":       {"name": "Fire Column",     "spawn_rate": 5,  "type": "bonus"},
-    "fire_cross":   {"name": "Fire Cross",      "spawn_rate": 5,  "type": "bonus"},
-    "bomb":         {"name": "Bomb",            "spawn_rate": 5,  "type": "bonus"},
-    "ice":          {"name": "Ice",             "spawn_rate": 6,  "type": "malus"},
-    "switch_h":     {"name": "Switch H",        "spawn_rate": 5,  "type": "bonus"},
-    "switch_v":     {"name": "Switch V",        "spawn_rate": 5,  "type": "bonus"},
-    "teleport":     {"name": "Teleport",        "spawn_rate": 2,  "type": "bonus"},
-    "expel_h":      {"name": "Expel H",         "spawn_rate": 5,  "type": "bonus"},
-    "expel_v":      {"name": "Expel V",         "spawn_rate": 5,  "type": "bonus"},
-    "block_up":     {"name": "Block Up",        "spawn_rate": 5,  "type": "malus"},
-    "block_down":   {"name": "Block Down",      "spawn_rate": 5,  "type": "malus"},
-    "block_left":   {"name": "Block Left",      "spawn_rate": 5,  "type": "malus"},
-    "block_right":  {"name": "Block Right",     "spawn_rate": 5,  "type": "malus"},
-    "lightning":    {"name": "Lightning",       "spawn_rate": 2,  "type": "bonus"},
-    "nuclear":      {"name": "Nuclear",         "spawn_rate": 1,  "type": "bonus"},
-    "blind":        {"name": "Blind",           "spawn_rate": 2,  "type": "malus"},
-    "bowling":      {"name": "Bowling",         "spawn_rate": 2,  "type": "bonus"},
-    "ads":          {"name": "Ads",             "spawn_rate": 5,  "type": "malus"}
+const POWERS = {
+    "fire_h":       {"name": "Fire Row",        "spawn_rate": 10, "type": "bonus", "duration": 1.0},
+    "fire_v":       {"name": "Fire Column",     "spawn_rate": 10, "type": "bonus", "duration": 1.0},
+    "fire_cross":   {"name": "Fire Cross",      "spawn_rate": 5,  "type": "bonus", "duration": 1.0},
+    "bomb":         {"name": "Bomb",            "spawn_rate": 10, "type": "bonus", "duration": 0.3},
+    "ice":          {"name": "Ice",             "spawn_rate": 6,  "type": "malus", "duration": 3.0},
+    "switch_h":     {"name": "Switch H",        "spawn_rate": 5,  "type": "bonus", "duration": 0.3},
+    "switch_v":     {"name": "Switch V",        "spawn_rate": 5,  "type": "bonus", "duration": 0.3},
+    "teleport":     {"name": "Teleport",        "spawn_rate": 2,  "type": "bonus", "duration": 0.3},
+    "expel_h":      {"name": "Expel H",         "spawn_rate": 10, "type": "bonus", "duration": 0.3},
+    "expel_v":      {"name": "Expel V",         "spawn_rate": 10, "type": "bonus", "duration": 0.3},
+    "block_up":     {"name": "Block Up",        "spawn_rate": 5,  "type": "malus", "duration": 1.0},
+    "block_down":   {"name": "Block Down",      "spawn_rate": 5,  "type": "malus", "duration": 1.0},
+    "block_left":   {"name": "Block Left",      "spawn_rate": 5,  "type": "malus", "duration": 1.0},
+    "block_right":  {"name": "Block Right",     "spawn_rate": 5,  "type": "malus", "duration": 1.0},
+    "lightning":    {"name": "Lightning",       "spawn_rate": 2,  "type": "bonus", "duration": 0.3},
+    "nuclear":      {"name": "Nuclear",         "spawn_rate": 1,  "type": "bonus", "duration": 1.5},
+    "blind":        {"name": "Blind",           "spawn_rate": 2,  "type": "malus", "duration": 4.0},
+    "bowling":      {"name": "Bowling",         "spawn_rate": 2,  "type": "bonus", "duration": 0.5},
+    "ads":          {"name": "Ads",             "spawn_rate": 10, "type": "malus", "duration": 1.0}
 }
 ```
 
@@ -67,62 +83,109 @@ signal power_effect_completed(power_type: String)
 
 ---
 
-## 🎯 Random Assignment
+## ⚙️ Game Mode (GameManager)
+
+### Mode System
+```gdscript
+enum GameMode {
+    CLASSIC,  # No powers on tiles
+    FIGHT     # Enemy assigns powers
+}
+
+var current_mode: GameMode = GameMode.CLASSIC
+```
+
+### Mode Transitions
+1. **Start Game** → CLASSIC mode (no enemy)
+2. **First Fusion** → Enemy spawns → Enter FIGHT mode
+3. **Enemy Defeated** → Clear all tile powers → Return to CLASSIC mode
+4. **10 Moves Later** → New enemy spawns → Back to FIGHT mode
+
+---
+
+## 🔀 Power Activation (NEW!)
+
+### Fusion & Power Triggering
+
+#### Classic Mode Fusion
+- Two tiles with **same value** merge
+- New tile has **no power** (classic 2048 behavior)
+- Result: Increased score only
+
+#### Fight Mode Fusion
+- **ANY tile with power that merges triggers its power**
+- Tile A has power → Tile B doesn't → **Tile A's power triggers**
+- Tile A has power → Tile B has power → **Tile A's power triggers** (moving tile priority)
+- Tile A doesn't → Tile B has power → **Tile B's power triggers**
+- Tile A has power → Tile B has same power → **Moving tile's power triggers**
+
+### Power Consumption
+Powers are **single-use**:
+- Power triggers on fusion
+- New tile **has NO power** after fusion (power is consumed)
+- Enemy will apply new powers on next move
+
+### Priority System
+When multiple fusions happen in one move, **only ONE power activates**:
+
+1. **Highest fusion value** wins
+2. If tied → **Highest position** (lowest Y) wins
+3. If still tied → **Leftmost** (lowest X) wins
+
+Example:
+```
+Move: 4 → 4 = 8 (with power)  [Position: (1,1)]
+Move: 4 → 4 = 8 (with power)  [Position: (2,1)]
+Result: Only position (1,1) power activates (leftmost)
+```
+
+---
+
+## 📋 Power Resolution Logic
+
+### Merge Result Structure
+```gdscript
+func merge_with(other_tile) -> Dictionary:
+    var new_value = value * 2
+    
+    # NEW: Power triggers if ANY tile has power
+    var power_to_activate = ""
+    if power_type != "":
+        power_to_activate = power_type      # Moving tile's power
+    elif other_tile.power_type != "":
+        power_to_activate = other_tile.power_type  # Target tile's power
+    
+    # New tile has no power (power consumed)
+    var new_power = ""
+    
+    return {
+        "value":           new_value,
+        "power":           new_power,         # New tile power (empty)
+        "power_activated": power_to_activate != "",
+        "activated_power": power_to_activate   # Which power to trigger
+    }
+```
+
+---
+
+## 🎯 Random Power Assignment (Classic Mode - deprecated)
+
+This was the **old system** before Fight Mode. Kept for reference:
 
 ### Get Random Power
+In Classic Mode, this is no longer used:
 ```gdscript
 func get_random_power() -> String:
-    var total_rate = 0
-    for power_key in POWER_DATA.keys():
-        total_rate += POWER_DATA[power_key].spawn_rate
-    
-    var random_value = randf() * total_rate
-    var current_sum = 0
-    
-    for power_key in POWER_DATA.keys():
-        current_sum += POWER_DATA[power_key].spawn_rate
-        if random_value <= current_sum:
-            return power_key if power_key != "empty" else ""
-    
-    return ""  # Default: no power
+    # Returns empty string in Classic Mode
+    # Only used when Free Mode is enabled (future feature)
+    return ""
 ```
 
 ---
 
-## 🔀 Fusion Resolution
+## ✨ Power Activation Method
 
-### Power Inheritance Logic
-```gdscript
-func resolve_power_merge(power1: String, power2: String) -> String:
-    # Case 1: Both have same power (activation!)
-    if power1 == power2:
-        return power1
-    
-    # Case 2: Only one has power
-    if power1 == "":
-        return power2
-    if power2 == "":
-        return power1
-    
-    # Case 3: Different powers -> keep rarest
-    var rate1 = POWER_DATA.get(power1, {}).get("spawn_rate", 100)
-    var rate2 = POWER_DATA.get(power2, {}).get("spawn_rate", 100)
-    
-    if rate1 < rate2:
-        return power1  # power1 is rarer
-    elif rate2 < rate1:
-        return power2  # power2 is rarer
-    else:
-        # Same rarity: keep tile that initiated movement
-        # (handled by GridManager)
-        return power1
-```
-
----
-
-## ✨ Power Activation
-
-### Main Method
+### Main Activation
 ```gdscript
 func activate_power(power_type: String, tile: Tile, grid_manager):
     if power_type == "":
@@ -134,195 +197,19 @@ func activate_power(power_type: String, tile: Tile, grid_manager):
     
     match power_type:
         "fire_h":
-            activate_fire_horizontal(tile, grid_manager)
+            await activate_fire_horizontal(tile, grid_manager)
         "fire_v":
-            activate_fire_vertical(tile, grid_manager)
-        "fire_cross":
-            activate_fire_cross(tile, grid_manager)
-        "bomb":
-            activate_bomb(tile, grid_manager)
-        "ice":
-            activate_ice(tile, grid_manager)
-        "switch_h":
-            activate_switch_horizontal(tile, grid_manager)
-        "switch_v":
-            activate_switch_vertical(tile, grid_manager)
-        "teleport":
-            activate_teleport(tile, grid_manager)
-        "expel_h":
-            activate_expel_horizontal(tile, grid_manager)
-        "expel_v":
-            activate_expel_vertical(tile, grid_manager)
-        "block_up":
-            activate_block_direction(GridManager.Direction.UP, grid_manager)
-        "block_down":
-            activate_block_direction(GridManager.Direction.DOWN, grid_manager)
-        "block_left":
-            activate_block_direction(GridManager.Direction.LEFT, grid_manager)
-        "block_right":
-            activate_block_direction(GridManager.Direction.RIGHT, grid_manager)
-        "lightning":
-            activate_lightning(tile, grid_manager)
-        "nuclear":
-            activate_nuclear(tile, grid_manager)
-        "blind":
-            activate_blind(tile, grid_manager)
-        "bowling":
-            activate_bowling(tile, grid_manager)
-        "ads":
-            activate_ads(tile, grid_manager)
-    
-    power_effect_completed.emit(power_type)
+            await activate_fire_vertical(tile, grid_manager)
+        # ... etc for all 20 powers
 ```
 
 ---
 
-## 🎆 Power Implementation (Examples)
+## 📁 Files Modified
 
-### Fire Horizontal
-```gdscript
-func activate_fire_horizontal(tile: Tile, grid_manager):
-    var row = tile.grid_position.y
-    
-    # Destroy entire row
-    for x in range(grid_manager.grid_size):
-        var target = grid_manager.get_tile_at(Vector2i(x, row))
-        if target != null and target != tile:
-            grid_manager.destroy_tile(target)
-    
-    # Visual effect
-    PowerEffect.fire_line_effect(row, true)  # true = horizontal
-```
+- `managers/GameManager.gd`: Added `GameMode` enum and mode management
+- `managers/GridManager.gd`: Updated fusion processing for new power logic
+- `managers/EnemyManager.gd`: Power assignment and fight mode transition
+- `objects/Tile.gd`: New merge logic with power triggering
 
-### Bomb
-```gdscript
-func activate_bomb(tile: Tile, grid_manager):
-    var pos = tile.grid_position
-    
-    # Adjacent positions (8 directions)
-    var adjacent = [
-        Vector2i(pos.x - 1, pos.y - 1), Vector2i(pos.x, pos.y - 1), Vector2i(pos.x + 1, pos.y - 1),
-        Vector2i(pos.x - 1, pos.y),                                 Vector2i(pos.x + 1, pos.y),
-        Vector2i(pos.x - 1, pos.y + 1), Vector2i(pos.x, pos.y + 1), Vector2i(pos.x + 1, pos.y + 1)
-    ]
-    
-    for adj_pos in adjacent:
-        var target = grid_manager.get_tile_at(adj_pos)
-        if target != null:
-            grid_manager.destroy_tile(target)
-    
-    # Visual effect
-    PowerEffect.explosion_effect(tile.position)
-```
-
-### Ice
-```gdscript
-func activate_ice(tile: Tile, grid_manager):
-    tile.is_iced = true
-    tile.ice_turns = 5
-    tile.apply_ice_effect()
-    
-    # Visual effect
-    PowerEffect.ice_effect(tile)
-```
-
-### Teleport
-```gdscript
-func activate_teleport(tile: Tile, grid_manager):
-    # Interactive mode: player must click 2 tiles
-    grid_manager.enter_teleport_mode()
-```
-
-### Lightning
-```gdscript
-func activate_lightning(tile: Tile, grid_manager):
-    var all_tiles = []
-    
-    # Get all tiles
-    for y in range(grid_manager.grid_size):
-        for x in range(grid_manager.grid_size):
-            var t = grid_manager.get_tile_at(Vector2i(x, y))
-            if t != null and t != tile:
-                all_tiles.append(t)
-    
-    # Choose 4 random tiles
-    all_tiles.shuffle()
-    var targets = all_tiles.slice(0, mini(4, all_tiles.size()))
-    
-    # Destroy with effect
-    for target in targets:
-        PowerEffect.lightning_strike_effect(target)
-        await get_tree().create_timer(0.2).timeout
-        grid_manager.destroy_tile(target)
-```
-
----
-
-## 🎨 Visual Effects (PowerEffect.gd)
-
-```gdscript
-# visuals/PowerEffect.gd
-extends Node
-
-static func fire_line_effect(index: int, is_horizontal: bool):
-    # Create animated fire line
-    pass
-
-static func explosion_effect(position: Vector2):
-    # Create explosion with particles
-    pass
-
-static func ice_effect(tile: Tile):
-    # Add blue icy overlay
-    pass
-
-static func lightning_strike_effect(tile: Tile):
-    # Lightning striking tile
-    pass
-
-static func nuclear_flash():
-    # White flash across entire grid
-    pass
-
-static func blind_overlay(duration: float):
-    # Black overlay hiding grid
-    pass
-```
-
----
-
-## 🎯 Priority Rules
-
-### One Activation Per Turn
-- If multiple fusions with powers in one movement
-- **Horizontal movement**: execute top to bottom
-- **Vertical movement**: execute right to left
-
-### Implementation
-```gdscript
-func sort_fusions_by_priority(fusions: Array, direction: GridManager.Direction) -> Array:
-    match direction:
-        GridManager.Direction.UP, GridManager.Direction.DOWN:
-            # Vertical: sort right to left
-            fusions.sort_custom(func(a, b): return a.position.x > b.position.x)
-        GridManager.Direction.LEFT, GridManager.Direction.RIGHT:
-            # Horizontal: sort top to bottom
-            fusions.sort_custom(func(a, b): return a.position.y < b.position.y)
-    
-    return fusions
-```
-
----
-
-## ✅ Implementation Checklist
-
-- [ ] Create `managers/PowerManager.gd` (AutoLoad)
-- [ ] Create `visuals/PowerEffect.gd`
-- [ ] Define `POWER_DATA` with 20 powers
-- [ ] Implement `get_random_power()`
-- [ ] Implement `resolve_power_merge()`
-- [ ] Implement `activate_power()` (switch)
-- [ ] Implement each power individually
-- [ ] Create basic visual effects
-- [ ] Test each power separately
-- [ ] Test priority rules
+````

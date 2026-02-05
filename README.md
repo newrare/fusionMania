@@ -155,15 +155,16 @@ godot --export-debug "Android" ./fusionMania.apk
 The game features an enemy system that adds combat mechanics to the puzzle gameplay:
 
 #### Enemy Basics
-- **Spawn**: Enemy appears after the player's first fusion
+- **Spawn**: Enemy appears after the player's first fusion (triggers **Fight Mode**)
 - **Position**: Top-right corner with 10% margin from edges
 - **Sprites**: Randomly selected from multiple variants per level type
-  - Normal enemies (2-512): `enemy_idle_01.png` to `enemy_idle_12.png` (192x48px, 48x48 per frame)
-  - Sub-Boss (1024): `enemy_subboss_01.png`, `enemy_subboss_02.png`, etc.
-  - Main Boss (2048): `enemy_mainboss_01.png`, `enemy_mainboss_02.png`, etc.
-- **Glow Effect**: Each sprite has a colored glow matching its level color (color swap effect)
-- **Health Bar**: Red bar on gray background (300x10px), centered above sprite
-- **Name Display**: Random math-themed name + colored level number below sprite
+  - Normal enemies (2-512): `enemy_idle_01.png` to `enemy_idle_12.png` (192x48px, 4-frame animation)
+  - Sub-Boss (1024): `enemy_subboss_*.png` series
+  - Main Boss (2048): `enemy_mainboss_*.png` series
+- **Glow Effect**: Each sprite has a colored glow matching its level color
+- **Health Bar**: Red bar above sprite showing remaining HP
+- **Level & Name**: Displayed below sprite (Lv + enemy name)
+- **Damage Display**: Red floating numbers show damage taken
 
 #### Combat Mechanics
 - **Damage**: Fusing tiles damages the enemy (fusion result ÷ 2 = damage)
@@ -172,32 +173,28 @@ The game features an enemy system that adds combat mechanics to the puzzle gamep
 - **Defeat**: When HP reaches 0, enemy is destroyed
 - **Score Bonus**: Defeating an enemy grants bonus points (Total Score × Enemy Level)
   - Example: Score 1000, Enemy Lv.8 → Bonus: **8,000 points**
-  - Example: Score 5000, Enemy Lv.64 → Bonus: **320,000 points**
-  - Example: Score 10000, Enemy Lv.2048 → Bonus: **20,480,000 points**
-- **Respawn**: After 10 moves, a new enemy spawns
+- **Respawn**: After 10 moves, a new enemy spawns (up to max tile value)
+
+#### Enemy Power Management
+Enemies use the Fight Mode power system:
+- **On Spawn**: Applies one random power from its available list to a random tile
+- **Each Turn**: Adds another power to a different tile (if available)
+- **Power Pool**: Enemies have level-specific available powers:
+  - Level 2-512: Control powers (blocks, switches, fire)
+  - Level 1024+: Advanced powers (nuclear, cross-fire)
+- **Power Source**: All powers come from the enemy - not random spawns
 
 #### Enemy Levels
 Enemies have levels matching tile values with corresponding colors:
 
-| Level | Color | Type |
-|-------|-------|------|
-| 2-512 | Same as tiles | Normal |
-| 1024 | #700570 (Darker Purple) | **Sub-Boss** |
-| 2048 | #440344 (Deep Purple) | **Main Boss** |
+| Level | Color | Type | HP | Powers Available |
+|-------|-------|------|-----|------------------|
+| 2-512 | Tile colors | Normal | 10×Level | Limited set |
+| 1024 | #700570 | **Sub-Boss** | 5120 | Extended set |
+| 2048 | #440344 | **Main Boss** | 10240 | Full set (20 powers) |
 
 #### Level Selection
 The enemy's maximum possible level equals the highest tile value on the grid.
-
-#### Enemy Powers
-Enemies can use powers against the player, unlocking more powers at higher levels:
-- **Level 2**: Block directions (up, down, left, right)
-- **Level 4**: + Fire horizontal/vertical
-- **Level 8**: + Teleport
-- **Level 16**: + Ice
-- **Level 32**: + Switch horizontal/vertical
-- **Level 64**: + Bomb
-- **Level 128**: + Expel horizontal/vertical
-- **Level 256**: + Blind
 - **Level 512**: + Lightning
 - **Level 1024** (Sub-Boss): + Fire Cross
 - **Level 2048** (Boss): + Nuclear
@@ -226,10 +223,40 @@ Each tile has:
 
 ### 🔥 Power System
 
-Each tile displays a power icon in the top-right corner with color coding (green for bonus, red for malus). When two tiles with the **same power icon** merge, the power activates!
+Each tile can have a power that activates when fused. The power system has two modes:
 
-#### Normal Mode
-In normal mode, all powers spawn with their default rates (total 100%):
+#### 🎮 Classic Mode
+- **No powers** on tiles
+- Pure 2048 puzzle gameplay
+- Tiles spawn without powers
+
+#### ⚔️ Fight Mode (when enemy is active)
+- **Enemy assigns powers** to tiles strategically
+- On spawn: Enemy applies one random power to a tile
+- Each turn: Enemy adds a new power to a tile without power (up to 4 powers on grid)
+- **Power Activation**: A power triggers immediately when a tile with that power **merges with any other tile**
+  - The moving tile's power (if any) takes priority
+  - After fusion, the new tile has **no power** (power is consumed)
+- When enemy is defeated → return to Classic Mode + all powers are cleared
+
+#### Power Rules
+1. **Power Triggering**: Any tile with a power that merges will trigger it
+2. **Power Priority**: If moving tile has power, it takes priority over the target tile
+3. **Power Consumption**: Powers are single-use (consumed on fusion)
+4. **One Power Per Movement**: Only the highest priority power activates per turn
+   - Priority 1: Highest fusion value
+   - Priority 2: Highest position on grid (lowest Y)
+   - Priority 3: Leftmost position (lowest X)
+
+#### 20 Available Powers
+Same as tile powers, enemies can assign:
+- **Fire Row/Column/Cross**: Destroy tiles in patterns
+- **Bomb**: Destroy adjacent tiles
+- **Ice**: Freeze tile for 5 turns
+- **Block Directions**: Restrict player movement
+- **Switch/Teleport**: Reposition tiles
+- **Expel**: Push tiles off grid
+- **And more**: Lightning, Nuclear, Blind, Bowling, Ads
 
 - **[Fire -]** (10%): Horizontal fire - destroys an entire row (bonus: green icon)
 - **[Fire |]** (10%): Vertical fire - destroys an entire column (bonus: green icon)
@@ -277,21 +304,6 @@ Free Mode allows you to customize which powers will appear in your game:
 - Create themed challenges (e.g., "Ice Age" with only freeze powers)
 - Simplify gameplay for new players by selecting only bonus powers
 - Increase difficulty by selecting only malus powers
-- **[Freeze →]** (5%): Blocks RIGHT movement for 2 turns (malus: red icon)
-- **[Lightning]** (2%): 4 random tiles are struck and destroyed (bonus: green icon)
-- **[Nuclear]** (1%): All tiles are destroyed (bonus: green icon)
-- **[Blind]** (2%): Grid becomes black for 2 turns (malus: red icon)
-- **[Bowling]** (2%): A ball crosses the grid randomly, destroying tiles (bonus: green icon)
-- **[Ads]** (10%): Launches an ad for X seconds (malus: red icon)
-
-#### Power Rules
-1. **Matching Powers**: Both tiles must have the same power icon to activate
-2. **Single Power Tile**: If only one tile has a power, the merged tile keeps that power
-3. **Different Powers**: If both tiles have different powers, keep the rarer one (lower spawn %), if % same, keep power from the tile that initiated the move
-4. **Power Priority**: If multiple fusions happen in one move:
-   - **Horizontal movement**: Execute powers from top to bottom
-   - **Vertical movement**: Execute powers from right to left
-5. **One Power Per Turn**: Only one power executes per turn, even if multiple fusions occur
 
 ### Controls
 

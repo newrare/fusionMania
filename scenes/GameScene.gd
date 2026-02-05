@@ -49,6 +49,9 @@ var move_count: int = 0
 # Enemy spawn protection
 var enemy_just_spawned: bool = false
 
+# Track active power ball animations for cancellation
+var active_power_animations: Array = []
+
 # Reference viewport size
 const DESIGN_WIDTH = 1080.0
 const DESIGN_HEIGHT = 1920.0
@@ -104,10 +107,15 @@ func _ready():
 	GameManager.direction_blocked.connect(_on_direction_blocked)
 	GameManager.direction_unblocked.connect(_on_direction_unblocked)
 
-	# Connect to EnemyManager signals
-	EnemyManager.enemy_spawned.connect(_on_enemy_spawned)
-	EnemyManager.enemy_defeated.connect(_on_enemy_defeated)
-	EnemyManager.enemy_damaged.connect(_on_enemy_damaged)
+	# Connect to EnemyManager signals (with safety check)
+	if EnemyManager != null:
+		EnemyManager.enemy_spawned.connect(_on_enemy_spawned)
+		EnemyManager.enemy_defeated.connect(_on_enemy_defeated)
+		EnemyManager.enemy_damaged.connect(_on_enemy_damaged)
+		EnemyManager.power_ball_animation_requested.connect(_on_power_ball_animation_requested)
+		EnemyManager.cancel_power_animations.connect(_on_cancel_power_animations)
+	else:
+		print("⚠️ EnemyManager is null - cannot connect signals")
 
 	# Connect to TitleMenu signals
 	title_menu.new_game_pressed.connect(_on_new_game_pressed)
@@ -277,8 +285,8 @@ func _on_new_game_pressed():
 	move_count = 0
 	update_move_count()
 	update_score_display()
-	# Reset PowerManager to default spawn rates
-	PowerManager.reset_to_default_spawn_rates()
+	# Ensure we're in Classic mode (no powers)
+	GameManager.enter_classic_mode()
 	GameManager.start_new_game()
 
 
@@ -329,9 +337,11 @@ func _on_powers_selected(selected_powers: Array):
 	move_count = 0
 	update_move_count()
 	update_score_display()
-	# Set custom spawn rates
-	PowerManager.set_custom_spawn_rates(selected_powers)
+	# Enter Free Mode BEFORE starting game so initial tiles spawn with powers
+	GameManager.enter_free_mode(selected_powers)
 	GameManager.start_new_game()
+	# Assign powers to the initial tiles after grid is created
+	GameManager.assign_powers_to_existing_tiles()
 
 
 func _on_power_choice_back():
@@ -361,6 +371,8 @@ func _on_ranking_back():
 # GameOver menu signal handlers
 func _on_gameover_new_game():
 	hide_all_overlays()
+	# Ensure we're in Classic mode when starting new game from game over
+	GameManager.enter_classic_mode()
 	GameManager.start_new_game()
 
 
@@ -402,8 +414,8 @@ func _on_game_ended(victory: bool):
 func _on_fusion_occurred(tile1, tile2, new_tile):
 	print("🔥 Fusion occurred - enemy_just_spawned=%s" % enemy_just_spawned)
 
-	# Spawn enemy on first fusion (before dealing damage)
-	if not EnemyManager.first_fusion_occurred:
+	# Spawn enemy on first fusion (only if not in Free Mode)
+	if EnemyManager != null and not EnemyManager.first_fusion_occurred and not GameManager.is_free_mode():
 		print("🐣 First fusion - spawning first enemy")
 		EnemyManager.spawn_enemy()
 		# Note: enemy_just_spawned flag is set in _on_enemy_spawned callback
@@ -414,7 +426,7 @@ func _on_fusion_occurred(tile1, tile2, new_tile):
 	ui_effect.show_floating_score(new_tile.value, tile_world_pos)
 
 	# Deal damage to enemy if active (but not if it just spawned)
-	if EnemyManager.is_enemy_active() and not enemy_just_spawned:
+	if EnemyManager != null and EnemyManager.is_enemy_active() and not enemy_just_spawned:
 		var damage = int(new_tile.value / 2)
 		print("⚔️ Applying %d damage to enemy" % damage)
 		EnemyManager.damage_enemy(damage)
@@ -437,7 +449,10 @@ func _on_tiles_moved():
 
 	# Update enemy respawn timer
 	print("🎮 Move completed, calling EnemyManager.on_move_completed()")
-	EnemyManager.on_move_completed()
+	if EnemyManager != null:
+		EnemyManager.on_move_completed()
+	else:
+		print("⚠️ EnemyManager is null - cannot call on_move_completed()")
 
 
 # ScoreManager signal handlers
@@ -635,7 +650,10 @@ func update_debug_display():
 
 	var debug_text = "[DEBUG MODE]\n"
 
-	if EnemyManager.is_enemy_active():
+	# Safety check for EnemyManager
+	if EnemyManager == null:
+		debug_text += "⚠️ EnemyManager not loaded\n"
+	elif EnemyManager.is_enemy_active():
 		var enemy_data = EnemyManager.active_enemy
 		debug_text += "Enemy: %s (Lv.%d)\n" % [enemy_data.get("name", "?"), enemy_data.get("level", 0)]
 		debug_text += "HP: %d/%d\n" % [enemy_data.get("current_hp", 0), enemy_data.get("max_hp", 0)]
@@ -645,7 +663,7 @@ func update_debug_display():
 		if powers.size() > 0:
 			debug_text += "Powers: %s\n" % ", ".join(powers)
 	else:
-		if EnemyManager.moves_until_respawn > 0:
+		if EnemyManager != null and EnemyManager.moves_until_respawn > 0:
 			debug_text += "Enemy respawns in: %d moves\n" % EnemyManager.moves_until_respawn
 		else:
 			debug_text += "No enemy active\n"
@@ -662,6 +680,11 @@ func update_debug_display():
 # Force spawn enemy at specific level (DEBUG ONLY)
 func spawn_test_enemy(level: int):
 	if not OS.is_debug_build():
+		return
+	
+	# Don't spawn enemies in Free Mode
+	if GameManager.is_free_mode():
+		print("🚫 DEBUG: Cannot spawn enemy in FREE mode")
 		return
 
 	if not EnemyManager.ENEMY_LEVELS.has(level):
@@ -752,3 +775,38 @@ func print_enemy_info():
 	print("Enemy defeated: %s" % EnemyManager.enemy_defeated_flag)
 	print("Moves until respawn: %d" % EnemyManager.moves_until_respawn)
 	print("========================\n")
+
+
+# Handle power ball animation from enemy to tile
+func _on_power_ball_animation_requested(power_type: String, tile_position: Vector2i):
+	# Calculate enemy sprite position (center of enemy sprite)
+	var enemy_pos = enemy_container.position + Vector2(96, 122)  # IdleSprite position
+	
+	# Calculate target tile position (center of tile)
+	var tile_size = 256  # Tile visual size
+	var grid_start = grid.position
+	var target_pos = grid_start + Vector2(
+		tile_position.x * tile_size + tile_size / 2,
+		tile_position.y * tile_size + tile_size / 2
+	)
+	
+	# Create and play power ball animation
+	var PowerBallAnimation = preload("res://visuals/PowerBallAnimation.gd")
+	var animation = PowerBallAnimation.create_animation(self, enemy_pos, target_pos)
+	
+	# Track animation for potential cancellation
+	active_power_animations.append(animation)
+	
+	# Remove from tracking when animation completes
+	animation.animation_completed.connect(func(): active_power_animations.erase(animation))
+	
+	print("🏀 Power ball animation: %s -> tile at %s" % [power_type, tile_position])
+
+
+# Handle cancellation of all power ball animations
+func _on_cancel_power_animations():
+	for animation in active_power_animations:
+		if is_instance_valid(animation):
+			animation.cancel_animation()
+	active_power_animations.clear()
+	print("🚫 Cancelled all power ball animations")
