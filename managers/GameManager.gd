@@ -2,6 +2,12 @@
 # Central game state manager
 extends Node
 
+# Viewport design constants
+const DESIGN_WIDTH = 1080.0
+const DESIGN_HEIGHT = 1920.0
+const MIN_WINDOW_WIDTH = 540.0
+const MIN_WINDOW_HEIGHT = 960.0
+
 enum GameState {
 	MENU,
 	PLAYING,
@@ -261,7 +267,7 @@ func decrement_power_counters():
 func enter_fight_mode():
 	if current_mode == GameMode.FIGHT:
 		return
-	
+
 	current_mode = GameMode.FIGHT
 	mode_changed.emit(GameMode.FIGHT)
 	print("⚔️ Entering FIGHT mode")
@@ -271,15 +277,15 @@ func enter_fight_mode():
 func enter_classic_mode():
 	if current_mode == GameMode.CLASSIC:
 		return
-	
+
 	current_mode = GameMode.CLASSIC
-	
+
 	# Clear all tile powers
 	clear_all_tile_powers()
-	
+
 	# Set PowerManager to no powers
 	PowerManager.set_no_powers()
-	
+
 	mode_changed.emit(GameMode.CLASSIC)
 	print("🎮 Entering CLASSIC mode")
 
@@ -288,19 +294,19 @@ func enter_classic_mode():
 func enter_free_mode(selected_powers: Array = []):
 	if current_mode == GameMode.FREE:
 		return
-	
+
 	current_mode = GameMode.FREE
-	
+
 	# Clear all tile powers first
 	clear_all_tile_powers()
-	
+
 	# Set PowerManager with custom spawn rates for selected powers
 	PowerManager.set_custom_spawn_rates(selected_powers)
-	
+
 	# In Free Mode, we don't want enemy logic to trigger
 	# So we mark first fusion as occurred to prevent enemy spawn
 	EnemyManager.first_fusion_occurred = true
-	
+
 	mode_changed.emit(GameMode.FREE)
 	print("🆓 Entering FREE mode with %d selected powers" % selected_powers.size())
 
@@ -313,7 +319,7 @@ func clear_all_tile_powers():
 			if tile != null and tile.power_type != "":
 				tile.power_type = ""
 				tile.update_visual()
-	
+
 	all_tile_powers_cleared.emit()
 	print("🧹 All tile powers cleared")
 
@@ -330,7 +336,7 @@ func assign_powers_to_existing_tiles():
 					tile.power_type = power
 					tile.update_visual()
 					tiles_with_powers += 1
-	
+
 	print("🔮 Assigned powers to %d existing tiles" % tiles_with_powers)
 
 
@@ -339,7 +345,7 @@ func is_fight_mode():
 	return current_mode == GameMode.FIGHT
 
 
-# Check if in Classic mode  
+# Check if in Classic mode
 func is_classic_mode():
 	return current_mode == GameMode.CLASSIC
 

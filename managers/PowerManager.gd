@@ -3,6 +3,8 @@ extends Node
 
 # Load PowerEffect for visual effects
 const PowerEffect = preload("res://visuals/PowerEffect.gd")
+# Load movement data structures for new architecture
+const MovementData = preload("res://managers/MovementData.gd")
 
 # Power data with spawn rates (total = 100%)
 const POWERS = {
@@ -656,3 +658,134 @@ func get_power_animation_duration(power_type: String):
 # Get power info
 func get_power_info(power_type: String):
 	return POWERS.get(power_type, {})
+
+
+# ============================================================================
+# NEW ARCHITECTURE: IMMEDIATE POWER EFFECTS
+# ============================================================================
+
+## Calculate power effect data without applying it (pure calculation)
+func calculate_power_effect(power_type: String, source_pos: Vector2i, grid_manager) -> MovementData.PowerEffectData:
+	var effect = MovementData.PowerEffectData.new(power_type, null, source_pos)
+	
+	print("⚡ Calculating power effect for '%s' at position %s" % [power_type, source_pos])
+	
+	match power_type:
+		"fire_h":
+			# Calculate horizontal line destruction
+			for x in range(4):
+				if Vector2i(x, source_pos.y) != source_pos:
+					effect.affected_positions.append(Vector2i(x, source_pos.y))
+		
+		"fire_v":
+			# Calculate vertical line destruction
+			for y in range(4):
+				if Vector2i(source_pos.x, y) != source_pos:
+					effect.affected_positions.append(Vector2i(source_pos.x, y))
+		
+		"fire_cross":
+			# Calculate cross destruction (horizontal + vertical)
+			for x in range(4):
+				if Vector2i(x, source_pos.y) != source_pos:
+					effect.affected_positions.append(Vector2i(x, source_pos.y))
+			for y in range(4):
+				if Vector2i(source_pos.x, y) != source_pos:
+					effect.affected_positions.append(Vector2i(source_pos.x, y))
+		
+		"bomb":
+			# Calculate adjacent positions
+			var adjacent = [
+				Vector2i(source_pos.x-1, source_pos.y),
+				Vector2i(source_pos.x+1, source_pos.y),
+				Vector2i(source_pos.x, source_pos.y-1),
+				Vector2i(source_pos.x, source_pos.y+1)
+			]
+			for pos in adjacent:
+				if _is_valid_grid_position(pos):
+					effect.affected_positions.append(pos)
+		
+		"block_up":
+			effect.blocked_directions.append("UP")
+			effect.duration = 2
+		
+		"block_down":
+			effect.blocked_directions.append("DOWN")
+			effect.duration = 2
+		
+		"block_left":
+			effect.blocked_directions.append("LEFT")
+			effect.duration = 2
+		
+		"block_right":
+			effect.blocked_directions.append("RIGHT")
+			effect.duration = 2
+		
+		"ice":
+			# Ice affects only the source tile
+			effect.duration = 5
+		
+		"lightning":
+			# Calculate 4 random tile positions
+			var all_positions = []
+			for y in range(4):
+				for x in range(4):
+					if Vector2i(x, y) != source_pos:
+						all_positions.append(Vector2i(x, y))
+			
+			# Randomly select up to 4 positions
+			for i in range(min(4, all_positions.size())):
+				var random_index = randi() % all_positions.size()
+				effect.affected_positions.append(all_positions[random_index])
+				all_positions.remove_at(random_index)
+		
+		"nuclear":
+			# Calculate all tile positions
+			for y in range(4):
+				for x in range(4):
+					if Vector2i(x, y) != source_pos:
+						effect.affected_positions.append(Vector2i(x, y))
+	
+	print("  ✓ Calculated %d affected positions, %d blocked directions" % [effect.affected_positions.size(), effect.blocked_directions.size()])
+	return effect
+
+## Apply power effect immediately without animation
+func apply_power_effect_immediately(effect: MovementData.PowerEffectData, grid_manager):
+	print("⚡ Applying power effect '%s' immediately at %s" % [effect.power_type, effect.source_position])
+	
+	match effect.power_type:
+		"fire_h", "fire_v", "fire_cross", "bomb", "lightning", "nuclear":
+			# Destroy tiles immediately using existing function
+			for pos in effect.affected_positions:
+				var tile = grid_manager.get_tile_at(pos)
+				if tile:
+					print("  💥 Destroying tile at %s" % pos)
+					var destroyed_data = MovementData.DestroyedTileData.new(tile, pos, "power")
+					grid_manager._destroy_tile_immediately(destroyed_data)
+		
+		"block_up", "block_down", "block_left", "block_right":
+			# Block direction immediately
+			var direction = _power_type_to_direction(effect.power_type)
+			print("  🚫 Blocking direction %s for %d turns" % [direction, effect.duration])
+			# TODO: Implement direction blocking in GameManager
+			# GameManager.block_direction_immediately(direction, effect.duration)
+		
+		"ice":
+			# Apply ice effect immediately
+			var tile = grid_manager.get_tile_at(effect.source_position)
+			if tile:
+				print("  🧊 Applying ice effect to tile at %s" % effect.source_position)
+				# TODO: Implement immediate ice effect
+				# tile.set_iced_immediately(true, effect.duration)
+
+## Helper function to check if position is within grid bounds
+func _is_valid_grid_position(pos: Vector2i) -> bool:
+	return pos.x >= 0 and pos.x < 4 and pos.y >= 0 and pos.y < 4
+
+## Convert power type to direction for blocking powers
+func _power_type_to_direction(power_type: String) -> String:
+	match power_type:
+		"block_up": return "UP"
+		"block_down": return "DOWN"
+		"block_left": return "LEFT"
+		"block_right": return "RIGHT"
+		_: return "UP"  # Default

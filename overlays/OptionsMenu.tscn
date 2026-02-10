@@ -36,25 +36,25 @@ alignment = 1
 
 [node name="BtnMusic" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "🎵 MUSIC: ON"
 
 [node name="BtnSfx" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "🔊 SFX: ON"
 
 [node name="BtnLanguage" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "🌍 ENGLISH"
 
 [node name="BtnResetRanking" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "🗑️ RESET RANKING"
 
 [node name="BtnBack" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "← BACK"

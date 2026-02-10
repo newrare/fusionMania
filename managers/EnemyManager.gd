@@ -86,6 +86,7 @@ const ENEMY_POWERS_BY_LEVEL = {
 # Signals
 signal enemy_spawned(enemy_data: Dictionary)
 signal enemy_damaged(damage: int, remaining_hp: int)
+signal enemy_sprite_updated(new_sprite_path: String)
 signal enemy_defeated(enemy_level: int, score_bonus: int)
 signal respawn_timer_updated(moves_remaining: int)
 signal power_applied_to_tile(power_type: String, tile_position: Vector2i)
@@ -121,7 +122,8 @@ func spawn_enemy():
 	var level = select_random_level(max_tile)
 	var enemy_name = get_random_name()
 	var max_hp = HP_BY_LEVEL.get(level, 10)
-	var sprite_path = get_random_sprite_path(level)
+	var sprite_variant = select_random_sprite_variant(level)
+	var sprite_path = get_sprite_path_for_health(level, "hight", sprite_variant)
 	var available_powers = ENEMY_POWERS_BY_LEVEL.get(level, [])
 
 	active_enemy = {
@@ -130,6 +132,8 @@ func spawn_enemy():
 		"max_hp": max_hp,
 		"current_hp": max_hp,
 		"sprite_path": sprite_path,
+		"sprite_variant": sprite_variant,
+		"health_state": "hight",
 		"powers": available_powers
 	}
 
@@ -179,45 +183,74 @@ func get_random_name():
 	return ENEMY_NAMES[randi() % ENEMY_NAMES.size()]
 
 
-# Get random sprite path based on enemy level
-func get_random_sprite_path(level: int):
-	var sprite_prefix = ""
-
-	if level == 2048:
-		sprite_prefix = "enemy_mainboss_"
-	elif level == 1024:
-		sprite_prefix = "enemy_subboss_"
-	else:
-		sprite_prefix = "enemy_idle_"
-
-	# Count available sprite variants
-	var variant_count = count_sprite_variants(sprite_prefix)
-	var random_variant = randi() % variant_count + 1
-
-	# Use %02d for zero-padded format (enemy_idle_01.png, enemy_idle_02.png, etc.)
-	return "res://assets/images/%s%02d.png" % [sprite_prefix, random_variant]
-
-
-# Count available sprite variants in assets/images/
-func count_sprite_variants(prefix: String):
+# Select a random sprite variant for the enemy (picks the specific numbered image)
+func select_random_sprite_variant(level: int) -> int:
+	# Count available variants for this level and health state
+	var prefix = "enemy_boss_" if level == 2048 else "enemy_basic_"
+	var health_state = "hight"  # Start with hight variants
+	var search_prefix = prefix + health_state + "_"
+	
 	var dir = DirAccess.open("res://assets/images/")
 	if dir == null:
 		print("⚠️ Could not open assets/images/ directory")
 		return 1
-
-	var count = 0
+	
+	var variants = []
 	dir.list_dir_begin()
 	var file_name = dir.get_next()
-
+	
 	while file_name != "":
-		if file_name.begins_with(prefix) and file_name.ends_with(".png"):
-			count += 1
+		if file_name.begins_with(search_prefix) and file_name.ends_with(".png"):
+			# Extract variant number from filename (e.g., "enemy_basic_hight_01.png" -> 1)
+			var parts = file_name.replace(".png", "").split("_")
+			if parts.size() >= 4:
+				var variant_num = int(parts[3])
+				if variant_num > 0 and not variants.has(variant_num):
+					variants.append(variant_num)
 		file_name = dir.get_next()
-
+	
 	dir.list_dir_end()
+	
+	# Return random variant or 1 as fallback
+	if variants.is_empty():
+		return 1
+	return variants[randi() % variants.size()]
 
-	# Fallback to 1 if no variants found
-	return max(count, 1)
+
+# Get sprite path for specific health state
+func get_sprite_path_for_health(level: int, health_state: String, variant: int) -> String:
+	var prefix = "enemy_boss_" if level == 2048 else "enemy_basic_"
+	return "res://assets/images/%s%s_%02d.png" % [prefix, health_state, variant]
+
+
+# Update enemy sprite based on current health percentage
+func update_enemy_sprite_for_health():
+	if not is_enemy_active():
+		return
+	
+	var health_percent = float(active_enemy.current_hp) / float(active_enemy.max_hp)
+	var new_health_state = ""
+	
+	# Determine health state based on HP percentage
+	if health_percent > 0.66:
+		new_health_state = "hight"
+	elif health_percent > 0.33:
+		new_health_state = "middle"
+	else:
+		new_health_state = "low"
+	
+	# Only update if state changed
+	if new_health_state != active_enemy.get("health_state", "hight"):
+		active_enemy.health_state = new_health_state
+		var new_sprite_path = get_sprite_path_for_health(
+			active_enemy.level,
+			new_health_state,
+			active_enemy.sprite_variant
+		)
+		active_enemy.sprite_path = new_sprite_path
+		
+		print("🔄 Enemy health state changed to '%s': %s" % [new_health_state, new_sprite_path])
+		enemy_sprite_updated.emit(new_sprite_path)
 
 
 # Apply damage to active enemy
@@ -230,6 +263,9 @@ func damage_enemy(amount: int):
 
 	print("⚔️ Enemy damaged: -%d HP (remaining: %d/%d)" % [amount, active_enemy.current_hp, active_enemy.max_hp])
 	enemy_damaged.emit(amount, active_enemy.current_hp)
+
+	# Update sprite based on health state
+	update_enemy_sprite_for_health()
 
 	# Check if enemy is defeated
 	if active_enemy.current_hp <= 0:
@@ -376,13 +412,25 @@ func load_save_data(data: Dictionary):
 
 	if data.get("has_enemy", false):
 		var level = data.get("enemy_level", 2)
+		var sprite_path = data.get("enemy_sprite_path", "")
+		# Extract variant from sprite path if possible, otherwise use 1
+		var sprite_variant = 1
+		if sprite_path != "":
+			var parts = sprite_path.get_file().replace(".png", "").split("_")
+			if parts.size() >= 4:
+				sprite_variant = int(parts[3])
+		
 		active_enemy = {
 			"level": level,
 			"name": data.get("enemy_name", "Unknown"),
 			"max_hp": data.get("enemy_max_hp", HP_BY_LEVEL.get(level, 10)),
 			"current_hp": data.get("enemy_hp", 10),
-			"sprite_path": data.get("enemy_sprite_path", ""),
+			"sprite_path": sprite_path,
+			"sprite_variant": sprite_variant,
+			"health_state": "hight",
 			"powers": ENEMY_POWERS_BY_LEVEL.get(level, [])
 		}
+		# Update sprite for current health after loading
+		update_enemy_sprite_for_health()
 		print("📂 Enemy restored: %s (Lv.%d, HP:%d/%d)" % [active_enemy.name, level, active_enemy.current_hp, active_enemy.max_hp])
 		enemy_spawned.emit(active_enemy)

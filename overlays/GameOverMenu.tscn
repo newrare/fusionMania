@@ -52,10 +52,10 @@ alignment = 1
 
 [node name="BtnNewGame" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "🎮 NEW GAME"
 
 [node name="BtnMenu" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "🏠 BACK TO MENU"

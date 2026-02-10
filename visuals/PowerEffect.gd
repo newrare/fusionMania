@@ -597,9 +597,9 @@ static func clear_all_wind_effects():
 	print("  ✅ Cleared %d wind effect(s)" % removed_count)
 
 
-# Create wind sprites on edge tiles for a direction
+# Create simple wind indicators on grid edges (without PNG assets)
 static func create_wind_sprites(direction: int):
-	print("  💨 Creating wind sprites for direction: %d" % direction)
+	print("  💨 Creating wind edge indicators for direction: %d" % direction)
 
 	var grid_node = Engine.get_main_loop().root.get_tree().get_first_node_in_group("grid")
 	if grid_node == null:
@@ -610,100 +610,58 @@ static func create_wind_sprites(direction: int):
 	const TILE_SPACING = 20
 	const CELL_SIZE = TILE_SIZE + TILE_SPACING
 	const GRID_SIZE = 4
-	const SPRITE_HEIGHT = 40  # Height of the wind sprite bar
+	const INDICATOR_HEIGHT = 6  # Thin line indicator
 
-	# Load wind textures
-	var wind_textures = [
-		load("res://assets/images/wind_1.png"),
-		load("res://assets/images/wind_2.png"),
-		load("res://assets/images/wind_3.png"),
-		load("res://assets/images/wind_4.png")
-	]
+	# Create container
+	var container = Node2D.new()
+	container.name = "WindSprites_Direction%d" % direction
+	grid_node.add_child(container)
 
-	# Determine which edge tiles to add sprites to
-	var positions = []
+	# Create simple colored line indicators based on direction
 	match direction:
-		0:  # UP is blocked - sprites on TOP edge of top row tiles
-			for x in range(GRID_SIZE):
-				positions.append({"grid": Vector2i(x, 0), "edge": "top"})
-		1:  # DOWN is blocked - sprites on BOTTOM edge of bottom row tiles
-			for x in range(GRID_SIZE):
-				positions.append({"grid": Vector2i(x, GRID_SIZE - 1), "edge": "bottom"})
-		2:  # LEFT is blocked - sprites on LEFT edge of left column tiles
-			for y in range(GRID_SIZE):
-				positions.append({"grid": Vector2i(0, y), "edge": "left"})
-		3:  # RIGHT is blocked - sprites on RIGHT edge of right column tiles
-			for y in range(GRID_SIZE):
-				positions.append({"grid": Vector2i(GRID_SIZE - 1, y), "edge": "right"})
+		0:  # UP is blocked - line at TOP of grid
+			var line = ColorRect.new()
+			line.color = Color(0.7, 0.9, 1.0, 0.8)  # Light blue
+			line.size = Vector2(GRID_SIZE * CELL_SIZE - TILE_SPACING, INDICATOR_HEIGHT)
+			line.position = Vector2(TILE_SPACING, TILE_SPACING - INDICATOR_HEIGHT - 5)
+			container.add_child(line)
+			
+		1:  # DOWN is blocked - line at BOTTOM of grid
+			var line = ColorRect.new()
+			line.color = Color(0.7, 0.9, 1.0, 0.8)  # Light blue
+			line.size = Vector2(GRID_SIZE * CELL_SIZE - TILE_SPACING, INDICATOR_HEIGHT)
+			line.position = Vector2(TILE_SPACING, TILE_SPACING + GRID_SIZE * CELL_SIZE - TILE_SPACING + 5)
+			container.add_child(line)
+			
+		2:  # LEFT is blocked - line at LEFT of grid
+			var line = ColorRect.new()
+			line.color = Color(0.7, 0.9, 1.0, 0.8)  # Light blue
+			line.size = Vector2(INDICATOR_HEIGHT, GRID_SIZE * CELL_SIZE - TILE_SPACING)
+			line.position = Vector2(TILE_SPACING - INDICATOR_HEIGHT - 5, TILE_SPACING)
+			container.add_child(line)
+			
+		3:  # RIGHT is blocked - line at RIGHT of grid
+			var line = ColorRect.new()
+			line.color = Color(0.7, 0.9, 1.0, 0.8)  # Light blue
+			line.size = Vector2(INDICATOR_HEIGHT, GRID_SIZE * CELL_SIZE - TILE_SPACING)
+			line.position = Vector2(TILE_SPACING + GRID_SIZE * CELL_SIZE - TILE_SPACING + 5, TILE_SPACING)
+			container.add_child(line)
 
-	# Create sprite container
-	var sprite_container = Node2D.new()
-	sprite_container.name = "WindSprites_Direction%d" % direction
-	grid_node.add_child(sprite_container)
-
-	# Create sprites for each position
-	for pos_data in positions:
-		var grid_pos = pos_data["grid"]
-		var edge = pos_data["edge"]
-
-		var sprite = TextureRect.new()
-		sprite.name = "WindSprite_%d_%d" % [grid_pos.x, grid_pos.y]
-		sprite.texture = wind_textures[0]
-		sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		sprite.stretch_mode = TextureRect.STRETCH_SCALE
-
-		# Calculate position based on edge
-		var tile_x = TILE_SPACING + grid_pos.x * CELL_SIZE
-		var tile_y = TILE_SPACING + grid_pos.y * CELL_SIZE
-
-		match edge:
-			"top":
-				sprite.size = Vector2(TILE_SIZE, SPRITE_HEIGHT)
-				sprite.position = Vector2(tile_x, tile_y - SPRITE_HEIGHT / 2)
-				sprite.rotation_degrees = 0
-			"bottom":
-				sprite.size = Vector2(TILE_SIZE, SPRITE_HEIGHT)
-				sprite.position = Vector2(tile_x, tile_y + TILE_SIZE - SPRITE_HEIGHT / 2)
-				sprite.rotation_degrees = 180
-				sprite.pivot_offset = Vector2(TILE_SIZE / 2, SPRITE_HEIGHT / 2)
-			"left":
-				sprite.size = Vector2(TILE_SIZE, SPRITE_HEIGHT)
-				sprite.position = Vector2(tile_x - SPRITE_HEIGHT / 2, tile_y + TILE_SIZE)
-				sprite.rotation_degrees = -90
-				sprite.pivot_offset = Vector2(0, 0)
-			"right":
-				sprite.size = Vector2(TILE_SIZE, SPRITE_HEIGHT)
-				sprite.position = Vector2(tile_x + TILE_SIZE + SPRITE_HEIGHT / 2, tile_y)
-				sprite.rotation_degrees = 90
-				sprite.pivot_offset = Vector2(0, 0)
-
-		sprite_container.add_child(sprite)
-
-	# Start animation loop for all sprites
-	_animate_wind_sprites(sprite_container, wind_textures)
+	# Simple pulse animation for the indicator
+	_animate_simple_wind_indicator(container)
 
 
-# Animate wind sprites with ping-pong cycle
-static func _animate_wind_sprites(container: Node2D, textures: Array):
-	var frame_index = 0
-	var direction = 1  # 1 = forward, -1 = backward
-	var frame_duration = 0.15  # Time between frames
-
+# Simple pulsing animation for wind indicators
+static func _animate_simple_wind_indicator(container: Node2D):
 	while is_instance_valid(container) and container.get_parent() != null:
-		# Update all sprites in container
-		for sprite in container.get_children():
-			if sprite is TextureRect:
-				sprite.texture = textures[frame_index]
-
-		# Wait for next frame
-		await container.get_tree().create_timer(frame_duration).timeout
-
-		# Update frame index with ping-pong
-		frame_index += direction
-		if frame_index >= textures.size() - 1:
-			direction = -1
-		elif frame_index <= 0:
-			direction = 1
+		# Pulse all indicators in container
+		for indicator in container.get_children():
+			if indicator is ColorRect:
+				var tween = container.create_tween()
+				tween.tween_property(indicator, "modulate:a", 0.4, 0.8)
+				tween.tween_property(indicator, "modulate:a", 0.8, 0.8)
+		
+		await container.get_tree().create_timer(1.6).timeout
 
 
 # Remove wind sprites for a direction
@@ -716,4 +674,24 @@ static func _remove_wind_sprites(direction: int):
 	var container = grid_node.get_node_or_null(container_name)
 	if container != null:
 		container.queue_free()
+
+
+# ============================================================================
+# ASYNC ANIMATION FUNCTIONS (for new architecture compatibility)
+# ============================================================================
+
+## Async version of fire line sequence
+static func fire_line_sequence_async(emitter_tile, target_tiles: Array, is_horizontal: bool, grid_manager):
+	fire_line_sequence(emitter_tile, target_tiles, is_horizontal, grid_manager)
+	# Return immediately for new architecture (no await needed)
+
+## Async version of explosion effect
+static func explosion_effect_async(position: Vector2, effect_type: String = "bomb"):
+	explosion_effect(position)
+	# Return immediately for new architecture (no await needed)
+
+## Async version of ice effect
+static func ice_effect_async(target_tile):
+	ice_effect(target_tile)
+	# Return immediately for new architecture (no await needed)
 

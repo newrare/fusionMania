@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dl0xc87s75hpc"]
+
+[ext_resource type="Script" path="res://tests/test_immediate_architecture.gd" id="1_3k7jw"]
+
+[node name="TestImmediateArchitecture" type="Node"]
+script = ExtResource("1_3k7jw")

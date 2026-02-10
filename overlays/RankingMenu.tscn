@@ -40,5 +40,5 @@ layout_mode = 2
 
 [node name="BtnBack" parent="MenuContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "← BACK"

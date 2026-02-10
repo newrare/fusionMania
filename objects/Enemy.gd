@@ -26,13 +26,14 @@ const TILE_COLORS = {
 	2048: Color("#440344")   # Deep Purple
 }
 
-# Health bar dimensions (same width as sprite: 48 * 4 = 192px)
-const HEALTH_BAR_WIDTH = 192
+# Health bar dimensions (same width as sprite displayed size)
+const HEALTH_BAR_WIDTH = 384
 const HEALTH_BAR_HEIGHT = 16
 
-# Sprite dimensions
-const SPRITE_SCALE = 4
-const SPRITE_SIZE = 48 * SPRITE_SCALE  # 192px
+# Sprite dimensions (876x876 source, scaled to ~384x384)
+const SPRITE_SOURCE_SIZE = 876
+const SPRITE_DISPLAY_SIZE = 384
+const SPRITE_SCALE = float(SPRITE_DISPLAY_SIZE) / float(SPRITE_SOURCE_SIZE)  # ~0.438
 
 # Label font size (reduced by 40%)
 const LABEL_FONT_SIZE = 30
@@ -40,7 +41,7 @@ const LABEL_FONT_SIZE_SUB_BOSS = 36
 const LABEL_FONT_SIZE_BOSS = 42
 
 # Node references (disabled - using get_node() instead to avoid timing issues)
-# @onready var idle_sprite: AnimatedSprite2D = $ContentContainer/IdleSprite
+# @onready var idle_sprite: Sprite2D = $ContentContainer/IdleSprite
 # @onready var health_bar_container: Node2D = $ContentContainer/HealthBarContainer
 # @onready var health_bar_bg: ColorRect = $ContentContainer/HealthBarContainer/HealthBarBg
 # @onready var health_bar: ColorRect = $ContentContainer/HealthBarContainer/HealthBar
@@ -75,10 +76,10 @@ func initialize(data: Dictionary) -> void:
 	var name_label_node = get_node("ContentContainer/NameLabel")
 	var damage_label_node = get_node("ContentContainer/DamageLabel")
 	
-	# Load sprite frames and apply glow
-	var sprite_frames = load_sprite_frames(sprite_path)
-	if sprite_frames:
-		idle_sprite_node.sprite_frames = sprite_frames
+	# Load sprite texture and apply glow
+	var texture = load_sprite_texture(sprite_path)
+	if texture:
+		idle_sprite_node.texture = texture
 		apply_level_glow()
 	
 	# Add debug border (only in debug builds)
@@ -94,7 +95,6 @@ func initialize(data: Dictionary) -> void:
 	# Update visual elements
 	update_health_bar()
 	update_display()
-	play_idle_animation()
 	
 	# Play spawn animation
 	play_spawn_animation()
@@ -103,8 +103,8 @@ func initialize(data: Dictionary) -> void:
 	if is_boss and AudioManager.has_method("play_music"):
 		AudioManager.play_music("music_boss")
 
-# Load sprite frames from atlas texture (4 frames, 96x96 each)
-func load_sprite_frames(path: String) -> SpriteFrames:
+# Load sprite texture from path (single 876x876 image)
+func load_sprite_texture(path: String) -> Texture2D:
 	if path.is_empty() or not FileAccess.file_exists(path):
 		print("Enemy: Sprite path invalid or file not found: ", path)
 		return null
@@ -114,21 +114,7 @@ func load_sprite_frames(path: String) -> SpriteFrames:
 		print("Enemy: Failed to load texture from: ", path)
 		return null
 	
-	var sprite_frames = SpriteFrames.new()
-	sprite_frames.add_animation("idle")
-	
-	# Create 4 frames from horizontal sprite sheet (192x48 total, 48x48 per frame)
-	for i in range(4):
-		var atlas = AtlasTexture.new()
-		atlas.atlas = texture
-		atlas.region = Rect2(i * 48, 0, 48, 48)
-		sprite_frames.add_frame("idle", atlas)
-	
-	# Set animation properties
-	sprite_frames.set_animation_speed("idle", 8.0)
-	sprite_frames.set_animation_loop("idle", true)
-	
-	return sprite_frames
+	return texture
 
 # Apply level-based glow effect using modulate
 func apply_level_glow() -> void:
@@ -142,9 +128,9 @@ func apply_level_glow() -> void:
 func add_debug_border() -> void:
 	var content = get_node("ContentContainer")
 	
-	# Total height: sprite (192) + gap (20) + level label (30) + name label (30) + damage label (30) + health bar (16) = ~318px
-	var total_height = 350
-	var total_width = SPRITE_SIZE  # 192px
+	# Total height: sprite (384) + gap (20) + level label (30) + name label (30) + damage label (30) + health bar (16) = ~510px
+	var total_height = 550
+	var total_width = SPRITE_DISPLAY_SIZE  # 384px
 	
 	# Top line
 	var top = ColorRect.new()
@@ -196,6 +182,18 @@ func update_hp(new_hp: int) -> void:
 	
 	print("💥 Enemy HP updated! HP: %d/%d" % [current_hp, max_hp])
 	# Note: die() is NOT called here - EnemyManager handles defeat via enemy_defeated signal
+
+
+# Update sprite texture (called when health state changes)
+func update_sprite(new_sprite_path: String) -> void:
+	sprite_path = new_sprite_path
+	var texture = load_sprite_texture(sprite_path)
+	if texture:
+		var idle_sprite_node = get_node("ContentContainer/IdleSprite")
+		idle_sprite_node.texture = texture
+		# Reapply glow effect to new sprite
+		apply_level_glow()
+		print("🔄 Enemy sprite updated: %s" % sprite_path)
 
 
 # Show damage taken in the damage label
@@ -265,20 +263,6 @@ func update_display() -> void:
 	
 	# Name label: "[Prefix]Name" - centered
 	name_label_node.text = "%s%s" % [name_prefix, enemy_name]
-
-# Start idle animation loop
-func play_idle_animation() -> void:
-	var idle_sprite_node = get_node("ContentContainer/IdleSprite")
-	if idle_sprite_node.sprite_frames and idle_sprite_node.sprite_frames.has_animation("idle"):
-		# Slower animation speed for bosses (more menacing)
-		if is_boss:
-			idle_sprite_node.speed_scale = 0.5
-		elif is_sub_boss:
-			idle_sprite_node.speed_scale = 0.7
-		else:
-			idle_sprite_node.speed_scale = 1.0
-		
-		idle_sprite_node.play("idle")
 
 # Play spawn animation with bounce effect
 func play_spawn_animation() -> void:

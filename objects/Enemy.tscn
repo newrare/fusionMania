@@ -7,16 +7,16 @@ script = ExtResource("1_enemy")
 
 [node name="ContentContainer" type="Node2D" parent="."]
 
-[node name="IdleSprite" type="AnimatedSprite2D" parent="ContentContainer"]
-position = Vector2(96, 122)
-scale = Vector2(4, 4)
+[node name="IdleSprite" type="Sprite2D" parent="ContentContainer"]
+position = Vector2(192, 192)
+scale = Vector2(0.438356, 0.438356)
 material = null
 
 [node name="LevelLabel" type="RichTextLabel" parent="ContentContainer"]
 offset_left = 0.0
-offset_top = 240.0
+offset_top = 400.0
 offset_right = 384.0
-offset_bottom = 270.0
+offset_bottom = 430.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
@@ -31,9 +31,9 @@ vertical_alignment = 0
 
 [node name="NameLabel" type="RichTextLabel" parent="ContentContainer"]
 offset_left = 0.0
-offset_top = 270.0
+offset_top = 430.0
 offset_right = 384.0
-offset_bottom = 300.0
+offset_bottom = 460.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
@@ -48,9 +48,9 @@ vertical_alignment = 0
 
 [node name="DamageLabel" type="RichTextLabel" parent="ContentContainer"]
 offset_left = 0.0
-offset_top = 300.0
+offset_top = 460.0
 offset_right = 384.0
-offset_bottom = 330.0
+offset_bottom = 490.0
 theme_override_colors/font_color = Color(1, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(0.5, 0, 0, 1)
 theme_override_constants/outline_size = 3
@@ -64,7 +64,7 @@ horizontal_alignment = 0
 vertical_alignment = 0
 
 [node name="HealthBarContainer" type="Node2D" parent="ContentContainer"]
-position = Vector2(0, 330)
+position = Vector2(0, 490)
 
 [node name="HealthBarBg" type="ColorRect" parent="ContentContainer/HealthBarContainer"]
 offset_left = 0.0

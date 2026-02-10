@@ -4,6 +4,8 @@ extends Node
 
 # Load PowerEffect for visual effects
 const PowerEffect = preload("res://visuals/PowerEffect.gd")
+# Load movement data structures
+const MovementData = preload("res://managers/MovementData.gd")
 
 enum Direction {
 	UP,
@@ -28,6 +30,8 @@ signal no_moves_available()
 signal game_over()
 
 func _ready():
+	# Initialize empty grid immediately
+	initialize_grid()
 	print("🎯 GridManager ready")
 
 
@@ -41,26 +45,6 @@ func initialize_grid():
 		grid.append(row)
 
 	print("Grid initialized (%dx%d)" % [grid_size, grid_size])
-
-
-# Print current grid state to console
-func print_grid_state(direction_name: String = ""):
-	var header = "=== GRID STATE"
-	if direction_name != "":
-		header += " (after %s)" % direction_name
-	header += " ==="
-	print(header)
-
-	for y in range(grid_size):
-		var row_str = ""
-		for x in range(grid_size):
-			var tile = grid[y][x]
-			if tile != null:
-				row_str += "%4d |" % tile.value
-			else:
-				row_str += "     |"
-		print(row_str)
-	print("")
 
 
 # Start a new game
@@ -95,10 +79,23 @@ func get_empty_cells():
 
 # Get tile at position
 func get_tile_at(position: Vector2i):
+	# Check if grid is initialized
+	if grid == null or grid.size() == 0:
+		print("⚠️ Grid not initialized in get_tile_at")
+		return null
+	
+	# Check bounds
 	if position.x < 0 or position.x >= grid_size:
 		return null
 	if position.y < 0 or position.y >= grid_size:
 		return null
+	
+	# Check if row exists
+	if position.y >= grid.size():
+		return null
+	if grid[position.y] == null or position.x >= grid[position.y].size():
+		return null
+	
 	return grid[position.y][position.x]
 
 
@@ -799,9 +796,6 @@ func process_movement(direction: Direction):
 				if tile != null and is_instance_valid(tile):
 					tile.is_merging = false
 
-		# Print grid state after movement and fusions
-		print_grid_state(direction_name)
-
 		# Spawn new tile only after all animations are done
 		spawn_random_tile()
 
@@ -890,3 +884,311 @@ func _expel_tile_off_screen(tile, direction: Direction):
 	# Destroy tile after animation completes
 	if is_instance_valid(tile):
 		tile.queue_free()
+
+
+# ============================================================================
+# NEW ARCHITECTURE: IMMEDIATE LOGIC / ANIMATION SEPARATION
+# ============================================================================
+
+## Calculate complete movement result without modifying actual state
+## This is a PURE function - no side effects, only calculation
+func calculate_movement_result(direction: Direction) -> MovementData.MovementResult:
+	print("🧮 Calculating movement result for %s" % Direction.keys()[direction])
+	
+	var result = MovementData.MovementResult.new()
+	result.direction = direction
+	
+	# Create simulated grid state for calculations
+	var simulated_grid = _duplicate_grid_state()
+	
+	# Simulate movement and detect changes
+	match direction:
+		Direction.UP:
+			_simulate_movement_up(simulated_grid, result)
+		Direction.DOWN:
+			_simulate_movement_down(simulated_grid, result)
+		Direction.LEFT:
+			_simulate_movement_left(simulated_grid, result)
+		Direction.RIGHT:
+			_simulate_movement_right(simulated_grid, result)
+	
+	# Calculate fusions from moved tiles
+	_calculate_fusions_for_result(result, simulated_grid)
+	
+	# Calculate power effects from fusions
+	_calculate_power_effects_for_result(result)
+	
+	# Calculate new tile spawn
+	if MovementData.MovementDataUtils.has_meaningful_changes(result):
+		_calculate_new_tile_spawn_for_result(result, simulated_grid)
+		result.state_changes.spawn_new_tile = true
+		result.state_changes.move_count_increment = 1
+	
+	# Set has_changes flag
+	result.has_changes = MovementData.MovementDataUtils.has_meaningful_changes(result)
+	
+	print("🧮 Movement calculation complete: %s" % MovementData.MovementDataUtils.get_movement_summary(result))
+	return result
+
+## Apply calculated movement result immediately to game state
+func apply_movement_result_immediately(result: MovementData.MovementResult):
+	print("⚡ Applying movement result immediately")
+	
+	# 1. Apply tile movements
+	for moved_tile in result.moved_tiles:
+		_move_tile_immediately(moved_tile)
+	
+	# 2. Apply fusions  
+	for fusion in result.fusions:
+		_apply_fusion_immediately(fusion)
+	
+	# 3. Apply power effects
+	for power_effect in result.activated_powers:
+		_apply_power_effect_immediately(power_effect)
+	
+	# 4. Destroy tiles affected by powers
+	for destroyed_tile in result.destroyed_tiles:
+		_destroy_tile_immediately(destroyed_tile)
+	
+	# 5. Create new tiles
+	for new_tile_data in result.new_tiles:
+		_create_tile_immediately(new_tile_data)
+	
+	# 6. Apply state changes
+	_apply_state_changes_immediately(result.state_changes)
+	
+	print("⚡ Movement result applied successfully")
+
+## Launch animations based on movement result (non-blocking)
+func launch_movement_animations(result: MovementData.MovementResult):
+	print("🎬 Launching movement animations in parallel")
+	
+	var animation_group = "movement_" + str(Time.get_ticks_msec())
+	
+	# Cancel previous movement animations
+	AnimationManager.cancel_animation_group("movement")
+	AnimationManager.cancel_animation_group("powers")
+	
+	# Launch tile movement animations
+	for moved_tile in result.moved_tiles:
+		_launch_tile_movement_animation(moved_tile, animation_group)
+	
+	# Launch fusion animations
+	for fusion in result.fusions:
+		_launch_fusion_animation(fusion, animation_group)
+	
+	# Launch power effect animations
+	for power_effect in result.activated_powers:
+		_launch_power_effect_animation(power_effect, animation_group)
+	
+	# Play movement sound
+	if result.has_changes:
+		AudioManager.play_sfx_move()
+
+# ============================================================================
+# HELPER FUNCTIONS FOR NEW ARCHITECTURE
+# ============================================================================
+
+## Create a copy of grid state for simulation
+func _duplicate_grid_state() -> Array:
+	var dup = []
+	for y in range(grid_size):
+		var row = []
+		for x in range(grid_size):
+			row.append(grid[y][x])  # Reference copy, not deep copy
+		dup.append(row)
+	return dup
+
+## Move a tile immediately without animation
+func _move_tile_immediately(moved_tile: MovementData.MovedTileData):
+	var tile = moved_tile.tile
+	var from_pos = moved_tile.from_pos
+	var to_pos = moved_tile.to_pos
+	
+	# Update grid
+	grid[from_pos.y][from_pos.x] = null
+	grid[to_pos.y][to_pos.x] = tile
+	
+	# Update tile position
+	tile.grid_position = to_pos
+
+## Apply a fusion immediately without animation
+func _apply_fusion_immediately(fusion: MovementData.FusionData):
+	# Remove original tiles from grid
+	var pos1 = fusion.tile1.grid_position
+	var pos2 = fusion.tile2.grid_position
+	
+	grid[pos1.y][pos1.x] = null
+	grid[pos2.y][pos2.x] = null
+	
+	# Place new tile
+	grid[fusion.position.y][fusion.position.x] = fusion.result_tile
+	fusion.result_tile.grid_position = fusion.position
+	
+	# Queue original tiles for destruction (will happen after current frame)
+	fusion.tile1.call_deferred("queue_free")
+	fusion.tile2.call_deferred("queue_free")
+
+## Apply power effect immediately
+func _apply_power_effect_immediately(power_effect: MovementData.PowerEffectData):
+	# Delegate to PowerManager for immediate application
+	PowerManager.apply_power_effect_immediately(power_effect, self)
+
+## Destroy a tile immediately  
+func _destroy_tile_immediately(destroyed_tile: MovementData.DestroyedTileData):
+	var pos = destroyed_tile.position
+	var tile = destroyed_tile.tile
+	
+	# Remove from grid
+	if grid[pos.y][pos.x] == tile:
+		grid[pos.y][pos.x] = null
+	
+	# Queue for destruction
+	tile.call_deferred("queue_free")
+
+## Create a tile immediately
+func _create_tile_immediately(new_tile_data: MovementData.NewTileData):
+	var tile = create_tile(new_tile_data.value, new_tile_data.power_type, new_tile_data.position)
+	return tile
+
+## Apply state changes immediately
+func _apply_state_changes_immediately(state_changes: MovementData.StateChanges):
+	# Update move count
+	move_count += state_changes.move_count_increment
+	
+	# Update ice timers
+	for pos in state_changes.ice_timer_decrements:
+		var tile = get_tile_at(pos)
+		if tile and tile.is_iced:
+			tile.ice_turns -= 1
+			if tile.ice_turns <= 0:
+				tile.is_iced = false
+				tile.remove_ice_effect()
+	
+	# Apply direction blocks
+	for block_data in state_changes.blocked_directions_added:
+		GameManager.block_direction_immediately(block_data.direction, block_data.duration)
+	
+	# Remove direction blocks  
+	for direction in state_changes.blocked_directions_removed:
+		GameManager.unblock_direction_immediately(direction)
+	
+	# Handle game over
+	if state_changes.game_over:
+		game_over.emit()
+
+## Launch animation for tile movement
+func _launch_tile_movement_animation(moved_tile: MovementData.MovedTileData, group: String):
+	var grid_node = get_tree().get_first_node_in_group("grid")
+	if grid_node:
+		var screen_pos = grid_node.calculate_screen_position(moved_tile.to_pos)
+		var tween = AnimationManager.create_movement_animation(moved_tile.tile, screen_pos, 0.2, group)
+
+## Launch animation for fusion
+func _launch_fusion_animation(fusion: MovementData.FusionData, group: String):
+	# Animate tile1 moving to fusion position
+	var grid_node = get_tree().get_first_node_in_group("grid") 
+	if grid_node:
+		var screen_pos = grid_node.calculate_screen_position(fusion.position)
+		AnimationManager.create_movement_animation(fusion.tile1, screen_pos, 0.2, group)
+		
+		# Fade out tile2
+		AnimationManager.create_fade_animation(fusion.tile2, 0.0, 0.15, group)
+		
+		# Scale animation for result tile
+		AnimationManager.create_scale_animation(fusion.result_tile, Vector2(1.2, 1.2), 0.1, group)
+
+## Launch animation for power effect
+func _launch_power_effect_animation(power_effect: MovementData.PowerEffectData, group: String):
+	# Delegate to PowerEffect for visual animations
+	match power_effect.power_type:
+		"fire_h":
+			PowerEffect.fire_line_sequence_async(power_effect.source_tile, [], true, self)
+		"fire_v":
+			PowerEffect.fire_line_sequence_async(power_effect.source_tile, [], false, self)
+		"fire_cross":
+			PowerEffect.fire_line_sequence_async(power_effect.source_tile, [], true, self)
+		"bomb":
+			if power_effect.source_position:
+				# Use a simple position calculation (grid position * tile size)
+				var world_pos = Vector2(power_effect.source_position.x * 100, power_effect.source_position.y * 100)
+				PowerEffect.explosion_effect_async(world_pos)
+		"ice":
+			PowerEffect.ice_effect_async(power_effect.source_tile)
+		# Add other power animations as needed
+
+# ============================================================================
+# SIMULATION FUNCTIONS (PURE CALCULATION)
+# ============================================================================
+
+## Simulate upward movement without modifying state
+func _simulate_movement_up(simulated_grid: Array, result: MovementData.MovementResult):
+	# This will be implemented to calculate movements without side effects
+	# For now, placeholder to maintain compilation
+	print("🧮 Simulating UP movement (placeholder)")
+
+## Simulate downward movement without modifying state  
+func _simulate_movement_down(simulated_grid: Array, result: MovementData.MovementResult):
+	print("🧮 Simulating DOWN movement (placeholder)")
+
+## Simulate leftward movement without modifying state
+func _simulate_movement_left(simulated_grid: Array, result: MovementData.MovementResult):
+	print("🧮 Simulating LEFT movement (placeholder)")
+
+## Simulate rightward movement without modifying state
+func _simulate_movement_right(simulated_grid: Array, result: MovementData.MovementResult):
+	print("🧮 Simulating RIGHT movement (placeholder)")
+
+## Calculate fusions from movement result
+func _calculate_fusions_for_result(result: MovementData.MovementResult, simulated_grid: Array):
+	print("🧮 Calculating fusions (placeholder)")
+
+## Calculate power effects from fusions
+func _calculate_power_effects_for_result(result: MovementData.MovementResult):
+	print("🧮 Calculating power effects (placeholder)")
+
+## Calculate new tile spawn position
+func _calculate_new_tile_spawn_for_result(result: MovementData.MovementResult, simulated_grid: Array):
+	# Find empty positions for new tile spawn
+	var empty_positions = []
+	for y in range(grid_size):
+		for x in range(grid_size):
+			if simulated_grid[y][x] == null:
+				empty_positions.append(Vector2i(x, y))
+	
+	if empty_positions.size() > 0:
+		var spawn_pos = empty_positions[randi() % empty_positions.size()]
+		var new_tile_data = MovementData.NewTileData.new(2, PowerManager.get_random_power(), spawn_pos)
+		result.new_tiles.append(new_tile_data)
+
+## Helper function to check if position is valid
+func _is_valid_position(x: int, y: int) -> bool:
+	return x >= 0 and x < grid_size and y >= 0 and y < grid_size
+
+
+# ============================================================================
+# NEW ARCHITECTURE EXAMPLE: Non-blocking movement processing
+# ============================================================================
+
+## Example of how process_movement would work with the new architecture
+func process_movement_with_new_architecture(direction: Direction) -> bool:
+	print("🚀 NEW: Processing movement with immediate architecture")
+	
+	# Step 1: Calculate all changes (pure calculation, no side effects)
+	var movement_result = calculate_movement_result(direction)
+	if movement_result == null:
+		print("  ❌ Movement not possible")
+		return false
+	
+	# Step 2: Apply all changes immediately to game state
+	apply_movement_result_immediately(movement_result)
+	print("  ✅ All state changes applied immediately")
+	
+	# Step 3: Launch animations in parallel (non-blocking)
+	launch_movement_animations(movement_result)
+	print("  🎬 Animations launched in parallel")
+	
+	# Game is immediately ready for next action!
+	can_move = true
+	print("  ⚡ Game ready for next move immediately")
+	return true

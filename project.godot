@@ -27,6 +27,7 @@ PowerManager="*res://managers/PowerManager.gd"
 SaveManager="*res://managers/SaveManager.gd"
 ToolsManager="*res://managers/ToolsManager.gd"
 EnemyManager="*res://managers/EnemyManager.gd"
+AnimationManager="*res://managers/AnimationManager.gd"
 
 [display]
 

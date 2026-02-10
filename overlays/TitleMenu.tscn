@@ -35,30 +35,30 @@ alignment = 1
 
 [node name="BtnNewGame" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "NEW GAME"
 
 [node name="BtnFreeMode" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "FREE MODE"
 
 [node name="BtnResume" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "RESUME"
 
 [node name="BtnRanking" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "RANKING"
 
 [node name="BtnOptions" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "OPTIONS"
 
 [node name="BtnQuit" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
-custom_minimum_size = Vector2(400, 70)
+custom_minimum_size = Vector2(400, 91)
 text = "QUIT"

@@ -14,13 +14,27 @@ var click_scale: Vector2  = Vector2(0.95, 0.95)
 const HOVER_DURATION: float = 0.1
 const CLICK_DURATION: float = 0.05
 
+# Reference to text label
+@onready var text_label = $TextLabel if has_node("TextLabel") else null
+
 
 func _ready():
 	# Set pivot for scaling animations
 	pivot_offset = size / 2
+	
+	# Sync text label with button text
+	if text_label:
+		text_label.text = text
 
 	# Connect signals based on platform
 	connect_signals()
+
+
+# Update text label when button text changes
+func _set(property, value):
+	if property == "text" and text_label:
+		text_label.text = value
+	return false
 
 
 # Connect appropriate signals based on platform
@@ -43,6 +57,13 @@ func _on_hover_start():
 	tween.tween_property(self, "scale", hover_scale, HOVER_DURATION)
 	tween.set_ease(Tween.EASE_OUT)
 	tween.set_trans(Tween.TRANS_BACK)
+	
+	# Counter-scale text to keep it crisp
+	if text_label:
+		var text_tween = create_tween()
+		text_tween.tween_property(text_label, "scale", Vector2.ONE / hover_scale, HOVER_DURATION)
+		text_tween.set_ease(Tween.EASE_OUT)
+		text_tween.set_trans(Tween.TRANS_BACK)
 
 
 # Hover end (PC only)
@@ -51,6 +72,12 @@ func _on_hover_end():
 	var tween = create_tween()
 	tween.tween_property(self, "scale", normal_scale, HOVER_DURATION)
 	tween.set_ease(Tween.EASE_OUT)
+	
+	# Reset text scale
+	if text_label:
+		var text_tween = create_tween()
+		text_tween.tween_property(text_label, "scale", Vector2.ONE, HOVER_DURATION)
+		text_tween.set_ease(Tween.EASE_OUT)
 
 
 # Button clicked (all platforms)
@@ -61,6 +88,12 @@ func _on_clicked():
 	var tween = create_tween()
 	tween.tween_property(self, "scale", click_scale, CLICK_DURATION)
 	tween.tween_property(self, "scale", normal_scale, CLICK_DURATION)
+	
+	# Counter-scale text during click
+	if text_label:
+		var text_tween = create_tween()
+		text_tween.tween_property(text_label, "scale", Vector2.ONE / click_scale, CLICK_DURATION)
+		text_tween.tween_property(text_label, "scale", Vector2.ONE, CLICK_DURATION)
 
 	# Emit custom signal
 	button_clicked.emit()

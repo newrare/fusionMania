@@ -157,10 +157,12 @@ The game features an enemy system that adds combat mechanics to the puzzle gamep
 #### Enemy Basics
 - **Spawn**: Enemy appears after the player's first fusion (triggers **Fight Mode**)
 - **Position**: Top-right corner with 10% margin from edges
-- **Sprites**: Randomly selected from multiple variants per level type
-  - Normal enemies (2-512): `enemy_idle_01.png` to `enemy_idle_12.png` (192x48px, 4-frame animation)
-  - Sub-Boss (1024): `enemy_subboss_*.png` series
-  - Main Boss (2048): `enemy_mainboss_*.png` series
+- **Sprites**: Health-based static images (876x876px displayed at 384x384px)
+  - Normal enemies (2-1024): `enemy_basic_hight_*.png`, `enemy_basic_middle_*.png`, `enemy_basic_low_*.png`
+  - Boss (2048): `enemy_boss_hight_01.png`, `enemy_boss_middle_01.png`, `enemy_boss_low_01.png`
+  - On spawn: Random "hight" variant selected
+  - At 1/3 HP lost (≤66% health): Switches to "middle" variant
+  - At 2/3 HP lost (≤33% health): Switches to "low" variant
 - **Glow Effect**: Each sprite has a colored glow matching its level color
 - **Health Bar**: Red bar above sprite showing remaining HP
 - **Level & Name**: Displayed below sprite (Lv + enemy name)

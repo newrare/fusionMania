@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bvq8w3h5fk2kl"]
+
+[ext_resource type="Script" path="res://tests/demo_immediate_architecture.gd" id="1_demo"]
+
+[node name="DemoImmediateArchitecture" type="Node"]
+script = ExtResource("1_demo")

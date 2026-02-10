@@ -1,14 +1,40 @@
-[gd_scene load_steps=2 format=3 uid="uid://b9kq8wxbhbtn1"]
+[gd_scene load_steps=5 format=3 uid="uid://b9kq8wxbhbtn1"]
 
 [ext_resource type="Script" path="res://widgets/UIButton.gd" id="1_btn01"]
+[ext_resource type="StyleBox" path="res://widgets/themes/simple_button_normal.tres" id="3_normal"]
+[ext_resource type="StyleBox" path="res://widgets/themes/simple_button_hover.tres" id="4_hover"]
+[ext_resource type="StyleBox" path="res://widgets/themes/simple_button_pressed.tres" id="5_pressed"]
+[ext_resource type="StyleBox" path="res://widgets/themes/simple_button_disabled.tres" id="6_disabled"]
 
 [node name="UIButton" type="Button"]
-custom_minimum_size = Vector2(300, 60)
+custom_minimum_size = Vector2(300, 150)
 offset_right = 300.0
-offset_bottom = 60.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 0.9, 0.4, 1)
-theme_override_colors/font_pressed_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 28
+offset_bottom = 150.0
+theme_override_colors/font_color = Color(1, 1, 1, 0)
+theme_override_colors/font_hover_color = Color(1, 0.95, 0.7, 0)
+theme_override_colors/font_pressed_color = Color(0.9, 0.9, 0.9, 0)
+theme_override_colors/font_disabled_color = Color(0.6, 0.6, 0.6, 0)
+theme_override_font_sizes/font_size = 32
+theme_override_styles/normal = ExtResource("3_normal")
+theme_override_styles/hover = ExtResource("4_hover")
+theme_override_styles/pressed = ExtResource("5_pressed")
+theme_override_styles/disabled = ExtResource("6_disabled")
 text = "Button"
+clip_text = false
 script = ExtResource("1_btn01")
+
+[node name="TextLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 32
+text = "Button"
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2

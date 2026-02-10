@@ -43,6 +43,13 @@ func create_cell_backgrounds():
 			cell_backgrounds.append(cell)
 
 
+# Get grid size (for layout calculations)  
+func get_grid_pixel_size():
+	var width  = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
+	var height = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
+	return Vector2(width, height)
+
+
 # Add tile to grid
 func add_tile(tile):
 	add_child(tile)
@@ -55,13 +62,6 @@ func calculate_screen_position(grid_pos: Vector2i):
 	var x = TILE_SPACING + grid_pos.x * (TILE_SIZE + TILE_SPACING)
 	var y = TILE_SPACING + grid_pos.y * (TILE_SIZE + TILE_SPACING)
 	return Vector2(x, y)
-
-
-# Get grid size (for layout calculations)
-func get_grid_pixel_size():
-	var width  = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
-	var height = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
-	return Vector2(width, height)
 
 
 # Clear all tiles from the grid
