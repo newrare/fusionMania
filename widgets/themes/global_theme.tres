@@ -1,0 +1,34 @@
+[gd_resource type="Theme" load_steps=2 format=3]
+
+[ext_resource type="FontFile" path="res://assets/others/westernic.otf" id="1_font"]
+
+[resource]
+default_font = ExtResource("1_font")
+default_font_size = 32
+
+Button/fonts/font = ExtResource("1_font")
+Button/font_sizes/font_size = 32
+
+Label/fonts/font = ExtResource("1_font")
+Label/font_sizes/font_size = 32
+
+RichTextLabel/fonts/normal_font = ExtResource("1_font")
+RichTextLabel/font_sizes/normal_font_size = 32
+
+LineEdit/fonts/font = ExtResource("1_font")
+LineEdit/font_sizes/font_size = 32
+
+TextEdit/fonts/font = ExtResource("1_font")
+TextEdit/font_sizes/font_size = 16
+
+TabContainer/fonts/font = ExtResource("1_font")
+TabContainer/font_sizes/font_size = 24
+
+OptionButton/fonts/font = ExtResource("1_font")
+OptionButton/font_sizes/font_size = 28
+
+CheckButton/fonts/font = ExtResource("1_font")
+CheckButton/font_sizes/font_size = 28
+
+HBoxContainer/constants/separation = 10
+VBoxContainer/constants/separation = 10

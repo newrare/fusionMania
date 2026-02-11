@@ -12,8 +12,14 @@ signal back_pressed()
 @onready var scores_container   = $MenuContainer/ScoresContainer
 @onready var btn_back           = $MenuContainer/BtnBack
 
+# Font reference
+var font_file: FontFile
+
 
 func _ready():
+	# Load the westernic font
+	font_file = preload("res://assets/others/westernic.otf")
+
 	# Initially hidden
 	hide()
 
@@ -56,6 +62,9 @@ func display_scores():
 		var no_scores_label     = Label.new()
 		no_scores_label.text    = tr("NO_SCORES")
 		no_scores_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if font_file:
+			no_scores_label.add_theme_font_override("font", font_file)
+			no_scores_label.add_theme_font_size_override("font_size", 28)
 		scores_container.add_child(no_scores_label)
 		return
 
@@ -77,6 +86,9 @@ func create_score_entry(rank: int, score_data: Dictionary):
 	rank_label.text                     = "#%d" % rank
 	rank_label.custom_minimum_size.x    = 60
 	rank_label.horizontal_alignment     = HORIZONTAL_ALIGNMENT_LEFT
+	if font_file:
+		rank_label.add_theme_font_override("font", font_file)
+		rank_label.add_theme_font_size_override("font_size", 24)
 	row.add_child(rank_label)
 
 	# Score label
@@ -84,6 +96,9 @@ func create_score_entry(rank: int, score_data: Dictionary):
 	score_label.text                    = str(score_data.get("score", 0))
 	score_label.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
 	score_label.horizontal_alignment    = HORIZONTAL_ALIGNMENT_CENTER
+	if font_file:
+		score_label.add_theme_font_override("font", font_file)
+		score_label.add_theme_font_size_override("font_size", 24)
 	row.add_child(score_label)
 
 	# Date label (formatted)
@@ -92,6 +107,9 @@ func create_score_entry(rank: int, score_data: Dictionary):
 	date_label.text                     = format_date(date_str)
 	date_label.custom_minimum_size.x    = 100
 	date_label.horizontal_alignment     = HORIZONTAL_ALIGNMENT_RIGHT
+	if font_file:
+		date_label.add_theme_font_override("font", font_file)
+		date_label.add_theme_font_size_override("font_size", 24)
 	row.add_child(date_label)
 
 	return row

@@ -26,6 +26,8 @@ func load_basic_translations():
 
 	# Menu
 	en_translation.add_message("START", 		"New Game")
+	en_translation.add_message("NEW_GAME",		"New Game")
+	en_translation.add_message("FREE_MODE",		"Free Mode")
 	en_translation.add_message("RESUME", 		"Resume")
 	en_translation.add_message("RANKING", 		"Ranking")
 	en_translation.add_message("RANKING_TITLE", "Ranking")
@@ -59,6 +61,10 @@ func load_basic_translations():
 	en_translation.add_message("NO",			"No")
 	en_translation.add_message("SUCCESS", 		"Success!")
 	en_translation.add_message("NO_SCORES",		"No scores yet")
+	
+	# Start screen
+	en_translation.add_message("PRESS_KEY_TO_START",	"Press any key to start")
+	en_translation.add_message("PRESS_SCREEN_TO_START",	"Tap the screen to start")
 
 	# Powers
 	en_translation.add_message("POWER_FIRE_HORIZONTAL",		"Fire Row")
@@ -89,6 +95,8 @@ func load_basic_translations():
 
 	# Menu
 	fr_translation.add_message("START", 		"Nouvelle Partie")
+	fr_translation.add_message("NEW_GAME",		"Nouvelle Partie")
+	fr_translation.add_message("FREE_MODE",		"Mode Libre")
 	fr_translation.add_message("RESUME", 		"Reprendre")
 	fr_translation.add_message("RANKING",		"Classement")
 	fr_translation.add_message("RANKING_TITLE",	"Classement")
@@ -122,6 +130,10 @@ func load_basic_translations():
 	fr_translation.add_message("NO",			"Non")
 	fr_translation.add_message("SUCCESS",		"OK !")
 	fr_translation.add_message("NO_SCORES",		"Pas encore de scores")
+	
+	# Start screen
+	fr_translation.add_message("PRESS_KEY_TO_START",	"Appuyez sur une touche pour commencer")
+	fr_translation.add_message("PRESS_SCREEN_TO_START",	"Appuyez sur l'écran pour commencer")
 
 	# Powers
 	fr_translation.add_message("POWER_FIRE_HORIZONTAL",		"Feu Horizontal")

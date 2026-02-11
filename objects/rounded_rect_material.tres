@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/rounded_rect.gdshader" id="1"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/corner_radius = 16.0
+shader_parameter/rect_size = Vector2(240, 240)

@@ -4,6 +4,7 @@ extends Node2D
 
 @onready var background_layer         = $BackgroundLayer
 @onready var grid                     = $Grid
+@onready var start_screen             = $StartScreen
 @onready var title_menu               = $TitleMenu
 @onready var power_choice_menu        = $PowerChoiceMenu
 @onready var options_menu             = $OptionsMenu
@@ -84,6 +85,9 @@ func _ready():
 		EnemyManager.power_ball_animation_requested.connect(_on_power_ball_animation_requested)
 		EnemyManager.cancel_power_animations.connect(_on_cancel_power_animations)
 
+	# Connect to StartScreen signals
+	start_screen.start_pressed.connect(_on_start_screen_pressed)
+
 	# Connect to TitleMenu signals
 	title_menu.new_game_pressed.connect(_on_new_game_pressed)
 	title_menu.free_mode_pressed.connect(_on_free_mode_pressed)
@@ -108,9 +112,10 @@ func _ready():
 	game_over_menu.new_game_pressed.connect(_on_gameover_new_game)
 	game_over_menu.menu_pressed.connect(_on_gameover_menu)
 
-	# Show title menu at start
+	# Show start screen at launch
 	_hide_grid()
-	title_menu.show_menu()
+	_hide_score()
+	start_screen.show_screen()
 
 
 # Process loop for parallax scrolling
@@ -207,6 +212,7 @@ func _set_minimum_window_size():
 
 # Hide all overlays
 func hide_all_overlays():
+	start_screen.hide_screen()
 	title_menu.hide_menu()
 	power_choice_menu.hide_menu()
 	options_menu.hide_menu()
@@ -214,11 +220,31 @@ func hide_all_overlays():
 	game_over_menu.hide_menu()
 	# Rendre la grille visible quand tous les menus sont fermés
 	grid.visible = true
+	_show_score()
 
 
 # Cacher la grille quand un menu overlay s'ouvre
 func _hide_grid():
 	grid.visible = false
+
+
+# Cacher les labels de score et moves
+func _hide_score():
+	score_label.visible = false
+	move_count_label.visible = false
+
+
+# Afficher les labels de score et moves
+func _show_score():
+	score_label.visible = true
+	move_count_label.visible = true
+
+
+# Start screen signal handler
+func _on_start_screen_pressed():
+	print("GameScene: Start screen pressed, showing title menu")
+	start_screen.hide_screen()
+	title_menu.show_menu()
 
 
 # Title menu signal handlers

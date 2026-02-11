@@ -28,12 +28,27 @@ func _ready():
 
 # Create visual backgrounds for each cell
 func create_cell_backgrounds():
+	# Load texture for grid cells
+	var grid_texture = load("res://assets/images/texture_grid.svg")
+	
+	# Create StyleBoxTexture with 9-slice
+	var style_box = StyleBoxTexture.new()
+	style_box.texture              = grid_texture
+	style_box.texture_margin_left   = 20.0
+	style_box.texture_margin_top    = 20.0
+	style_box.texture_margin_right  = 20.0
+	style_box.texture_margin_bottom = 20.0
+	style_box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+	style_box.axis_stretch_vertical   = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+	
 	for y in range(GRID_SIZE):
 		for x in range(GRID_SIZE):
-			var cell = ColorRect.new()
-			cell.color    = Color(0.4, 0.4, 0.45, 0.4)  # Dark gray cell avec 60% de transparence
-			cell.size     = Vector2(TILE_SIZE, TILE_SIZE)
-			cell.position = Vector2(
+			var cell = Panel.new()
+			cell.add_theme_stylebox_override("panel", style_box)
+			cell.modulate = Color(1, 1, 1, 0.5)  # 50% transparency
+			cell.custom_minimum_size = Vector2(TILE_SIZE, TILE_SIZE)
+			cell.size          = Vector2(TILE_SIZE, TILE_SIZE)
+			cell.position      = Vector2(
 				TILE_SPACING + x * (TILE_SIZE + TILE_SPACING),
 				TILE_SPACING + y * (TILE_SIZE + TILE_SPACING)
 			)

@@ -13,7 +13,7 @@ signal quit_pressed()
 # Node references
 @onready var overlay_background = $OverlayBackground
 @onready var menu_container     = $MenuContainer
-@onready var logo_label          = $MenuContainer/Logo
+@onready var logo                = $MenuContainer/Logo
 @onready var btn_new_game        = $MenuContainer/ButtonsContainer/BtnNewGame
 @onready var btn_free_mode       = $MenuContainer/ButtonsContainer/BtnFreeMode
 @onready var btn_resume          = $MenuContainer/ButtonsContainer/BtnResume
@@ -62,7 +62,7 @@ func hide_menu():
 
 # Update all button texts with translations
 func update_translations():
-	logo_label.text    = tr("FUSION_MANIA")
+	# Logo is now an image (TextureRect), no text to update
 	btn_new_game.text  = tr("NEW_GAME")
 	btn_free_mode.text = tr("FREE_MODE")
 	btn_resume.text    = tr("RESUME")

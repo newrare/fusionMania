@@ -21,7 +21,7 @@ const CLICK_DURATION: float = 0.05
 func _ready():
 	# Set pivot for scaling animations
 	pivot_offset = size / 2
-	
+
 	# Sync text label with button text
 	if text_label:
 		text_label.text = text
@@ -57,7 +57,7 @@ func _on_hover_start():
 	tween.tween_property(self, "scale", hover_scale, HOVER_DURATION)
 	tween.set_ease(Tween.EASE_OUT)
 	tween.set_trans(Tween.TRANS_BACK)
-	
+
 	# Counter-scale text to keep it crisp
 	if text_label:
 		var text_tween = create_tween()
@@ -72,7 +72,7 @@ func _on_hover_end():
 	var tween = create_tween()
 	tween.tween_property(self, "scale", normal_scale, HOVER_DURATION)
 	tween.set_ease(Tween.EASE_OUT)
-	
+
 	# Reset text scale
 	if text_label:
 		var text_tween = create_tween()
@@ -88,7 +88,7 @@ func _on_clicked():
 	var tween = create_tween()
 	tween.tween_property(self, "scale", click_scale, CLICK_DURATION)
 	tween.tween_property(self, "scale", normal_scale, CLICK_DURATION)
-	
+
 	# Counter-scale text during click
 	if text_label:
 		var text_tween = create_tween()

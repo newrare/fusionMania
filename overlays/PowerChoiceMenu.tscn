@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://bpowerchoicemenu"]
+[gd_scene load_steps=4 format=3 uid="uid://bpowerchoicemenu"]
 
 [ext_resource type="Script" path="res://overlays/PowerChoiceMenu.gd" id="1_powerchoice"]
 [ext_resource type="PackedScene" uid="uid://b9kq8wxbhbtn1" path="res://widgets/UIButton.tscn" id="2_uibtn"]
+[ext_resource type="FontFile" path="res://assets/others/westernic.otf" id="3_font"]
 
 [node name="PowerChoiceMenu" type="CanvasLayer"]
 script = ExtResource("1_powerchoice")
@@ -20,13 +21,15 @@ theme_override_constants/separation = 20
 
 [node name="TitleLabel" type="Label" parent="MenuContainer"]
 layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
 theme_override_font_sizes/font_size = 48
 text = "FREE MODE - SELECT POWERS"
 horizontal_alignment = 1
 
 [node name="SelectionInfo" type="Label" parent="MenuContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.843137, 0, 1)
+theme_override_colos/font = ExtResource("3_font")
+theme_override_fontrs/font_color = Color(1, 0.843137, 0, 1)
 theme_override_font_sizes/font_size = 24
 text = "No powers selected - All powers will spawn"
 horizontal_alignment = 1

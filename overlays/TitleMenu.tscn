@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://d5kq9wxbhtitle"]
+[gd_scene load_steps=5 format=3 uid="uid://d5kq9wxbhtitle"]
 
 [ext_resource type="Script" path="res://overlays/TitleMenu.gd" id="1_title01"]
 [ext_resource type="PackedScene" uid="uid://b9kq8wxbhbtn1" path="res://widgets/UIButton.tscn" id="2_uibtn"]
+[ext_resource type="FontFile" path="res://assets/others/westernic.otf" id="3_font"]
+[ext_resource type="Texture2D" path="res://assets/images/logo.png" id="4_logo"]
 
 [node name="TitleMenu" type="CanvasLayer"]
 script = ExtResource("1_title01")
@@ -12,17 +14,20 @@ offset_bottom = 1920.0
 color = Color(0, 0, 0, 0.6)
 
 [node name="MenuContainer" type="VBoxContainer" parent="."]
+anchor_top = 0.5
+anchor_bottom = 0.5
 offset_left = 240.0
-offset_top = 600.0
+offset_top = -280.0
 offset_right = 840.0
-offset_bottom = 1200.0
+offset_bottom = 280.0
+grow_vertical = 2
 
-[node name="Logo" type="Label" parent="MenuContainer"]
+[node name="Logo" type="TextureRect" parent="MenuContainer"]
+custom_minimum_size = Vector2(0, 400)
 layout_mode = 2
-theme_override_font_sizes/font_size = 64
-text = "FUSION MANIA"
-horizontal_alignment = 1
-vertical_alignment = 1
+texture = ExtResource("4_logo")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Spacer1" type="Control" parent="MenuContainer"]
 custom_minimum_size = Vector2(0, 80)
