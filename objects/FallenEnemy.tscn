@@ -1,0 +1,58 @@
+[gd_scene load_steps=3 format=3 uid="uid://cefz4wl3cw7x"]
+
+[ext_resource type="Script" path="res://objects/FallenEnemy.gd" id="1_nj5gn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_square"]
+size = Vector2(240, 240)
+
+[node name="FallenEnemy" type="RigidBody2D"]
+script = ExtResource("1_nj5gn")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 0)
+shape = SubResource("RectangleShape2D_square")
+
+[node name="TileContainer" type="Control" parent="."]
+clip_contents = true
+custom_minimum_size = Vector2(240, 240)
+layout_mode = 3
+anchors_preset = 0
+offset_left = -120.0
+offset_top = -120.0
+offset_right = 120.0
+offset_bottom = 120.0
+
+[node name="BackgroundPanel" type="Panel" parent="TileContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EnemySprite" type="Sprite2D" parent="TileContainer"]
+z_index = 1
+position = Vector2(120, 120)
+scale = Vector2(0.273973, 0.273973)
+
+[node name="NameLabel" type="Label" parent="TileContainer"]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -40.0
+offset_right = 100.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+vertical_alignment = 2
+clip_text = true

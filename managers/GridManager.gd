@@ -24,7 +24,7 @@ var blind_turns: int			= 0
 # Signals
 signal tile_spawned(tile, position: Vector2i)
 signal movement_completed(direction: Direction)
-signal tiles_moved()
+signal tiles_moved(direction: Direction)
 signal fusion_occurred(tile1, tile2, new_tile)
 signal no_moves_available()
 signal game_over()
@@ -167,6 +167,14 @@ func create_tile(value: int, power: String, grid_pos: Vector2i, is_new_spawn: bo
 
 # Destroy tile
 func destroy_tile(tile):
+	# Check if tile value is greater than current enemy level BEFORE destroying
+	var enemy_level = EnemyManager.get_current_enemy_level()
+	if enemy_level > 0 and tile.value > enemy_level:
+		print("💀 GAME OVER: Destroying tile (value=%d) greater than enemy level (%d)!" % [tile.value, enemy_level])
+		# Trigger game over immediately
+		game_over.emit()
+		return
+	
 	var pos = tile.grid_position
 	grid[pos.y][pos.x] = null
 	tile.destroy_animation()
@@ -701,11 +709,16 @@ func process_fusions(fusions: Array):
 		AudioManager.play_sfx_fusion()
 		print("🔊 Playing fusion SFX (no power)")
 
-	# Activate only the highest priority power
+	# Activate only the highest priority power (ONLY in FIGHT mode)
 	if power_to_activate != null and power_tile != null:
-		print("⚡ Activating power '%s' via PowerManager" % power_to_activate)
-		await PowerManager.activate_power(power_to_activate, power_tile, self)
-		print("✅ Power activation completed")
+		# Check if powers are enabled (FIGHT mode only)
+		if GameManager.is_fight_mode():
+			print("⚡ Activating power '%s' via PowerManager" % power_to_activate)
+			await PowerManager.activate_power(power_to_activate, power_tile, self)
+			print("✅ Power activation completed")
+		else:
+			print("🚫 Power '%s' skipped - not in FIGHT mode (current mode: %s)" % [power_to_activate, "CLASSIC" if GameManager.is_classic_mode() else "FREE"])
+			AudioManager.play_sfx_fusion()
 	else:
 		print("❌ No power to activate - power_to_activate: %s, power_tile: %s" % [power_to_activate, power_tile])
 
@@ -767,7 +780,7 @@ func process_movement(direction: Direction):
 	# If at least one tile moved
 	if moved:
 		move_count += 1
-		tiles_moved.emit()
+		tiles_moved.emit(direction)
 		AudioManager.play_sfx_move()
 
 		# Mark previously new tiles as old (they've had one movement now)
@@ -1038,6 +1051,13 @@ func _apply_power_effect_immediately(power_effect: MovementData.PowerEffectData)
 func _destroy_tile_immediately(destroyed_tile: MovementData.DestroyedTileData):
 	var pos = destroyed_tile.position
 	var tile = destroyed_tile.tile
+	
+	# Check if tile value is greater than current enemy level
+	var enemy_level = EnemyManager.get_current_enemy_level()
+	if enemy_level > 0 and tile.value > enemy_level:
+		print("💀 GAME OVER: Destroyed tile (value=%d) is greater than enemy level (%d)!" % [tile.value, enemy_level])
+		# Trigger game over
+		game_over.emit()
 	
 	# Remove from grid
 	if grid[pos.y][pos.x] == tile:

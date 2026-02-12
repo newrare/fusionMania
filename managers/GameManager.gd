@@ -26,6 +26,12 @@ var current_mode: GameMode = GameMode.CLASSIC
 var game_data:     Dictionary = {}  # Stores current game session data
 
 # ============================
+# Scene Reload Persistence
+# ============================
+var pending_free_mode_powers: Array = []  # Powers to apply after scene reload
+var should_start_new_game: bool = false   # Flag for scene reload to start new game
+
+# ============================
 # Persistent Power States
 # ============================
 var blind_turns_remaining: int = 0
@@ -139,6 +145,11 @@ func end_game(victory: bool):
 		print("🏆 Game ended - VICTORY! Score: %d (Rank: %d)" % [final_score, rank])
 	else:
 		print("💀 Game ended - Game Over. Score: %d (Rank: %d)" % [final_score, rank])
+
+
+# Get current game state data
+func get_game_state() -> Dictionary:
+	return game_data.duplicate()
 
 
 # Return to menu

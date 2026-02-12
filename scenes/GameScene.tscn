@@ -22,6 +22,7 @@ script = ExtResource("1_gamescene")
 theme = ExtResource("15_theme")
 
 [node name="BackgroundLayer" type="Node2D" parent="."]
+z_index = -1
 
 [node name="Sky" type="Sprite2D" parent="BackgroundLayer"]
 position = Vector2(540, 960)
@@ -66,6 +67,7 @@ color = Color(0.2, 0.2, 0.25, 1)
 
 [node name="Grid" parent="." instance=ExtResource("2_grid")]
 position = Vector2(10, 430)
+z_index = 10
 
 [node name="TitleMenu" parent="." instance=ExtResource("3_title")]
 

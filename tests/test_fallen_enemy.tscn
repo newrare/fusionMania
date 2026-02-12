@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3 uid="uid://dfallen_enemy_test"]
+
+[ext_resource type="Script" path="res://tests/test_fallen_enemy.gd" id="1_test"]
+
+[node name="TestFallenEnemy" type="Node2D"]
+script = ExtResource("1_test")
+
+[node name="GroundCollider" type="StaticBody2D"]
+position = Vector2(540, 1480)
+collision_layer = 3
+collision_mask = 3
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GroundCollider"]
+shape = RectangleShape2D
+shape.size = Vector2(1080, 100)
+
+[node name="GroundVisual" type="ColorRect" parent="GroundCollider"]
+offset_top = -50.0
+offset_right = 1080.0
+offset_bottom = 50.0
+color = Color(0.4, 0.3, 0.2, 1)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(540, 960)
+zoom = 0.5

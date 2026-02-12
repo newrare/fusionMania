@@ -311,6 +311,13 @@ func is_enemy_active():
 	return not active_enemy.is_empty()
 
 
+# Get current enemy level (returns 0 if no active enemy)
+func get_current_enemy_level() -> int:
+	if is_enemy_active():
+		return active_enemy.get("level", 0)
+	return 0
+
+
 # Handle move completion (called after each player move)
 func on_move_completed():
 	print("🎮 on_move_completed called - enemy_defeated_flag=%s, moves_until_respawn=%d" % [enemy_defeated_flag, moves_until_respawn])

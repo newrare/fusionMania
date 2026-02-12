@@ -112,10 +112,42 @@ func _ready():
 	game_over_menu.new_game_pressed.connect(_on_gameover_new_game)
 	game_over_menu.menu_pressed.connect(_on_gameover_menu)
 
-	# Show start screen at launch
-	_hide_grid()
-	_hide_score()
-	start_screen.show_screen()
+	# Handle scene reload for new game or custom powers
+	if GameManager.should_start_new_game:
+		GameManager.should_start_new_game = false
+		hide_all_overlays()
+		# Reset UI counters
+		move_count = 0
+		update_move_count()
+		update_score_display()
+		
+		# Check if coming from power selection (FREE mode) or classic new game
+		if GameManager.pending_free_mode_powers.size() > 0:
+			# Enter Free Mode with selected powers
+			GameManager.enter_free_mode(GameManager.pending_free_mode_powers)
+			GameManager.pending_free_mode_powers.clear()
+			GameManager.start_new_game()
+			# Assign powers to the initial tiles after grid is created
+			GameManager.assign_powers_to_existing_tiles()
+		else:
+			# Enter Classic mode (no powers)
+			GameManager.enter_classic_mode()
+			GameManager.start_new_game()
+	else:
+		# Show start screen at launch
+		_hide_grid()
+		_hide_score()
+		start_screen.show_screen()
+	
+	# Debug: Check ground collider position
+	var ground_collider = get_node_or_null("GroundCollider")
+	if ground_collider:
+		print("✅ GroundCollider found at: %s" % ground_collider.global_position)
+		var collision_shape = ground_collider.get_node_or_null("CollisionShape2D")
+		if collision_shape and collision_shape.shape:
+			print("   Shape: %s" % collision_shape.shape)
+	else:
+		print("❌ GroundCollider NOT FOUND!")
 
 
 # Process loop for parallax scrolling
@@ -249,14 +281,10 @@ func _on_start_screen_pressed():
 
 # Title menu signal handlers
 func _on_new_game_pressed():
-	hide_all_overlays()
-	# Reset UI counters
-	move_count = 0
-	update_move_count()
-	update_score_display()
-	# Ensure we're in Classic mode (no powers)
-	GameManager.enter_classic_mode()
-	GameManager.start_new_game()
+	# Set flag for new game after reload
+	GameManager.should_start_new_game = true
+	# Reload scene completely for a clean state
+	get_tree().reload_current_scene()
 
 
 func _on_free_mode_pressed():
@@ -266,14 +294,8 @@ func _on_free_mode_pressed():
 
 
 func _on_resume_pressed():
+	# Simply resume the game - grids, tweens, and all game objects remain in their paused state
 	hide_all_overlays()
-	var save_data = SaveManager.load_game()
-	if not save_data.is_empty():
-		SaveManager.restore_game(save_data)
-		# Restore move count if saved
-		move_count = save_data.get("move_count", 0)
-		update_move_count()
-		# Enemy state is automatically restored by SaveManager.restore_game()
 	GameManager.resume_game()
 
 
@@ -295,16 +317,11 @@ func _on_quit_pressed():
 
 # PowerChoiceMenu signal handlers
 func _on_powers_selected(selected_powers: Array):
-	hide_all_overlays()
-	# Reset UI counters
-	move_count = 0
-	update_move_count()
-	update_score_display()
-	# Enter Free Mode BEFORE starting game so initial tiles spawn with powers
-	GameManager.enter_free_mode(selected_powers)
-	GameManager.start_new_game()
-	# Assign powers to the initial tiles after grid is created
-	GameManager.assign_powers_to_existing_tiles()
+	# Save powers to GameManager before reloading scene
+	GameManager.pending_free_mode_powers = selected_powers
+	GameManager.should_start_new_game = true
+	# Reload scene completely for a clean state with selected powers
+	get_tree().reload_current_scene()
 
 
 func _on_power_choice_back():
@@ -333,14 +350,12 @@ func _on_ranking_back():
 
 # GameOver menu signal handlers
 func _on_gameover_new_game():
-	hide_all_overlays()
-	# Ensure we're in Classic mode when starting new game from game over
-	GameManager.enter_classic_mode()
-	GameManager.start_new_game()
+	# Reload scene completely for a clean state
+	get_tree().reload_current_scene()
 
 
 func _on_gameover_menu():
-	hide_all_overlays()
+	# Return to menu - don't reload, as we may return to main menu outside GameScene
 	GameManager.return_to_menu()
 	_hide_grid()
 	title_menu.show_menu()
@@ -394,10 +409,13 @@ func _on_fusion_occurred(tile1, tile2, new_tile):
 	enemy_just_spawned = false
 
 
-func _on_tiles_moved():
+func _on_tiles_moved(direction):
 	# Increment move counter when tiles actually moved
 	move_count += 1
 	update_move_count()
+
+	# Apply bounce to all fallen enemies
+	_bounce_fallen_enemies(direction)
 
 	# Update enemy respawn timer
 	if EnemyManager != null:
@@ -428,6 +446,14 @@ func _on_power_activated(power_type: String, tile):
 	ui_effect.show_power_message(power_name, world_position)
 
 
+# Apply small bounce to all fallen enemies (called on each move)
+func _bounce_fallen_enemies(direction):
+	var fallen_enemies = get_tree().get_nodes_in_group("fallen_enemy")
+	for fallen in fallen_enemies:
+		if fallen.has_method("apply_movement_bounce"):
+			fallen.apply_movement_bounce(direction)
+
+
 # EnemyManager signal handlers
 func _on_enemy_spawned(enemy_data: Dictionary):
 	# Instance the Enemy scene
@@ -436,6 +462,9 @@ func _on_enemy_spawned(enemy_data: Dictionary):
 
 	# Initialize enemy with data from EnemyManager
 	enemy.initialize(enemy_data)
+	
+	# Set z-index so enemy is in front of fallen enemies (z_index = 1)
+	enemy.z_index = 2
 
 	# Clear any existing enemy first
 	for child in enemy_container.get_children():
