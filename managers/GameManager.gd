@@ -3,9 +3,9 @@
 extends Node
 
 # Viewport design constants
-const DESIGN_WIDTH = 1080.0
-const DESIGN_HEIGHT = 1920.0
-const MIN_WINDOW_WIDTH = 540.0
+const DESIGN_WIDTH      = 1080.0
+const DESIGN_HEIGHT     = 1920.0
+const MIN_WINDOW_WIDTH  = 540.0
 const MIN_WINDOW_HEIGHT = 960.0
 
 enum GameState {
@@ -16,43 +16,44 @@ enum GameState {
 }
 
 enum GameMode {
-	CLASSIC,  # No powers on tiles (no enemy active)
-	FIGHT,    # Enemy assigns powers to tiles
-	FREE      # Player-selected powers spawn on tiles, no enemy
+	MANIA,    # Powers activated by enemy spawn
+	CLASSIC,  # No powers, no enemies
+	FREE      # Powers chosen by player and tile spawn with powers already set, no enemies
 }
 
 var current_state: GameState = GameState.MENU
-var current_mode: GameMode = GameMode.CLASSIC
-var game_data:     Dictionary = {}  # Stores current game session data
+var current_mode = GameMode.CLASSIC
+var game_data    = {}  # Stores current game session data
+var game_session_active: bool = false  # True if a game is currently active or paused
 
 # ============================
 # Scene Reload Persistence
 # ============================
 var pending_free_mode_powers: Array = []  # Powers to apply after scene reload
-var should_start_new_game: bool = false   # Flag for scene reload to start new game
-
+var should_start_new_game = false   # Flag for scene reload to start new game
+var pending_game_mode     = GameMode.CLASSIC  # Mode to start after scene reload
 # ============================
 # Persistent Power States
 # ============================
-var blind_turns_remaining: int = 0
-var is_blind_active: bool = false
-var blocked_directions: Dictionary = {}  # {Direction: turns_remaining}
+var blind_turns_remaining	= 0
+var is_blind_active         = false
+var blocked_directions      = {}  # {Direction: turns_remaining}
 
 # Constants for power durations
-const DEFAULT_BLIND_TURNS: int = 3
-const DEFAULT_BLOCK_TURNS: int = 3
+const DEFAULT_BLIND_TURNS = 3
+const DEFAULT_BLOCK_TURNS = 3
 
 # Signals
-signal state_changed(new_state: GameState)
-signal mode_changed(new_mode: GameMode)
+signal state_changed(new_state)
+signal mode_changed(new_mode)
 signal game_started()
 signal game_paused()
 signal game_resumed()
-signal game_ended(victory: bool)
+signal game_ended(victory)
 signal blind_started()
 signal blind_ended()
-signal direction_blocked(direction: int, turns: int)
-signal direction_unblocked(direction: int)
+signal direction_blocked(direction, turns)
+signal direction_unblocked(direction)
 signal all_tile_powers_cleared()
 
 func _ready():
@@ -82,11 +83,13 @@ func start_new_game():
 		"tiles":      []
 	}
 
+	# Mark game as started
+	game_session_active = true
+
 	# Reset score and grid (this clears visual tiles and spawns new ones)
 	ScoreManager.start_game()
 	GridManager.start_new_game()
 
-	# Change state
 	change_state(GameState.PLAYING)
 	game_started.emit()
 
@@ -96,14 +99,11 @@ func start_new_game():
 # Reset all persistent power states
 func reset_power_states():
 	blind_turns_remaining = 0
-	is_blind_active = false
+	is_blind_active       = false
 	blocked_directions.clear()
-	# Only reset mode to CLASSIC if not already in FREE mode
 	if current_mode != GameMode.FREE:
 		current_mode = GameMode.CLASSIC
-		# Reset PowerManager to Classic Mode (no powers)
 		PowerManager.set_no_powers()
-	# Reset enemy first fusion flag
 	EnemyManager.first_fusion_occurred = false
 	print("🔄 Power states reset - Mode: %s" % GameMode.keys()[current_mode])
 
@@ -136,27 +136,21 @@ func end_game(victory: bool):
 	game_data["final_score"]  = final_score
 	game_data["victory"]      = victory
 	game_data["rank"]         = rank
+	# Mark game as not started anymore
+	game_session_active = false
 
 	# Change state
 	change_state(GameState.GAME_OVER)
 	game_ended.emit(victory)
 
-	if victory:
-		print("🏆 Game ended - VICTORY! Score: %d (Rank: %d)" % [final_score, rank])
-	else:
-		print("💀 Game ended - Game Over. Score: %d (Rank: %d)" % [final_score, rank])
-
-
 # Get current game state data
-func get_game_state() -> Dictionary:
+func get_game_state():
 	return game_data.duplicate()
 
 
 # Return to menu
 func return_to_menu():
 	change_state(GameState.MENU)
-
-	print("🏠 Returned to menu")
 
 
 # Check if currently playing
@@ -274,50 +268,35 @@ func decrement_power_counters():
 # Game Mode Methods
 # ============================
 
-# Enter Fight Mode (when enemy spawns)
-func enter_fight_mode():
-	if current_mode == GameMode.FIGHT:
+# Enter Mania Mode (powers activated by enemy spawn)
+func enter_mania_mode():
+	if current_mode == GameMode.MANIA:
 		return
+	current_mode = GameMode.MANIA
+	mode_changed.emit(GameMode.MANIA)
+	print("⚔️ Entering MANIA mode")
 
-	current_mode = GameMode.FIGHT
-	mode_changed.emit(GameMode.FIGHT)
-	print("⚔️ Entering FIGHT mode")
 
-
-# Enter Classic Mode (when enemy is defeated)
+# Enter Classic Mode (no powers, no enemies)
 func enter_classic_mode():
 	if current_mode == GameMode.CLASSIC:
 		return
-
 	current_mode = GameMode.CLASSIC
-
-	# Clear all tile powers
 	clear_all_tile_powers()
-
-	# Set PowerManager to no powers
 	PowerManager.set_no_powers()
-
+	EnemyManager.first_fusion_occurred = true
 	mode_changed.emit(GameMode.CLASSIC)
 	print("🎮 Entering CLASSIC mode")
 
 
 # Enter Free Mode (player-selected powers)
-func enter_free_mode(selected_powers: Array = []):
+func enter_free_mode(selected_powers = []):
 	if current_mode == GameMode.FREE:
 		return
-
 	current_mode = GameMode.FREE
-
-	# Clear all tile powers first
 	clear_all_tile_powers()
-
-	# Set PowerManager with custom spawn rates for selected powers
 	PowerManager.set_custom_spawn_rates(selected_powers)
-
-	# In Free Mode, we don't want enemy logic to trigger
-	# So we mark first fusion as occurred to prevent enemy spawn
 	EnemyManager.first_fusion_occurred = true
-
 	mode_changed.emit(GameMode.FREE)
 	print("🆓 Entering FREE mode with %d selected powers" % selected_powers.size())
 
@@ -351,9 +330,9 @@ func assign_powers_to_existing_tiles():
 	print("🔮 Assigned powers to %d existing tiles" % tiles_with_powers)
 
 
-# Check if in Fight mode
-func is_fight_mode():
-	return current_mode == GameMode.FIGHT
+# Check if in Mania mode
+func is_mania_mode():
+	return current_mode == GameMode.MANIA
 
 
 # Check if in Classic mode

@@ -30,8 +30,8 @@ signal all_animations_cancelled()
 func _ready():
 	print("🎬 AnimationManager ready - Managing parallel animations")
 
-## Register an animation tween with a group for management
-func register_animation(tween: Tween, group: String = "default") -> bool:
+# Register an animation tween with a group for management
+func register_animation(tween, group = "default"):
 	if not tween or not tween.is_valid():
 		print("⚠️ AnimationManager: Invalid tween provided")
 		return false
@@ -77,26 +77,26 @@ func cancel_all_animations():
 	active_animations.clear()
 	all_animations_cancelled.emit()
 
-## Get number of active animation groups
-func get_active_group_count() -> int:
+# Get number of active animation groups
+func get_active_group_count():
 	return active_animations.size()
 
-## Get number of animations in a specific group  
-func get_group_animation_count(group: String) -> int:
+# Get number of animations in a specific group  
+func get_group_animation_count(group):
 	if active_animations.has(group):
 		return active_animations[group].size()
 	return 0
 
-## Check if a specific group is active
-func is_group_active(group: String) -> bool:
+# Check if a specific group is active
+func is_group_active(group):
 	return active_animations.has(group) and active_animations[group].size() > 0
 
 # ============================================================================
 # ANIMATION CREATION HELPERS
 # ============================================================================
 
-## Create and register a movement animation
-func create_movement_animation(tile: Node, target_pos: Vector2, duration: float = 0.2, group: String = "movement") -> Tween:
+# Create and register a movement animation
+func create_movement_animation(tile, target_pos, duration = 0.2, group = "movement"):
 	if not tile:
 		return null
 	
@@ -108,8 +108,8 @@ func create_movement_animation(tile: Node, target_pos: Vector2, duration: float 
 	register_animation(tween, group)
 	return tween
 
-## Create and register a fade animation
-func create_fade_animation(node: Node, target_alpha: float, duration: float = 0.3, group: String = "effects") -> Tween:
+# Create and register a fade animation
+func create_fade_animation(node, target_alpha, duration = 0.3, group = "effects"):
 	if not node:
 		return null
 	
@@ -119,8 +119,8 @@ func create_fade_animation(node: Node, target_alpha: float, duration: float = 0.
 	register_animation(tween, group)
 	return tween
 
-## Create and register a scale animation
-func create_scale_animation(node: Node, target_scale: Vector2, duration: float = 0.2, group: String = "effects") -> Tween:
+# Create and register a scale animation
+func create_scale_animation(node, target_scale, duration = 0.2, group = "effects"):
 	if not node:
 		return null
 	
@@ -132,8 +132,8 @@ func create_scale_animation(node: Node, target_scale: Vector2, duration: float =
 	register_animation(tween, group)
 	return tween
 
-## Create and register a bounce animation for feedback
-func create_bounce_animation(node: Node, direction_offset: Vector2, duration: float = 0.2, group: String = "feedback") -> Tween:
+# Create and register a bounce animation for feedback
+func create_bounce_animation(node, direction_offset, duration = 0.2, group = "feedback"):
 	if not node:
 		return null
 	
@@ -150,8 +150,8 @@ func create_bounce_animation(node: Node, direction_offset: Vector2, duration: fl
 # POWER EFFECT ANIMATIONS
 # ============================================================================
 
-## Create explosion effect animation
-func create_explosion_animation(center_pos: Vector2, group: String = "powers") -> Tween:
+# Create explosion effect animation
+func create_explosion_animation(center_pos, group = "powers"):
 	# Create temporary explosion node
 	var explosion = ColorRect.new()
 	explosion.color = Color.ORANGE
@@ -172,8 +172,8 @@ func create_explosion_animation(center_pos: Vector2, group: String = "powers") -
 	register_animation(tween, group)
 	return tween
 
-## Create ice effect animation
-func create_ice_effect_animation(tile_pos: Vector2, group: String = "powers") -> Tween:
+# Create ice effect animation
+func create_ice_effect_animation(tile_pos, group = "powers"):
 	# Create temporary ice overlay
 	var ice_effect = ColorRect.new()
 	ice_effect.color = Color(0.5, 0.8, 1.0, 0.3)
@@ -194,8 +194,8 @@ func create_ice_effect_animation(tile_pos: Vector2, group: String = "powers") ->
 # CLEANUP SYSTEM
 # ============================================================================
 
-## Create a safety timer to cleanup animations if they don't finish
-func create_cleanup_timer(duration: float, callback: Callable):
+# Create a safety timer to cleanup animations if they don't finish
+func create_cleanup_timer(duration, callback):
 	var timer = Timer.new()
 	timer.wait_time = duration
 	timer.one_shot = true
@@ -205,7 +205,7 @@ func create_cleanup_timer(duration: float, callback: Callable):
 	cleanup_timers.append(timer)
 	timer.start()
 
-## Cleanup all timers (call when scene changes)
+# Cleanup all timers (call when scene changes)
 func cleanup_all_timers():
 	print("🧹 Cleaning up %d animation timers" % cleanup_timers.size())
 	
@@ -220,8 +220,8 @@ func cleanup_all_timers():
 # INTERNAL HANDLERS
 # ============================================================================
 
-## Called when an animation finishes naturally
-func _on_animation_finished(tween: Tween, group: String):
+# Called when an animation finishes naturally
+func _on_animation_finished(tween, group):
 	if active_animations.has(group):
 		active_animations[group].erase(tween)
 		
@@ -231,8 +231,8 @@ func _on_animation_finished(tween: Tween, group: String):
 			animation_group_completed.emit(group)
 			print("✅ Animation group '%s' completed" % group)
 
-## Called when a cleanup timer fires
-func _on_cleanup_timer_timeout(timer: Timer, callback: Callable):
+# Called when a cleanup timer fires
+func _on_cleanup_timer_timeout(timer, callback):
 	# Remove from tracking
 	cleanup_timers.erase(timer)
 	
@@ -248,7 +248,7 @@ func _on_cleanup_timer_timeout(timer: Timer, callback: Callable):
 # DEBUG FUNCTIONS
 # ============================================================================
 
-## Print current animation status for debugging
+# Print current animation status for debugging
 func print_animation_status():
 	print("🎬 Animation Status:")
 	print("  Active groups: %d" % active_animations.size())
@@ -256,8 +256,8 @@ func print_animation_status():
 		print("    %s: %d animations" % [group, active_animations[group].size()])
 	print("  Cleanup timers: %d" % cleanup_timers.size())
 
-## Get animation statistics
-func get_animation_stats() -> Dictionary:
+# Get animation statistics
+func get_animation_stats():
 	var stats = {
 		"total_groups": active_animations.size(),
 		"total_animations": 0,

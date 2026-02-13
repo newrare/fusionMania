@@ -115,7 +115,7 @@ func initialize(data: Dictionary):
 
 
 # Load sprite texture from path (single 876x876 image)
-func load_sprite_texture(path: String) -> Texture2D:
+func load_sprite_texture(path):
 	if path.is_empty() or not FileAccess.file_exists(path):
 		print("Enemy: Sprite path invalid or file not found: ", path)
 		return null
@@ -250,30 +250,30 @@ func play_death_animation():
 	# Create fallen enemy debris
 	var fallen_enemy_scene = preload("res://objects/FallenEnemy.tscn")
 	var fallen_enemy = fallen_enemy_scene.instantiate()
-	
+
 	# Initialize with enemy name and level (for display)
 	fallen_enemy.initialize(enemy_name, level)
-	
+
 	# Position at current enemy location
 	fallen_enemy.global_position = global_position
-	
+
 	# Set z-index so it renders in front of background but behind the grid
 	fallen_enemy.z_index = 1
-	
+
 	# Copy the visual appearance (color from BackgroundPanel)
 	var original_bg_panel = get_node("TileContainer/BackgroundPanel")
 	var fallen_bg_panel = fallen_enemy.get_node("TileContainer/BackgroundPanel")
 	var original_style = original_bg_panel.get_theme_stylebox("panel")
 	if original_style:
 		fallen_bg_panel.add_theme_stylebox_override("panel", original_style)
-	
+
 	# Copy the sprite and scale it
 	var original_sprite = get_node("TileContainer/EnemySprite")
 	var fallen_sprite = fallen_enemy.get_node("TileContainer/EnemySprite")
 	fallen_sprite.texture = original_sprite.texture
 	fallen_sprite.scale = original_sprite.scale
 	fallen_sprite.modulate = original_sprite.modulate
-	
+
 	# Add to GameScene (parent of enemy_container) instead of enemy_container
 	# This way FallenEnemy can fall down and stack at the bottom
 	var parent = get_parent()
@@ -289,7 +289,7 @@ func play_death_animation():
 	else:
 		get_tree().root.add_child(fallen_enemy)
 		print("⚠️ FallenEnemy added to root (no parent found)")
-	
+
 	# Brief flash effect before original enemy disappears
 	var tween = create_tween()
 	tween.tween_property(self, "modulate:a", 0.5, 0.1)

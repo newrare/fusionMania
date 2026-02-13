@@ -27,6 +27,8 @@ func load_basic_translations():
 	# Menu
 	en_translation.add_message("START", 		"New Game")
 	en_translation.add_message("NEW_GAME",		"New Game")
+	en_translation.add_message("MANIA_MODE",	"Mania Mode")
+	en_translation.add_message("CLASSIC_MODE",	"Classic Mode")
 	en_translation.add_message("FREE_MODE",		"Free Mode")
 	en_translation.add_message("RESUME", 		"Resume")
 	en_translation.add_message("RANKING", 		"Ranking")
@@ -96,6 +98,8 @@ func load_basic_translations():
 	# Menu
 	fr_translation.add_message("START", 		"Nouvelle Partie")
 	fr_translation.add_message("NEW_GAME",		"Nouvelle Partie")
+	fr_translation.add_message("MANIA_MODE",	"Mode Mania")
+	fr_translation.add_message("CLASSIC_MODE",	"Mode Classique")
 	fr_translation.add_message("FREE_MODE",		"Mode Libre")
 	fr_translation.add_message("RESUME", 		"Reprendre")
 	fr_translation.add_message("RANKING",		"Classement")

@@ -89,7 +89,8 @@ func _ready():
 	start_screen.start_pressed.connect(_on_start_screen_pressed)
 
 	# Connect to TitleMenu signals
-	title_menu.new_game_pressed.connect(_on_new_game_pressed)
+	title_menu.mania_mode_pressed.connect(_on_mania_mode_pressed)
+	title_menu.classic_mode_pressed.connect(_on_classic_mode_pressed)
 	title_menu.free_mode_pressed.connect(_on_free_mode_pressed)
 	title_menu.resume_pressed.connect(_on_resume_pressed)
 	title_menu.ranking_pressed.connect(_on_ranking_pressed)
@@ -121,7 +122,7 @@ func _ready():
 		update_move_count()
 		update_score_display()
 		
-		# Check if coming from power selection (FREE mode) or classic new game
+		# Check if coming from power selection (FREE mode) or direct mode choice (MANIA/CLASSIC)
 		if GameManager.pending_free_mode_powers.size() > 0:
 			# Enter Free Mode with selected powers
 			GameManager.enter_free_mode(GameManager.pending_free_mode_powers)
@@ -129,8 +130,12 @@ func _ready():
 			GameManager.start_new_game()
 			# Assign powers to the initial tiles after grid is created
 			GameManager.assign_powers_to_existing_tiles()
+		elif GameManager.pending_game_mode == GameManager.GameMode.MANIA:
+			# Enter Mania mode (powers activated by enemy spawn)
+			GameManager.enter_mania_mode()
+			GameManager.start_new_game()
 		else:
-			# Enter Classic mode (no powers)
+			# Enter Classic mode (no powers, no enemies)
 			GameManager.enter_classic_mode()
 			GameManager.start_new_game()
 	else:
@@ -138,16 +143,6 @@ func _ready():
 		_hide_grid()
 		_hide_score()
 		start_screen.show_screen()
-	
-	# Debug: Check ground collider position
-	var ground_collider = get_node_or_null("GroundCollider")
-	if ground_collider:
-		print("✅ GroundCollider found at: %s" % ground_collider.global_position)
-		var collision_shape = ground_collider.get_node_or_null("CollisionShape2D")
-		if collision_shape and collision_shape.shape:
-			print("   Shape: %s" % collision_shape.shape)
-	else:
-		print("❌ GroundCollider NOT FOUND!")
 
 
 # Process loop for parallax scrolling
@@ -280,10 +275,17 @@ func _on_start_screen_pressed():
 
 
 # Title menu signal handlers
-func _on_new_game_pressed():
-	# Set flag for new game after reload
+func _on_mania_mode_pressed():
+	# Set mode to MANIA and reload scene
+	GameManager.pending_game_mode = GameManager.GameMode.MANIA
 	GameManager.should_start_new_game = true
-	# Reload scene completely for a clean state
+	get_tree().reload_current_scene()
+
+
+func _on_classic_mode_pressed():
+	# Set mode to CLASSIC and reload scene
+	GameManager.pending_game_mode = GameManager.GameMode.CLASSIC
+	GameManager.should_start_new_game = true
 	get_tree().reload_current_scene()
 
 
@@ -294,7 +296,6 @@ func _on_free_mode_pressed():
 
 
 func _on_resume_pressed():
-	# Simply resume the game - grids, tweens, and all game objects remain in their paused state
 	hide_all_overlays()
 	GameManager.resume_game()
 

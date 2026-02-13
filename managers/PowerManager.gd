@@ -664,8 +664,8 @@ func get_power_info(power_type: String):
 # NEW ARCHITECTURE: IMMEDIATE POWER EFFECTS
 # ============================================================================
 
-## Calculate power effect data without applying it (pure calculation)
-func calculate_power_effect(power_type: String, source_pos: Vector2i, grid_manager) -> MovementData.PowerEffectData:
+# Calculate power effect data without applying it (pure calculation)
+func calculate_power_effect(power_type, source_pos, grid_manager):
 	var effect = MovementData.PowerEffectData.new(power_type, null, source_pos)
 	
 	print("⚡ Calculating power effect for '%s' at position %s" % [power_type, source_pos])
@@ -748,8 +748,8 @@ func calculate_power_effect(power_type: String, source_pos: Vector2i, grid_manag
 	print("  ✓ Calculated %d affected positions, %d blocked directions" % [effect.affected_positions.size(), effect.blocked_directions.size()])
 	return effect
 
-## Apply power effect immediately without animation
-func apply_power_effect_immediately(effect: MovementData.PowerEffectData, grid_manager):
+# Apply power effect immediately without animation
+func apply_power_effect_immediately(effect, grid_manager):
 	print("⚡ Applying power effect '%s' immediately at %s" % [effect.power_type, effect.source_position])
 	
 	match effect.power_type:
@@ -777,12 +777,12 @@ func apply_power_effect_immediately(effect: MovementData.PowerEffectData, grid_m
 				# TODO: Implement immediate ice effect
 				# tile.set_iced_immediately(true, effect.duration)
 
-## Helper function to check if position is within grid bounds
-func _is_valid_grid_position(pos: Vector2i) -> bool:
+# Helper function to check if position is within grid bounds
+func _is_valid_grid_position(pos):
 	return pos.x >= 0 and pos.x < 4 and pos.y >= 0 and pos.y < 4
 
-## Convert power type to direction for blocking powers
-func _power_type_to_direction(power_type: String) -> String:
+# Convert power type to direction for blocking powers
+func _power_type_to_direction(power_type):
 	match power_type:
 		"block_up": return "UP"
 		"block_down": return "DOWN"

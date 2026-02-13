@@ -7,8 +7,8 @@ extends Resource
 # MAIN RESULT CLASS
 # ============================================================================
 
-## Contains all calculated changes from a movement operation
-## Used to separate calculation from application and animation
+# Contains all calculated changes from a movement operation
+# Used to separate calculation from application and animation
 class MovementResult:
 	var direction: GridManager.Direction
 	var has_changes: bool = false
@@ -26,13 +26,13 @@ class MovementResult:
 # TILE MOVEMENT DATA
 # ============================================================================
 
-## Data for a tile that moves without fusion
+# Data for a tile that moves without fusion
 class MovedTileData:
 	var tile: Node
 	var from_pos: Vector2i
 	var to_pos: Vector2i
 	
-	func _init(p_tile: Node = null, p_from: Vector2i = Vector2i.ZERO, p_to: Vector2i = Vector2i.ZERO):
+	func _init(p_tile = null, p_from = Vector2i.ZERO, p_to = Vector2i.ZERO):
 		tile = p_tile
 		from_pos = p_from
 		to_pos = p_to
@@ -41,7 +41,7 @@ class MovedTileData:
 # FUSION DATA
 # ============================================================================
 
-## Data for two tiles that fuse together
+# Data for two tiles that fuse together
 class FusionData:
 	var tile1: Node                # Moving tile
 	var tile2: Node                # Static tile  
@@ -49,7 +49,7 @@ class FusionData:
 	var position: Vector2i         # Final position of fusion
 	var power_activated: String = ""  # Power triggered by fusion
 	
-	func _init(p_tile1: Node = null, p_tile2: Node = null, p_result: Node = null, p_pos: Vector2i = Vector2i.ZERO, p_power: String = ""):
+	func _init(p_tile1 = null, p_tile2 = null, p_result = null, p_pos = Vector2i.ZERO, p_power = ""):
 		tile1 = p_tile1
 		tile2 = p_tile2  
 		result_tile = p_result
@@ -60,7 +60,7 @@ class FusionData:
 # POWER EFFECT DATA
 # ============================================================================
 
-## Data for a power effect that needs to be applied immediately
+# Data for a power effect that needs to be applied immediately
 class PowerEffectData:
 	var power_type: String
 	var source_tile: Node
@@ -70,7 +70,7 @@ class PowerEffectData:
 	var duration: int = 0
 	var destroyed_tile_positions: Array[Vector2i] = []
 	
-	func _init(p_power: String = "", p_tile: Node = null, p_pos: Vector2i = Vector2i.ZERO):
+	func _init(p_power = "", p_tile = null, p_pos = Vector2i.ZERO):
 		power_type = p_power
 		source_tile = p_tile
 		source_position = p_pos
@@ -79,13 +79,13 @@ class PowerEffectData:
 # DESTRUCTION DATA
 # ============================================================================
 
-## Data for a tile that gets destroyed
+# Data for a tile that gets destroyed
 class DestroyedTileData:
 	var tile: Node
 	var position: Vector2i
 	var cause: String  # "power", "fusion", "expel", etc.
 	
-	func _init(p_tile: Node = null, p_pos: Vector2i = Vector2i.ZERO, p_cause: String = ""):
+	func _init(p_tile = null, p_pos = Vector2i.ZERO, p_cause = ""):
 		tile = p_tile
 		position = p_pos
 		cause = p_cause
@@ -100,7 +100,7 @@ class NewTileData:
 	var power_type: String
 	var position: Vector2i
 	
-	func _init(p_value: int = 2, p_power: String = "", p_pos: Vector2i = Vector2i.ZERO):
+	func _init(p_value = 2, p_power = "", p_pos = Vector2i.ZERO):
 		value = p_value
 		power_type = p_power
 		position = p_pos
@@ -109,7 +109,7 @@ class NewTileData:
 # GAME STATE CHANGES
 # ============================================================================
 
-## Global state changes that need to be applied
+# Global state changes that need to be applied
 class StateChanges:
 	var move_count_increment: int = 0
 	var score_addition: int = 0
@@ -122,12 +122,12 @@ class StateChanges:
 	func _init():
 		pass
 
-## Data for blocking a direction
+# Data for blocking a direction
 class BlockDirectionData:
 	var direction: GridManager.Direction
 	var duration: int
 	
-	func _init(p_dir: GridManager.Direction = GridManager.Direction.UP, p_duration: int = 1):
+	func _init(p_dir = GridManager.Direction.UP, p_duration = 1):
 		direction = p_dir
 		duration = p_duration
 
@@ -135,18 +135,18 @@ class BlockDirectionData:
 # UTILITY FUNCTIONS
 # ============================================================================
 
-## Helper functions for working with movement data
+# Helper functions for working with movement data
 class MovementDataUtils:
 	
-	## Check if a MovementResult has any actual changes
-	static func has_meaningful_changes(result: MovementResult) -> bool:
+	# Check if a MovementResult has any actual changes
+	static func has_meaningful_changes(result):
 		return result.moved_tiles.size() > 0 or \
 		       result.fusions.size() > 0 or \
 		       result.destroyed_tiles.size() > 0 or \
 		       result.activated_powers.size() > 0
 	
-	## Get all tiles involved in a movement (for animation tracking)
-	static func get_all_involved_tiles(result: MovementResult) -> Array[Node]:
+	# Get all tiles involved in a movement (for animation tracking)
+	static func get_all_involved_tiles(result):
 		var tiles: Array[Node] = []
 		
 		for moved in result.moved_tiles:
@@ -167,8 +167,8 @@ class MovementDataUtils:
 		
 		return tiles
 	
-	## Get all positions that will be affected by the movement
-	static func get_all_affected_positions(result: MovementResult) -> Array[Vector2i]:
+	# Get all positions that will be affected by the movement
+	static func get_all_affected_positions(result):
 		var positions: Array[Vector2i] = []
 		
 		for moved in result.moved_tiles:
@@ -192,8 +192,8 @@ class MovementDataUtils:
 		
 		return positions
 	
-	## Create a summary string for debugging
-	static func get_movement_summary(result: MovementResult) -> String:
+	# Create a summary string for debugging
+	static func get_movement_summary(result):
 		var summary = "Movement %s: " % GridManager.Direction.keys()[result.direction]
 		summary += "%d moved, " % result.moved_tiles.size()
 		summary += "%d fused, " % result.fusions.size()

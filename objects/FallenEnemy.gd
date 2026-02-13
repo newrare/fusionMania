@@ -78,16 +78,16 @@ func _ready():
 	_create_ground()
 
 
-func initialize(p_name: String, p_level: int):
-	"""Initialize with enemy name and level for display"""
+# Initialize with enemy name and level for display
+func initialize(p_name, p_level):
 	enemy_name = p_name
 	enemy_level = p_level
 	enemy_color = TILE_COLORS.get(p_level, Color.WHITE)
 	_update_name_label()
 
 
+# Update the name label with enemy name and color
 func _update_name_label():
-	"""Update the name label with enemy name and color"""
 	var name_label = get_node_or_null("TileContainer/NameLabel")
 	if name_label and enemy_name != "":
 		name_label.text = enemy_name
@@ -96,8 +96,8 @@ func _update_name_label():
 		name_label.visible = true
 
 
+# Apply small bounce when player moves (makes fallen enemies react slightly)
 func apply_movement_bounce(direction):
-	"""Apply small bounce when player moves (makes fallen enemies react slightly)"""
 	# Determine impulse direction based on player movement
 	# Direction values: UP=0, DOWN=1, LEFT=2, RIGHT=3 (from GridManager.Direction enum)
 	var impulse = Vector2.ZERO
@@ -119,8 +119,8 @@ func apply_movement_bounce(direction):
 	apply_torque_impulse(rotation_impulse * 200.0)
 
 
+# Create a static ground body at bottom of screen
 func _create_ground():
-	"""Create a static ground body at bottom of screen"""
 	# Check if ground already exists
 	var scene_root = get_parent()
 	if not scene_root:
@@ -156,8 +156,8 @@ func _create_ground():
 	print("🌍 Created ground at y=%.0f" % ground_body.position.y)
 
 
-func _integrate_forces(state: PhysicsDirectBodyState2D):
-	"""Called during physics step - snap rotation when nearly sleeping"""
+# Called during physics step - snap rotation when nearly sleeping
+func _integrate_forces(state):
 	# If nearly at rest and nearly upright, snap to upright
 	if state.linear_velocity.length() < 10.0 and abs(state.angular_velocity) < 0.1:
 		var current_rotation = fmod(state.transform.get_rotation(), TAU)

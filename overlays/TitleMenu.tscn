@@ -38,12 +38,17 @@ layout_mode = 2
 theme_override_constants/separation = 25
 alignment = 1
 
-[node name="BtnNewGame" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+[node name="BtnMania" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
 custom_minimum_size = Vector2(400, 91)
-text = "NEW GAME"
+text = "MANIA MODE"
 
-[node name="BtnFreeMode" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+[node name="BtnClassic" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 91)
+text = "CLASSIC MODE"
+
+[node name="BtnFree" parent="MenuContainer/ButtonsContainer" instance=ExtResource("2_uibtn")]
 layout_mode = 2
 custom_minimum_size = Vector2(400, 91)
 text = "FREE MODE"

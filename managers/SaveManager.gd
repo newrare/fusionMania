@@ -38,7 +38,7 @@ func save_game():
 			else:
 				row.append(null)
 		grid_state.append(row)
-	
+
 	var save_data = {
 		"version":           "1.0",
 		"timestamp":         Time.get_datetime_string_from_system(),
@@ -89,29 +89,29 @@ func load_game():
 
 
 # Restore game state from loaded data
-func restore_game(data: Dictionary):
+func restore_game(data):
 	if data.is_empty():
 		return false
-	
+
 	# Clear current grid
 	GridManager.initialize_grid()
-	
+
 	# Restore score
 	ScoreManager.current_score = data.get("score", 0)
-	
+
 	# Restore move count
 	GridManager.move_count = data.get("moves", 0)
-	
+
 	# Restore blocked directions
 	var blocked_dirs = data.get("blocked_directions", {})
 	GameManager.blocked_directions.clear()
 	for dir_key in blocked_dirs.keys():
 		GameManager.blocked_directions[int(dir_key)] = blocked_dirs[dir_key]
-	
+
 	# Restore blind mode
-	GridManager.blind_mode  = data.get("blind_mode", false)
-	GridManager.blind_turns = data.get("blind_turns", 0)
-	
+	GameManager.is_blind_active        = data.get("blind_mode", false)
+	GameManager.blind_turns_remaining  = data.get("blind_turns", 0)
+
 	# Restore grid tiles
 	var grid_data = data.get("grid", [])
 	for y in range(grid_data.size()):
@@ -126,12 +126,12 @@ func restore_game(data: Dictionary):
 				# Restore frozen state
 				if tile_data.get("iced", false) and tile.has_method("set_iced"):
 					tile.set_iced(true, tile_data.get("ice_turns", 0))
-	
+
 	# Restore enemy state
 	var enemy_data = data.get("enemy", {})
 	if not enemy_data.is_empty():
 		EnemyManager.load_save_data(enemy_data)
-	
+
 	print("✅ Game state restored")
 	return true
 

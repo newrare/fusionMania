@@ -140,9 +140,6 @@ func spawn_enemy():
 	print("👾 Enemy spawned: %s (Lv.%d, HP:%d)" % [enemy_name, level, max_hp])
 	enemy_spawned.emit(active_enemy)
 
-	# Enter Fight Mode
-	GameManager.enter_fight_mode()
-
 	# Apply first power to a random tile
 	apply_power_to_random_tile()
 
@@ -184,7 +181,7 @@ func get_random_name():
 
 
 # Select a random sprite variant for the enemy (picks the specific numbered image)
-func select_random_sprite_variant(level: int) -> int:
+func select_random_sprite_variant(level):
 	# Count available variants for this level and health state
 	var prefix = "enemy_boss_" if level == 2048 else "enemy_basic_"
 	var health_state = "hight"  # Start with hight variants
@@ -218,7 +215,7 @@ func select_random_sprite_variant(level: int) -> int:
 
 
 # Get sprite path for specific health state
-func get_sprite_path_for_health(level: int, health_state: String, variant: int) -> String:
+func get_sprite_path_for_health(level, health_state, variant):
 	var prefix = "enemy_boss_" if level == 2048 else "enemy_basic_"
 	return "res://assets/images/%s%s_%02d.png" % [prefix, health_state, variant]
 
@@ -312,7 +309,7 @@ func is_enemy_active():
 
 
 # Get current enemy level (returns 0 if no active enemy)
-func get_current_enemy_level() -> int:
+func get_current_enemy_level():
 	if is_enemy_active():
 		return active_enemy.get("level", 0)
 	return 0
