@@ -6,21 +6,39 @@ extends CanvasLayer
 signal powers_selected(selected_powers: Array)
 signal back_pressed()
 
-# Node references
-@onready var overlay_background = $OverlayBackground
-@onready var menu_container     = $MenuContainer
-@onready var title_label        = $MenuContainer/TitleLabel
-@onready var powers_grid        = $MenuContainer/ScrollContainer/CenterContainer/PowersGrid
-@onready var btn_start          = $MenuContainer/BottomButtons/BtnStart
-@onready var btn_back           = $MenuContainer/BottomButtons/BtnBack
-@onready var selection_info     = $MenuContainer/SelectionInfo
+# Node references (created dynamically)
+var overlay_background: ColorRect
+var menu_container: VBoxContainer
+var title_label: Label
+var selection_info: Label
+var scroll_container: ScrollContainer
+var center_container: CenterContainer
+var powers_grid: GridContainer
+var bottom_buttons: HBoxContainer
+var btn_start: Node
+var btn_back: Node
 
 # Power selection state
 var selected_powers: Array = []
 var power_buttons: Dictionary = {}
 
+# Constants
+const TITLE_FONT_SIZE     = 48
+const INFO_FONT_SIZE      = 24
+const SCROLL_HEIGHT       = 1100
+const GRID_SEPARATION     = 20
+const BUTTON_SEPARATION   = 40
+const GRID_COLUMNS        = 4
+const BTN_BACK_WIDTH      = 400
+const BTN_BACK_HEIGHT     = 91
+const BTN_START_WIDTH     = 300
+const BTN_START_HEIGHT    = 70
+
 
 func _ready():
+	# Build scene hierarchy
+	_setup_scene()
+
 	# Initially hidden
 	hide()
 
@@ -32,6 +50,96 @@ func _ready():
 	create_power_buttons()
 
 	update_selection_info()
+
+
+# Build scene hierarchy programmatically
+func _setup_scene():
+	# Overlay background
+	overlay_background = ColorRect.new()
+	overlay_background.name = "OverlayBackground"
+	overlay_background.offset_right = 1080.0
+	overlay_background.offset_bottom = 1920.0
+	overlay_background.color = Color(0, 0, 0, 0.8)
+	add_child(overlay_background)
+
+	# Menu container
+	menu_container = VBoxContainer.new()
+	menu_container.name = "MenuContainer"
+	menu_container.offset_left = 90.0
+	menu_container.offset_top = 200.0
+	menu_container.offset_right = 990.0
+	menu_container.offset_bottom = 1700.0
+	menu_container.add_theme_constant_override("separation", 20)
+	add_child(menu_container)
+
+	# Title label
+	title_label = ThemeManager.create_label()
+	title_label.name = "TitleLabel"
+	title_label.layout_mode = 2
+	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
+	title_label.text = "FREE MODE - SELECT POWERS"
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_container.add_child(title_label)
+
+	# Selection info label
+	selection_info = ThemeManager.create_label()
+	selection_info.name = "SelectionInfo"
+	selection_info.layout_mode = 2
+	selection_info.add_theme_color_override("font_color", Color(1, 0.843137, 0, 1))
+	selection_info.add_theme_font_size_override("font_size", INFO_FONT_SIZE)
+	selection_info.text = "No powers selected - All powers will spawn"
+	selection_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_container.add_child(selection_info)
+
+	# Scroll container
+	scroll_container = ScrollContainer.new()
+	scroll_container.name = "ScrollContainer"
+	scroll_container.custom_minimum_size = Vector2(0, SCROLL_HEIGHT)
+	scroll_container.layout_mode = 2
+	scroll_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	menu_container.add_child(scroll_container)
+
+	# Center container
+	center_container = CenterContainer.new()
+	center_container.name = "CenterContainer"
+	center_container.layout_mode = 2
+	center_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll_container.add_child(center_container)
+
+	# Powers grid
+	powers_grid = GridContainer.new()
+	powers_grid.name = "PowersGrid"
+	powers_grid.layout_mode = 2
+	powers_grid.add_theme_constant_override("h_separation", GRID_SEPARATION)
+	powers_grid.add_theme_constant_override("v_separation", GRID_SEPARATION)
+	powers_grid.columns = GRID_COLUMNS
+	center_container.add_child(powers_grid)
+
+	# Bottom buttons container
+	bottom_buttons = HBoxContainer.new()
+	bottom_buttons.name = "BottomButtons"
+	bottom_buttons.layout_mode = 2
+	bottom_buttons.add_theme_constant_override("separation", BUTTON_SEPARATION)
+	bottom_buttons.alignment = 1
+	menu_container.add_child(bottom_buttons)
+
+	# Back button
+	btn_back = load("res://widgets/UIButton.tscn").instantiate()
+	btn_back.name = "BtnBack"
+	btn_back.layout_mode = 2
+	btn_back.custom_minimum_size = Vector2(BTN_BACK_WIDTH, BTN_BACK_HEIGHT)
+	btn_back.text = "BACK"
+	bottom_buttons.add_child(btn_back)
+
+	# Start button
+	btn_start = load("res://widgets/UIButton.tscn").instantiate()
+	btn_start.name = "BtnStart"
+	btn_start.layout_mode = 2
+	btn_start.custom_minimum_size = Vector2(BTN_START_WIDTH, BTN_START_HEIGHT)
+	btn_start.text = "START GAME"
+	bottom_buttons.add_child(btn_start)
 
 
 # Create a button for each power
@@ -88,7 +196,7 @@ void fragment() {
 		icon_button.pressed.connect(_on_power_icon_clicked.bind(power_key, icon_button))
 
 		# Label
-		var label = Label.new()
+		var label = ThemeManager.create_label()
 		label.text = power_name
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 24)

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b26fgsm0cp0s3"
-path="res://.godot/imported/button_classic.svg-5a34c56e7adbbb9af7257d746ed5648a.ctex"
+uid="uid://d10py8bvcg5l0"
+path="res://.godot/imported/divider_02.svg-a4eb2aca5ea6fa4b532a03b8468f2d9d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/button_classic.svg"
-dest_files=["res://.godot/imported/button_classic.svg-5a34c56e7adbbb9af7257d746ed5648a.ctex"]
+source_file="res://assets/svg/divider_02.svg"
+dest_files=["res://.godot/imported/divider_02.svg-a4eb2aca5ea6fa4b532a03b8468f2d9d.ctex"]
 
 [params]
 

@@ -1,14 +1,14 @@
 # ScoreManager for Fusion Mania
-# Manages score tracking and ranking system
+# Reviewed
 extends Node
 
-const SAVE_FILE = "user://fusion_mania_scores.save"
-const MAX_SCORES = 10
-const MILESTONE_INTERVAL = 500  # Score increment per level
+const SAVE_FILE 			= "user://fusion_mania_scores.save"
+const MAX_SCORES 			= 10
+const MILESTONE_INTERVAL 	= 500  # Score increment per level
 
-var high_scores: Array = []
-var current_score: int = 0
-var last_milestone_score: int = 0
+var high_scores: 			Array 	= []
+var current_score: 			int 	= 0
+var last_milestone_score: 	int 	= 0
 
 # Signals for score events
 signal score_changed(new_score: int)
@@ -71,8 +71,8 @@ func is_new_high_score(new_score: int):
 # Add new score and return its rank (1-based, 0 if not in top 10)
 func add_score(new_score: int):
 	var score_entry = {
-		"score": new_score,
-		"date": Time.get_datetime_string_from_system()
+		"score": 	new_score,
+		"date": 	Time.get_datetime_string_from_system()
 	}
 
 	high_scores.append(score_entry)
@@ -89,6 +89,7 @@ func add_score(new_score: int):
 		if high_scores[i].score == new_score and high_scores[i].date == score_entry.date:
 			save_scores()
 			high_score_achieved.emit(new_score, i + 1)
+
 			return i + 1
 
 	save_scores()
@@ -121,6 +122,7 @@ func get_high_scores():
 # Get rank preview of a score without adding it
 func get_rank_preview(score: int):
 	var temp_scores = high_scores.duplicate()
+
 	temp_scores.append({"score": score})
 	temp_scores.sort_custom(func(a, b): return a.score > b.score)
 
@@ -148,8 +150,8 @@ func reset_all_scores():
 
 # Initialize current game score
 func start_game():
-	current_score = 0
-	last_milestone_score = 0
+	current_score 			= 0
+	last_milestone_score 	= 0
 	score_changed.emit(current_score)
 
 
@@ -158,11 +160,12 @@ func add_to_score(points: int):
 	current_score += points
 
 	# Check for milestones
-	var current_level = current_score / MILESTONE_INTERVAL
-	var previous_level = last_milestone_score / MILESTONE_INTERVAL
+	var current_level 	= current_score / MILESTONE_INTERVAL
+	var previous_level 	= last_milestone_score / MILESTONE_INTERVAL
 
 	if current_level > previous_level:
 		var milestones_crossed = current_level - previous_level
+
 		milestone_crossed.emit(current_level, milestones_crossed)
 		last_milestone_score = current_score
 
@@ -178,6 +181,7 @@ func get_current_score():
 func get_high_score():
 	if high_scores.is_empty():
 		return 0
+
 	return high_scores[0].score
 
 
@@ -186,4 +190,5 @@ func get_score_rank(score: int):
 	for i in range(high_scores.size()):
 		if high_scores[i].score == score:
 			return i + 1
+
 	return 0

@@ -600,7 +600,14 @@ func _execute_expel_power(emitter, power_type: String, grid_manager):
 # Block direction power (uses GameManager for state)
 func _execute_block_direction_power(direction: int):
 	print("  🧊 Block direction: %d" % direction)
-	GameManager.block_direction(direction, GameManager.DEFAULT_BLOCK_TURNS)
+	var power_key = ""
+	match direction:
+		GridManager.Direction.UP: power_key = "block_up"
+		GridManager.Direction.DOWN: power_key = "block_down"
+		GridManager.Direction.LEFT: power_key = "block_left"
+		GridManager.Direction.RIGHT: power_key = "block_right"
+	if power_key != "":
+		GameManager.power_activate(power_key)
 
 
 # Lightning power
@@ -631,7 +638,7 @@ func _execute_blind_power(emitter):
 	if emitter != null and is_instance_valid(emitter):
 		emitter.start_emitter_effect(4.0)
 
-	GameManager.activate_blind(GameManager.DEFAULT_BLIND_TURNS)
+	GameManager.power_activate("blind")
 
 
 # Bowling power (uses factorized destroy helper)

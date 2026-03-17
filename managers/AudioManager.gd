@@ -1,5 +1,5 @@
 # AudioManager for Fusion Mania
-# Manages all audio and music for the game
+# Reviewed
 extends Node
 
 # Default volume off for Godot (best practice)
@@ -35,11 +35,6 @@ var is_cleaned_up:	bool = false
 # Settings file path
 const SETTINGS_PATH = "user://audio_settings.cfg"
 
-
-
-##################
-### METHODS GD ###
-##################
 
 # Load
 func _ready():
@@ -115,11 +110,6 @@ func _on_music_finished():
 		print("🔄 Background music looped")
 
 
-
-###############
-### METHODS ###
-###############
-
 # Set player
 func setup_audio_players():
 	for key in sounds.keys():
@@ -145,8 +135,10 @@ func load_audio_resources():
 
 			if stream:
 				sound["stream"] = stream
+
 				if sound["audio"]:
 					sound["audio"].stream = stream
+
 				print("✅ Loaded: %s" % path)
 			else:
 				print("❌ Failed to load %s" % path)
@@ -209,7 +201,7 @@ func play_sfx_fusion():
 func play_sfx_power(power_type: String = ""):
 	if is_sfx_muted:
 		return
-	
+
 	# Map power types to their SFX
 	var sfx_key = ""
 	match power_type:
@@ -238,12 +230,13 @@ func play_sfx_power(power_type: String = ""):
 		_:
 			# No SFX for this power (e.g., "ads")
 			return
-	
+
 	var power_sfx = sounds.get(sfx_key)
+
 	if not power_sfx or not power_sfx["audio"] or not power_sfx["stream"]:
 		print("❌ Cannot play power sfx %s: missing audio player or stream" % sfx_key)
 		return
-	
+
 	power_sfx["audio"].play()
 
 # Play sfx button hover
@@ -288,6 +281,7 @@ func play_sfx_game_over():
 # Music control
 func toggle_music():
 	is_music_muted = !is_music_muted
+
 	var music = sounds["music_background"]
 
 	if is_music_muted:
@@ -312,12 +306,12 @@ func toggle_sfx():
 
 # Load settings
 func load_settings():
-	var config = ConfigFile.new()
-	var err = config.load(SETTINGS_PATH)
+	var config 	= ConfigFile.new()
+	var err 	= config.load(SETTINGS_PATH)
 
 	if err == OK:
-		is_music_muted = config.get_value("audio", "music_muted", false)
-		is_sfx_muted = config.get_value("audio", "sfx_muted", false)
+		is_music_muted 	= config.get_value("audio", "music_muted", 	false)
+		is_sfx_muted 	= config.get_value("audio", "sfx_muted", 	false)
 		print("✅ Audio settings loaded")
 	else:
 		print("ℹ️ No audio settings file found, using defaults")
@@ -325,16 +319,17 @@ func load_settings():
 # Save settings
 func save_settings():
 	var config = ConfigFile.new()
-	config.set_value("audio", "music_muted", is_music_muted)
-	config.set_value("audio", "sfx_muted", is_sfx_muted)
+
+	config.set_value("audio", "music_muted", 	is_music_muted)
+	config.set_value("audio", "sfx_muted", 		is_sfx_muted)
 
 	var err = config.save(SETTINGS_PATH)
+
 	if err == OK:
 		print("✅ Audio settings saved")
 	else:
 		print("❌ Failed to save audio settings: error %d" % err)
 
-# Getters for UI
 func is_music_enabled():
 	return not is_music_muted
 

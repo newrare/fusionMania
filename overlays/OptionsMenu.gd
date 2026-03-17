@@ -6,18 +6,29 @@ extends CanvasLayer
 signal back_pressed()
 signal ranking_reset()
 
-# Node references
-@onready var overlay_background = $OverlayBackground
-@onready var menu_container     = $MenuContainer
-@onready var title_label        = $MenuContainer/TitleLabel
-@onready var btn_music          = $MenuContainer/ButtonsContainer/BtnMusic
-@onready var btn_sfx            = $MenuContainer/ButtonsContainer/BtnSfx
-@onready var btn_language       = $MenuContainer/ButtonsContainer/BtnLanguage
-@onready var btn_reset_ranking  = $MenuContainer/ButtonsContainer/BtnResetRanking
-@onready var btn_back           = $MenuContainer/ButtonsContainer/BtnBack
+# Node references (created dynamically)
+var overlay_background: ColorRect
+var menu_container: VBoxContainer
+var title_label: Label
+var buttons_container: VBoxContainer
+var btn_music: Node
+var btn_sfx: Node
+var btn_language: Node
+var btn_reset_ranking: Node
+var btn_back: Node
+
+# Constants for UI
+const BUTTON_WIDTH     = 400
+const BUTTON_HEIGHT    = 91
+const BUTTON_SEPARATION = 20
+const TITLE_FONT_SIZE  = 56
+const SPACER_HEIGHT    = 40
 
 
 func _ready():
+	# Build scene hierarchy
+	_setup_scene()
+
 	# Initially hidden
 	hide()
 
@@ -33,6 +44,69 @@ func _ready():
 
 	# Update translations
 	update_translations()
+
+
+# Build scene hierarchy programmatically
+func _setup_scene():
+	# Overlay background
+	overlay_background = ColorRect.new()
+	overlay_background.name = "OverlayBackground"
+	overlay_background.offset_right = 1080.0
+	overlay_background.offset_bottom = 1920.0
+	overlay_background.color = Color(0, 0, 0, 0.8)
+	add_child(overlay_background)
+
+	# Menu container
+	menu_container = VBoxContainer.new()
+	menu_container.name = "MenuContainer"
+	menu_container.offset_left = 240.0
+	menu_container.offset_top = 500.0
+	menu_container.offset_right = 840.0
+	menu_container.offset_bottom = 1400.0
+	menu_container.add_theme_constant_override("separation", 20)
+	add_child(menu_container)
+
+	# Title label
+	title_label = ThemeManager.create_label()
+	title_label.name = "TitleLabel"
+	title_label.layout_mode = 2
+	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
+	title_label.text = "OPTIONS"
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	menu_container.add_child(title_label)
+
+	# Spacer
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, SPACER_HEIGHT)
+	spacer.layout_mode = 2
+	menu_container.add_child(spacer)
+
+	# Buttons container
+	buttons_container = VBoxContainer.new()
+	buttons_container.name = "ButtonsContainer"
+	buttons_container.layout_mode = 2
+	buttons_container.add_theme_constant_override("separation", BUTTON_SEPARATION)
+	buttons_container.alignment = 1
+	menu_container.add_child(buttons_container)
+
+	# Create all buttons
+	btn_music         = _create_button("BtnMusic", "MUSIC: ON")
+	btn_sfx           = _create_button("BtnSfx", "SFX: ON")
+	btn_language      = _create_button("BtnLanguage", "ENGLISH")
+	btn_reset_ranking = _create_button("BtnResetRanking", "RESET RANKING")
+	btn_back          = _create_button("BtnBack", "BACK")
+
+
+# Helper to create button
+func _create_button(button_name, initial_text):
+	var btn = load("res://widgets/UIButton.tscn").instantiate()
+	btn.name = button_name
+	btn.layout_mode = 2
+	btn.custom_minimum_size = Vector2(BUTTON_WIDTH, BUTTON_HEIGHT)
+	btn.text = initial_text
+	buttons_container.add_child(btn)
+	return btn
 
 
 # Show the menu

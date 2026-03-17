@@ -576,11 +576,9 @@ static func remove_wind_effect(direction: int):
 static func clear_all_wind_effects():
 	print("  💨 Clearing all wind effects")
 
-	await Engine.get_main_loop().process_frame  # Wait one frame to ensure scene is ready
-
 	var scene_root = Engine.get_main_loop().root.get_tree().get_first_node_in_group("game_scene")
 	if scene_root == null:
-		print("  ⚠️ Could not find game scene to clear wind effects")
+		print("  ⚠️ Could not find game scene to clear wind effects (scene may not be ready yet)")
 		return
 
 	# Remove all 4 possible directions

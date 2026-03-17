@@ -6,20 +6,8 @@ const TILE_SPACING 	= 20
 const BORDER_RADIUS = 20
 const GLOW_SIZE 	= 8
 
-# Tile neon color mapping (for glow border)
-const TILE_COLORS = {
-	2:    Color("#FFFFFF"),  # White
-	4:    Color("#D9D9D9"),  # Light Gray
-	8:    Color("#00FF00"),  # Green
-	16:   Color("#6D9EEB"),  # Blue
-	32:   Color("#FFE599"),  # Light Yellow
-	64:   Color("#E69138"),  # Orange
-	128:  Color("#FF00FF"),  # Magenta
-	256:  Color("#C809C8"),  # Purple
-	512:  Color("#9C079C"),  # Dark Purple
-	1024: Color("#700570"),  # Darker Purple
-	2048: Color("#440344")   # Deep Purple
-}
+# Tile neon color mapping (for glow border) - now uses ThemeManager
+# Colors retrieved dynamically via get_tile_color()
 
 # Background attenuation factor (lighter to reflect neon glow)
 const BACKGROUND_ATTENUATION = 0.75
@@ -54,7 +42,7 @@ var transparency: 	float	= 1.0  # 1.0 = full opacity, 0.7 = 30% transparent for 
 var grid_position: 	Vector2i
 var is_new_tile:	bool	= false  # Only true for randomly spawned tiles
 
-# Visual node references
+# Visual node references (created dynamically)
 var background:			Control
 var tile_center:		TextureRect
 var tile_corner_tl:		TextureRect
@@ -71,23 +59,168 @@ signal tile_destroyed(tile)
 
 
 func _ready():
-	# Get child node references
-	background     = $Background
-	tile_center    = $Background/TileCenter
-	tile_corner_tl = $Background/TileCornerTopLeft
-	tile_corner_tr = $Background/TileCornerTopRight
-	tile_corner_bl = $Background/TileCornerBottomLeft
-	tile_corner_br = $Background/TileCornerBottomRight
-	value_label    = $ValueLabel
-	power_icon     = $PowerIcon
-	power_label    = $PowerLabel
+	# Configure Tile layout and dimensions
+	custom_minimum_size = Vector2(TILE_SIZE, TILE_SIZE)
+	layout_mode = 3
+	anchors_preset = 0
+	offset_right = TILE_SIZE
+	offset_bottom = TILE_SIZE
 
-	# Ensure visual is updated after nodes are ready
-	update_visual()
+	# Build scene hierarchy if not already done
+	if not background:
+		_setup_scene()
+		# Ensure visual is updated after nodes are ready
+		update_visual()
+
+
+# Build scene hierarchy programmatically
+func _setup_scene():
+	# Background container
+	background = Control.new()
+	background.name = "Background"
+	background.z_index = 0
+	background.layout_mode = 1
+	background.anchors_preset = Control.PRESET_FULL_RECT
+	background.anchor_right = 1.0
+	background.anchor_bottom = 1.0
+	background.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	background.grow_vertical = Control.GROW_DIRECTION_BOTH
+	add_child(background)
+
+	# Tile center (fills entire background)
+	tile_center = TextureRect.new()
+	tile_center.name = "TileCenter"
+	tile_center.layout_mode = 1
+	tile_center.anchors_preset = Control.PRESET_FULL_RECT
+	tile_center.anchor_right = 1.0
+	tile_center.anchor_bottom = 1.0
+	tile_center.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	tile_center.grow_vertical = Control.GROW_DIRECTION_BOTH
+	tile_center.stretch_mode = TextureRect.STRETCH_TILE
+	background.add_child(tile_center)
+
+	# Corner top left
+	tile_corner_tl = TextureRect.new()
+	tile_corner_tl.name = "TileCornerTopLeft"
+	tile_corner_tl.layout_mode = 0
+	tile_corner_tl.offset_right = BORDER_RADIUS
+	tile_corner_tl.offset_bottom = BORDER_RADIUS
+	background.add_child(tile_corner_tl)
+
+	# Corner top right
+	tile_corner_tr = TextureRect.new()
+	tile_corner_tr.name = "TileCornerTopRight"
+	tile_corner_tr.layout_mode = 1
+	tile_corner_tr.anchors_preset = Control.PRESET_TOP_RIGHT
+	tile_corner_tr.anchor_left = 1.0
+	tile_corner_tr.anchor_right = 1.0
+	tile_corner_tr.offset_left = -BORDER_RADIUS
+	tile_corner_tr.offset_right = 0.0
+	tile_corner_tr.offset_bottom = BORDER_RADIUS
+	tile_corner_tr.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	background.add_child(tile_corner_tr)
+
+	# Corner bottom left
+	tile_corner_bl = TextureRect.new()
+	tile_corner_bl.name = "TileCornerBottomLeft"
+	tile_corner_bl.layout_mode = 1
+	tile_corner_bl.anchors_preset = Control.PRESET_BOTTOM_LEFT
+	tile_corner_bl.anchor_top = 1.0
+	tile_corner_bl.anchor_bottom = 1.0
+	tile_corner_bl.offset_top = -BORDER_RADIUS
+	tile_corner_bl.offset_right = BORDER_RADIUS
+	tile_corner_bl.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	background.add_child(tile_corner_bl)
+
+	# Corner bottom right
+	tile_corner_br = TextureRect.new()
+	tile_corner_br.name = "TileCornerBottomRight"
+	tile_corner_br.layout_mode = 1
+	tile_corner_br.anchors_preset = Control.PRESET_BOTTOM_RIGHT
+	tile_corner_br.anchor_left = 1.0
+	tile_corner_br.anchor_top = 1.0
+	tile_corner_br.anchor_right = 1.0
+	tile_corner_br.anchor_bottom = 1.0
+	tile_corner_br.offset_left = -BORDER_RADIUS
+	tile_corner_br.offset_top = -BORDER_RADIUS
+	tile_corner_br.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	tile_corner_br.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	background.add_child(tile_corner_br)
+
+	# Power icon (top right corner of tile)
+	power_icon = TextureRect.new()
+	power_icon.name = "PowerIcon"
+	power_icon.visible = false
+	power_icon.z_index = 1
+	power_icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	power_icon.layout_mode = 1
+	power_icon.anchors_preset = Control.PRESET_TOP_RIGHT
+	power_icon.anchor_left = 1.0
+	power_icon.anchor_right = 1.0
+	power_icon.offset_left = -70.0
+	power_icon.offset_top = 8.0
+	power_icon.offset_right = -8.0
+	power_icon.offset_bottom = 70.0
+	power_icon.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	power_icon.expand_mode = 1
+	power_icon.stretch_mode = 5
+	add_child(power_icon)
+
+	# Value label (centered)
+	value_label = ThemeManager.create_label()
+	value_label.name = "ValueLabel"
+	value_label.z_index = 2
+	value_label.layout_mode = 1
+	value_label.anchors_preset = Control.PRESET_CENTER
+	value_label.anchor_left = 0.5
+	value_label.anchor_top = 0.5
+	value_label.anchor_right = 0.5
+	value_label.anchor_bottom = 0.5
+	value_label.offset_left = -120.0
+	value_label.offset_top = -30.0
+	value_label.offset_right = 120.0
+	value_label.offset_bottom = 30.0
+	value_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	value_label.grow_vertical = Control.GROW_DIRECTION_BOTH
+	value_label.add_theme_color_override("font_color", ThemeManager.get_color("white"))
+	value_label.add_theme_color_override("font_outline_color", ThemeManager.get_color("black"))
+	value_label.add_theme_constant_override("outline_size", 4)
+	value_label.add_theme_font_size_override("font_size", 48)
+	value_label.text = "2"
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(value_label)
+
+	# Power label (bottom of tile)
+	power_label = ThemeManager.create_label()
+	power_label.name = "PowerLabel"
+	power_label.visible = false
+	power_label.z_index = 2
+	power_label.layout_mode = 1
+	power_label.anchors_preset = Control.PRESET_BOTTOM_WIDE
+	power_label.anchor_left = 0.0
+	power_label.anchor_top = 1.0
+	power_label.anchor_right = 1.0
+	power_label.anchor_bottom = 1.0
+	power_label.offset_top = -50.0
+	power_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	power_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	power_label.add_theme_color_override("font_color", ThemeManager.get_color("white"))
+	power_label.add_theme_color_override("font_outline_color", ThemeManager.get_color("black"))
+	power_label.add_theme_constant_override("outline_size", 3)
+	power_label.add_theme_font_size_override("font_size", 24)
+	power_label.text = "Power Name"
+	power_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	power_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(power_label)
 
 
 # Initialize tile with value, power, and grid position
 func initialize(val: int, power: String = "", grid_pos: Vector2i = Vector2i.ZERO):
+	# Ensure scene is setup (in case called before _ready)
+	if not background:
+		_setup_scene()
+
 	value         = val
 	power_type    = power
 	grid_position = grid_pos
@@ -181,7 +314,7 @@ func apply_expel_textures(direction: String, bg_color: Color):
 
 # Update tile visual appearance (color, label, icon)
 func update_visual():
-	var neon_color = TILE_COLORS.get(value, Color.WHITE)
+	var neon_color = ThemeManager.get_level_color(value)
 
 	# Transparency is always full opacity
 	transparency = 1.0

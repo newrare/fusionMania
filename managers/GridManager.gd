@@ -710,12 +710,12 @@ func process_fusions(fusions: Array):
 	# Activate only the highest priority power (ONLY in FIGHT mode)
 	if power_to_activate != null and power_tile != null:
 		# Check if powers are enabled (FIGHT mode only)
-		if GameManager.is_mania_mode():
+		if GameManager.is_mode_mania():
 			print("⚡ Activating power '%s' via PowerManager" % power_to_activate)
 			await PowerManager.activate_power(power_to_activate, power_tile, self)
 			print("✅ Power activation completed")
 		else:
-			print("🚫 Power '%s' skipped - not in FIGHT mode (current mode: %s)" % [power_to_activate, "CLASSIC" if GameManager.is_classic_mode() else "FREE"])
+			print("🚫 Power '%s' skipped - not in FIGHT mode (current mode: %s)" % [power_to_activate, "CLASSIC" if GameManager.is_mode_classic() else "FREE"])
 			AudioManager.play_sfx_fusion()
 	else:
 		print("❌ No power to activate - power_to_activate: %s, power_tile: %s" % [power_to_activate, power_tile])
@@ -727,7 +727,7 @@ func process_movement(direction: Direction):
 		return false
 
 	# Check if direction is blocked (use GameManager for blocked state)
-	if GameManager.is_direction_blocked(direction):
+	if GameManager.is_power_block_by_int(direction):
 		print("Direction blocked by block power!")
 		return false
 
@@ -792,10 +792,7 @@ func process_movement(direction: Direction):
 
 		# Decrease ice turns for all tiles
 		# Decrement all power counters (blind, blocked directions, tile ice)
-		GameManager.decrement_power_counters()
-
-		# Update persistent power counters via GameManager
-		GameManager.decrement_power_counters()
+		GameManager.power_decrement()
 
 		# Process fusions (includes animation wait + merge + power)
 		await process_fusions(fusions)
@@ -1085,11 +1082,27 @@ func _apply_state_changes_immediately(state_changes):
 	
 	# Apply direction blocks
 	for block_data in state_changes.blocked_directions_added:
-		GameManager.block_direction_immediately(block_data.direction, block_data.duration)
+		var power_key = ""
+		match block_data.direction:
+			Direction.UP: power_key = "block_up"
+			Direction.DOWN: power_key = "block_down"
+			Direction.LEFT: power_key = "block_left"
+			Direction.RIGHT: power_key = "block_right"
+		if power_key != "":
+			GameManager.power_activate(power_key)
+			if block_data.duration != 3:
+				GameManager.powers[power_key]["remaining"] = block_data.duration
 	
 	# Remove direction blocks  
 	for direction in state_changes.blocked_directions_removed:
-		GameManager.unblock_direction_immediately(direction)
+		var power_key = ""
+		match direction:
+			Direction.UP: power_key = "block_up"
+			Direction.DOWN: power_key = "block_down"
+			Direction.LEFT: power_key = "block_left"
+			Direction.RIGHT: power_key = "block_right"
+		if power_key != "":
+			GameManager.powers[power_key]["active"] = false
 	
 	# Handle game over
 	if state_changes.game_over:

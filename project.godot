@@ -18,6 +18,7 @@ config/icon="res://assets/icons/project.svg"
 
 [autoload]
 
+ThemeManager="*res://managers/ThemeManager.gd"
 AudioManager="*res://managers/AudioManager.gd"
 LanguageManager="*res://managers/LanguageManager.gd"
 ScoreManager="*res://managers/ScoreManager.gd"

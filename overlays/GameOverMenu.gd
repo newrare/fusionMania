@@ -6,21 +6,35 @@ extends CanvasLayer
 signal new_game_pressed()
 signal menu_pressed()
 
-# Node references
-@onready var overlay_background = $OverlayBackground
-@onready var menu_container     = $MenuContainer
-@onready var title_label        = $MenuContainer/TitleLabel
-@onready var score_label        = $MenuContainer/ScoreLabel
-@onready var rank_label         = $MenuContainer/RankLabel
-@onready var btn_new_game       = $MenuContainer/ButtonsContainer/BtnNewGame
-@onready var btn_menu           = $MenuContainer/ButtonsContainer/BtnMenu
+# Node references (created dynamically)
+var overlay_background: ColorRect
+var menu_container: VBoxContainer
+var title_label: Label
+var score_label: Label
+var rank_label: Label
+var buttons_container: VBoxContainer
+var btn_new_game: Node
+var btn_menu: Node
 
 var is_victory: bool  = false
 var final_score: int  = 0
 var final_rank: int   = 0
 
+# Constants
+const TITLE_FONT_SIZE  = 52
+const SCORE_FONT_SIZE  = 40
+const RANK_FONT_SIZE   = 32
+const SPACER_HEIGHT    = 40
+const BUTTON_WIDTH     = 400
+const BUTTON_HEIGHT    = 91
+const BUTTON_SEPARATION = 20
+const CONTAINER_SEPARATION = 25
+
 
 func _ready():
+	# Build scene hierarchy
+	_setup_scene()
+
 	# Initially hidden
 	hide()
 
@@ -32,15 +46,99 @@ func _ready():
 	LanguageManager.language_changed.connect(_on_language_changed)
 
 
+# Build scene hierarchy programmatically
+func _setup_scene():
+	# Overlay background
+	overlay_background = ColorRect.new()
+	overlay_background.name = "OverlayBackground"
+	overlay_background.offset_right = 1080.0
+	overlay_background.offset_bottom = 1920.0
+	overlay_background.color = Color(0.2, 0, 0, 0.85)
+	add_child(overlay_background)
+
+	# Menu container
+	menu_container = VBoxContainer.new()
+	menu_container.name = "MenuContainer"
+	menu_container.offset_left = 240.0
+	menu_container.offset_top = 550.0
+	menu_container.offset_right = 840.0
+	menu_container.offset_bottom = 1350.0
+	menu_container.add_theme_constant_override("separation", CONTAINER_SEPARATION)
+	add_child(menu_container)
+
+	# Title label
+	title_label = ThemeManager.create_label()
+	title_label.name = "TitleLabel"
+	title_label.layout_mode = 2
+	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
+	title_label.text = "GAME OVER"
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	menu_container.add_child(title_label)
+
+	# Spacer 1
+	var spacer1 = Control.new()
+	spacer1.custom_minimum_size = Vector2(0, SPACER_HEIGHT)
+	spacer1.layout_mode = 2
+	menu_container.add_child(spacer1)
+
+	# Score label
+	score_label = ThemeManager.create_label()
+	score_label.name = "ScoreLabel"
+	score_label.layout_mode = 2
+	score_label.add_theme_font_size_override("font_size", SCORE_FONT_SIZE)
+	score_label.text = "FINAL SCORE: 0"
+	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_container.add_child(score_label)
+
+	# Rank label
+	rank_label = ThemeManager.create_label()
+	rank_label.name = "RankLabel"
+	rank_label.layout_mode = 2
+	rank_label.add_theme_font_size_override("font_size", RANK_FONT_SIZE)
+	rank_label.text = "NEW HIGH SCORE #1!"
+	rank_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_container.add_child(rank_label)
+
+	# Spacer 2
+	var spacer2 = Control.new()
+	spacer2.custom_minimum_size = Vector2(0, SPACER_HEIGHT)
+	spacer2.layout_mode = 2
+	menu_container.add_child(spacer2)
+
+	# Buttons container
+	buttons_container = VBoxContainer.new()
+	buttons_container.name = "ButtonsContainer"
+	buttons_container.layout_mode = 2
+	buttons_container.add_theme_constant_override("separation", BUTTON_SEPARATION)
+	buttons_container.alignment = 1
+	menu_container.add_child(buttons_container)
+
+	# Create buttons
+	btn_new_game = _create_button("BtnNewGame", "NEW GAME")
+	btn_menu     = _create_button("BtnMenu", "BACK TO MENU")
+
+
+# Helper to create button
+func _create_button(button_name, initial_text):
+	var btn = load("res://widgets/UIButton.tscn").instantiate()
+	btn.name = button_name
+	btn.layout_mode = 2
+	btn.custom_minimum_size = Vector2(BUTTON_WIDTH, BUTTON_HEIGHT)
+	btn.text = initial_text
+	buttons_container.add_child(btn)
+	return btn
+
+
 # Show the menu with game results
 func show_menu():
 	visible = true
 
-	# Get final data from GameManager
-	var game_data = GameManager.get_game_state()
-	is_victory    = game_data.get("victory", false)
-	final_score   = game_data.get("final_score", 0)
-	final_rank    = game_data.get("rank", 0)
+	# Get final data from SaveManager
+	var infos 	= SaveManager.get_game_infos()
+	is_victory	= infos.get("victory", false)
+	final_score	= infos.get("final_score", 0)
+	final_rank	= infos.get("rank", 0)
 
 	update_display()
 	update_translations()

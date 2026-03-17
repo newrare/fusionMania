@@ -16,21 +16,6 @@ const INITIAL_ROTATION_IMPULSE = 3.0  # Initial rotation speed range
 const HITBOX_SIZE = 240  # Square hitbox size
 const HALF_SIZE = 120  # Half of hitbox for position calculations
 
-# Tile colors (same as Enemy.gd)
-const TILE_COLORS = {
-	2:    Color("#FFFFFF"),  # White
-	4:    Color("#D9D9D9"),  # Light Gray
-	8:    Color("#00FF00"),  # Green
-	16:   Color("#6D9EEB"),  # Blue
-	32:   Color("#FFE599"),  # Light Yellow
-	64:   Color("#E69138"),  # Orange
-	128:  Color("#FF00FF"),  # Magenta
-	256:  Color("#C809C8"),  # Purple
-	512:  Color("#9C079C"),  # Dark Purple
-	1024: Color("#700570"),  # Darker Purple
-	2048: Color("#440344")   # Deep Purple
-}
-
 # Enemy identity
 var enemy_name: String = ""
 var enemy_level: int = 2
@@ -39,10 +24,21 @@ var enemy_color: Color = Color.WHITE
 # Ground tracking
 var ground_body: StaticBody2D = null
 
+# Node references (created dynamically)
+var collision_shape: CollisionShape2D
+var tile_container: Control
+var background_panel: Panel
+var enemy_sprite: Sprite2D
+var name_label: Label
+
 
 func _ready():
 	# Add to fallen_enemy group
 	add_to_group("fallen_enemy")
+
+	# Build scene hierarchy if not already done
+	if not tile_container:
+		_setup_scene()
 	
 	# Configure RigidBody2D physics
 	gravity_scale = GRAVITY_SCALE
@@ -78,17 +74,89 @@ func _ready():
 	_create_ground()
 
 
+# Build scene hierarchy programmatically
+func _setup_scene():
+	# Collision shape with rectangle
+	collision_shape = CollisionShape2D.new()
+	collision_shape.name = "CollisionShape2D"
+	collision_shape.position = Vector2(0, 0)
+	var rect_shape = RectangleShape2D.new()
+	rect_shape.size = Vector2(HITBOX_SIZE, HITBOX_SIZE)
+	collision_shape.shape = rect_shape
+	add_child(collision_shape)
+
+	# Tile container
+	tile_container = Control.new()
+	tile_container.name = "TileContainer"
+	tile_container.clip_contents = true
+	tile_container.custom_minimum_size = Vector2(HITBOX_SIZE, HITBOX_SIZE)
+	tile_container.layout_mode = 3
+	tile_container.anchors_preset = 0
+	tile_container.offset_left = -HALF_SIZE
+	tile_container.offset_top = -HALF_SIZE
+	tile_container.offset_right = HALF_SIZE
+	tile_container.offset_bottom = HALF_SIZE
+	add_child(tile_container)
+
+	# Background panel
+	background_panel = Panel.new()
+	background_panel.name = "BackgroundPanel"
+	background_panel.layout_mode = 1
+	background_panel.anchors_preset = Control.PRESET_FULL_RECT
+	background_panel.anchor_right = 1.0
+	background_panel.anchor_bottom = 1.0
+	background_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	background_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	tile_container.add_child(background_panel)
+
+	# Enemy sprite
+	enemy_sprite = Sprite2D.new()
+	enemy_sprite.name = "EnemySprite"
+	enemy_sprite.z_index = 1
+	enemy_sprite.position = Vector2(HALF_SIZE, HALF_SIZE)
+	enemy_sprite.scale = Vector2(0.273973, 0.273973)
+	tile_container.add_child(enemy_sprite)
+
+	# Name label (hidden by default)
+	name_label = ThemeManager.create_label()
+	name_label.name = "NameLabel"
+	name_label.visible = false
+	name_label.layout_mode = 1
+	name_label.anchors_preset = Control.PRESET_CENTER_BOTTOM
+	name_label.anchor_left = 0.5
+	name_label.anchor_top = 1.0
+	name_label.anchor_right = 0.5
+	name_label.anchor_bottom = 1.0
+	name_label.offset_left = -100.0
+	name_label.offset_top = -40.0
+	name_label.offset_right = 100.0
+	name_label.offset_bottom = 0.0
+	name_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	name_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	name_label.add_theme_color_override("font_color", ThemeManager.get_color("white"))
+	name_label.add_theme_color_override("font_outline_color", ThemeManager.get_color("black"))
+	name_label.add_theme_constant_override("outline_size", 4)
+	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	name_label.clip_text = true
+	tile_container.add_child(name_label)
+
+
 # Initialize with enemy name and level for display
 func initialize(p_name, p_level):
+	# Ensure scene is setup (in case called before _ready)
+	if not tile_container:
+		_setup_scene()
+
 	enemy_name = p_name
 	enemy_level = p_level
-	enemy_color = TILE_COLORS.get(p_level, Color.WHITE)
+	enemy_color = ThemeManager.get_level_color(p_level)
 	_update_name_label()
 
 
 # Update the name label with enemy name and color
 func _update_name_label():
-	var name_label = get_node_or_null("TileContainer/NameLabel")
 	if name_label and enemy_name != "":
 		name_label.text = enemy_name
 		name_label.add_theme_color_override("font_color", enemy_color)

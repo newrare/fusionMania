@@ -11,20 +11,18 @@ var sprite_path: String = ""
 var is_sub_boss: bool = false
 var is_boss: bool = false
 
-# Tile colors (same as Tile.gd for level-based glow effect)
-const TILE_COLORS = {
-	2:    Color("#FFFFFF"),  # White
-	4:    Color("#D9D9D9"),  # Light Gray
-	8:    Color("#00FF00"),  # Green
-	16:   Color("#6D9EEB"),  # Blue
-	32:   Color("#FFE599"),  # Light Yellow
-	64:   Color("#E69138"),  # Orange
-	128:  Color("#FF00FF"),  # Magenta
-	256:  Color("#C809C8"),  # Purple
-	512:  Color("#9C079C"),  # Dark Purple
-	1024: Color("#700570"),  # Darker Purple
-	2048: Color("#440344")   # Deep Purple
-}
+# Color cache for visual styling (needed for _ready)
+var level_color: Color = Color.WHITE
+var dark_color: Color = Color.BLACK
+
+# Node references (created dynamically)
+var tile_container: Control
+var background_panel: Panel
+var liquid_wave: ColorRect
+var enemy_sprite: Sprite2D
+var level_label: RichTextLabel
+var name_label: RichTextLabel
+var damage_label: RichTextLabel
 
 # Tile dimensions
 const TILE_SIZE = 240
@@ -39,10 +37,138 @@ const LABEL_FONT_SIZE_BOSS = 42
 signal defeated(enemy_level: int)
 
 func _ready():
-	pass
+	# Build scene hierarchy if not already done
+	if not tile_container:
+		_setup_scene()
+	
+	# Reapply background stylebox if colors are set (fixes timing issue)
+	if background_panel and level != 0:
+		_apply_background_style()
+
+
+# Build scene hierarchy programmatically
+func _setup_scene():
+	position = Vector2(0, 50)
+
+	# Tile container
+	tile_container = Control.new()
+	tile_container.name = "TileContainer"
+	tile_container.clip_contents = true
+	tile_container.custom_minimum_size = Vector2(TILE_SIZE, TILE_SIZE)
+	tile_container.layout_mode = 3
+	tile_container.anchors_preset = 0
+	tile_container.offset_right = TILE_SIZE
+	tile_container.offset_bottom = TILE_SIZE
+	add_child(tile_container)
+
+	# Background panel
+	background_panel = Panel.new()
+	background_panel.name = "BackgroundPanel"
+	background_panel.layout_mode = 1
+	background_panel.anchors_preset = Control.PRESET_FULL_RECT
+	background_panel.anchor_right = 1.0
+	background_panel.anchor_bottom = 1.0
+	background_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	background_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	tile_container.add_child(background_panel)
+
+	# Liquid wave
+	liquid_wave = ColorRect.new()
+	liquid_wave.name = "LiquidWave"
+	liquid_wave.z_index = 1
+	liquid_wave.layout_mode = 1
+	liquid_wave.anchors_preset = Control.PRESET_FULL_RECT
+	liquid_wave.anchor_right = 1.0
+	liquid_wave.anchor_bottom = 1.0
+	liquid_wave.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	liquid_wave.grow_vertical = Control.GROW_DIRECTION_BOTH
+	liquid_wave.color = ThemeManager.get_color("white")
+	tile_container.add_child(liquid_wave)
+
+	# Enemy sprite
+	enemy_sprite = Sprite2D.new()
+	enemy_sprite.name = "EnemySprite"
+	enemy_sprite.z_index = 2
+	enemy_sprite.position = Vector2(TILE_SIZE / 2.0, TILE_SIZE / 2.0)
+	enemy_sprite.scale = Vector2(0.273973, 0.273973)
+	tile_container.add_child(enemy_sprite)
+
+	# Level label
+	level_label = ThemeManager.create_rich_text_label()
+	level_label.name = "LevelLabel"
+	level_label.offset_left = 0.0
+	level_label.offset_top = 245.0
+	level_label.offset_right = TILE_SIZE
+	level_label.offset_bottom = 285.0
+	level_label.add_theme_color_override("font_color", ThemeManager.get_color("white"))
+	level_label.add_theme_color_override("font_outline_color", ThemeManager.get_color("black"))
+	level_label.add_theme_constant_override("outline_size", 6)
+	level_label.add_theme_font_size_override("normal_font_size", 28)
+	level_label.bbcode_enabled = true
+	level_label.text = "Lv 2"
+	level_label.fit_content = true
+	level_label.scroll_active = false
+	level_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	add_child(level_label)
+
+	# Name label
+	name_label = ThemeManager.create_rich_text_label()
+	name_label.name = "NameLabel"
+	name_label.offset_left = 0.0
+	name_label.offset_top = -60.0
+	name_label.offset_right = TILE_SIZE
+	name_label.offset_bottom = -10.0
+	name_label.add_theme_color_override("font_color", ThemeManager.get_color("white"))
+	name_label.add_theme_color_override("font_outline_color", ThemeManager.get_color("black"))
+	name_label.add_theme_constant_override("outline_size", 6)
+	name_label.add_theme_font_size_override("normal_font_size", 75)
+	name_label.bbcode_enabled = true
+	name_label.text = ""
+	name_label.fit_content = true
+	name_label.scroll_active = false
+	name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	add_child(name_label)
+
+	# Damage label
+	damage_label = ThemeManager.create_rich_text_label()
+	damage_label.name = "DamageLabel"
+	damage_label.offset_left = 0.0
+	damage_label.offset_top = 295.0
+	damage_label.offset_right = TILE_SIZE
+	damage_label.offset_bottom = 335.0
+	damage_label.add_theme_color_override("font_color", Color(1, 0, 0, 1))
+	damage_label.add_theme_color_override("font_outline_color", Color(0.5, 0, 0, 1))
+	damage_label.add_theme_constant_override("outline_size", 4)
+	damage_label.add_theme_font_size_override("normal_font_size", 36)
+	damage_label.bbcode_enabled = true
+	damage_label.text = ""
+	damage_label.fit_content = true
+	damage_label.scroll_active = false
+	damage_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	add_child(damage_label)
+
+# Apply background panel style with rounded corners
+func _apply_background_style():
+	if not background_panel:
+		return
+	
+	# Create StyleBoxFlat for BackgroundPanel (dark base with rounded corners)
+	var bg_style = StyleBoxFlat.new()
+	bg_style.bg_color = dark_color
+	bg_style.corner_radius_top_left = CORNER_RADIUS
+	bg_style.corner_radius_top_right = CORNER_RADIUS
+	bg_style.corner_radius_bottom_left = CORNER_RADIUS
+	bg_style.corner_radius_bottom_right = CORNER_RADIUS
+	bg_style.anti_aliasing = true
+	bg_style.anti_aliasing_size = 2.0
+	background_panel.add_theme_stylebox_override("panel", bg_style)
 
 # Initialize enemy from EnemyManager data
 func initialize(data: Dictionary):
+	# Ensure scene is setup (in case called before _ready)
+	if not tile_container:
+		_setup_scene()
+
 	level = data.get("level", 2)
 	max_hp = data.get("max_hp", 10)
 	current_hp = max_hp
@@ -57,34 +183,18 @@ func initialize(data: Dictionary):
 	scale = Vector2.ZERO
 	modulate.a = 0.0
 
-	# Get node references
-	var enemy_sprite_node = get_node("TileContainer/EnemySprite")
-	var background_panel = get_node("TileContainer/BackgroundPanel")
-	var liquid_wave = get_node("TileContainer/LiquidWave")
-	var level_label_node = get_node("LevelLabel")
-	var name_label_node = get_node("NameLabel")
-	var damage_label_node = get_node("DamageLabel")
-
 	# Load sprite texture (no color effect)
 	var texture = load_sprite_texture(sprite_path)
 	if texture:
-		enemy_sprite_node.texture = texture
+		enemy_sprite.texture = texture
 
 	# Get level color
-	var level_color = TILE_COLORS.get(level, Color.WHITE)
-	var dark_color = level_color.darkened(0.7)  # Background darker version
+	level_color = ThemeManager.get_level_color(level)
+	dark_color = level_color.darkened(0.7)  # Background darker version
 	print("🎨 Enemy Lv%d - Level color: %s" % [level, level_color])
 
-	# Create StyleBoxFlat for BackgroundPanel (dark base with rounded corners)
-	var bg_style = StyleBoxFlat.new()
-	bg_style.bg_color = dark_color
-	bg_style.corner_radius_top_left = CORNER_RADIUS
-	bg_style.corner_radius_top_right = CORNER_RADIUS
-	bg_style.corner_radius_bottom_left = CORNER_RADIUS
-	bg_style.corner_radius_bottom_right = CORNER_RADIUS
-	bg_style.anti_aliasing = true
-	bg_style.anti_aliasing_size = 2.0
-	background_panel.add_theme_stylebox_override("panel", bg_style)
+	# Apply background style with rounded corners
+	_apply_background_style()
 
 	# Create ShaderMaterial for LiquidWave with ondulation effect
 	var wave_shader = load("res://assets/shaders/liquid_wave.gdshader")
@@ -100,7 +210,7 @@ func initialize(data: Dictionary):
 	liquid_wave.material = wave_material
 
 	# Initialize damage label to empty
-	damage_label_node.text = ""
+	damage_label.text = ""
 
 	# Update visual elements
 	update_liquid_fill()
@@ -139,7 +249,6 @@ func update_hp(new_hp: int):
 
 # Update liquid fill height based on HP percentage
 func update_liquid_fill():
-	var liquid_wave = get_node("TileContainer/LiquidWave")
 	if max_hp <= 0:
 		return
 
@@ -174,32 +283,27 @@ func update_sprite(new_sprite_path: String):
 	sprite_path = new_sprite_path
 	var texture = load_sprite_texture(sprite_path)
 	if texture:
-		var enemy_sprite_node = get_node("TileContainer/EnemySprite")
-		enemy_sprite_node.texture = texture
+		enemy_sprite.texture = texture
 		print("🔄 Enemy sprite updated: %s" % sprite_path)
 
 
 # Show damage taken in the damage label
 func show_damage(damage: int):
-	var damage_label_node = get_node("DamageLabel")
-	damage_label_node.text = "[color=#FF0000]-%d[/color]" % damage
+	damage_label.text = "[color=#FF0000]-%d[/color]" % damage
 
 	# Clear the label after 1.5 seconds
 	var tween = create_tween()
 	tween.tween_interval(1.5)
-	tween.tween_callback(func(): damage_label_node.text = "")
+	tween.tween_callback(func(): damage_label.text = "")
 
 
 # Update level and name labels separately
 func update_display():
-	var level_label_node = get_node("LevelLabel")
-	var name_label_node = get_node("NameLabel")
-
-	level_label_node.bbcode_enabled = true
-	name_label_node.bbcode_enabled = true
+	level_label.bbcode_enabled = true
+	name_label.bbcode_enabled = true
 
 	# Get level color as hex string
-	var level_color = TILE_COLORS.get(level, Color.WHITE)
+	var level_color = ThemeManager.get_level_color(level)
 	var color_hex = level_color.to_html(false)
 
 	# Add boss prefix and determine font size
@@ -213,27 +317,26 @@ func update_display():
 		font_size = LABEL_FONT_SIZE_BOSS
 
 	# Clear previous theme overrides for name label
-	name_label_node.remove_theme_font_size_override("font_size")
-	name_label_node.remove_theme_font_size_override("normal_font_size")
+	name_label.remove_theme_font_size_override("font_size")
+	name_label.remove_theme_font_size_override("normal_font_size")
 
 	# Apply font size for name label
-	name_label_node.add_theme_font_size_override("normal_font_size", font_size)
-	name_label_node.add_theme_font_size_override("font_size", font_size)
+	name_label.add_theme_font_size_override("normal_font_size", font_size)
+	name_label.add_theme_font_size_override("font_size", font_size)
 
 	# Update labels with BBCode
-	name_label_node.text = "[center]%s%s[/center]" % [name_prefix, enemy_name]
-	level_label_node.text = "[center][color=#%s]Lv %d[/color][/center]" % [color_hex, level]
+	name_label.text = "[center]%s%s[/center]" % [name_prefix, enemy_name]
+	level_label.text = "[center][color=#%s]Lv %d[/color][/center]" % [color_hex, level]
 
 
 # Create a visual flash on damage
 func flash_damage():
-	var enemy_sprite_node = get_node("TileContainer/EnemySprite")
-	var original_modulate = enemy_sprite_node.modulate
+	var original_modulate = enemy_sprite.modulate
 
 	# Flash red
 	var tween = create_tween()
-	tween.tween_property(enemy_sprite_node, "modulate", Color.RED, 0.1)
-	tween.tween_property(enemy_sprite_node, "modulate", original_modulate, 0.1)
+	tween.tween_property(enemy_sprite, "modulate", Color.RED, 0.1)
+	tween.tween_property(enemy_sprite, "modulate", original_modulate, 0.1)
 
 
 # Spawn animation
@@ -261,18 +364,16 @@ func play_death_animation():
 	fallen_enemy.z_index = 1
 
 	# Copy the visual appearance (color from BackgroundPanel)
-	var original_bg_panel = get_node("TileContainer/BackgroundPanel")
 	var fallen_bg_panel = fallen_enemy.get_node("TileContainer/BackgroundPanel")
-	var original_style = original_bg_panel.get_theme_stylebox("panel")
+	var original_style = background_panel.get_theme_stylebox("panel")
 	if original_style:
 		fallen_bg_panel.add_theme_stylebox_override("panel", original_style)
 
 	# Copy the sprite and scale it
-	var original_sprite = get_node("TileContainer/EnemySprite")
 	var fallen_sprite = fallen_enemy.get_node("TileContainer/EnemySprite")
-	fallen_sprite.texture = original_sprite.texture
-	fallen_sprite.scale = original_sprite.scale
-	fallen_sprite.modulate = original_sprite.modulate
+	fallen_sprite.texture = enemy_sprite.texture
+	fallen_sprite.scale = enemy_sprite.scale
+	fallen_sprite.modulate = enemy_sprite.modulate
 
 	# Add to GameScene (parent of enemy_container) instead of enemy_container
 	# This way FallenEnemy can fall down and stack at the bottom

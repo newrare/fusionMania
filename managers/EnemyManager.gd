@@ -111,7 +111,7 @@ func _ready():
 # Spawn a new enemy based on current grid state
 func spawn_enemy():
 	# Do not spawn enemies in Free Mode
-	if GameManager.is_free_mode():
+	if GameManager.is_mode_free():
 		print("🚫 Cannot spawn enemy in FREE mode")
 		return
 
@@ -186,16 +186,16 @@ func select_random_sprite_variant(level):
 	var prefix = "enemy_boss_" if level == 2048 else "enemy_basic_"
 	var health_state = "hight"  # Start with hight variants
 	var search_prefix = prefix + health_state + "_"
-	
+
 	var dir = DirAccess.open("res://assets/images/")
 	if dir == null:
 		print("⚠️ Could not open assets/images/ directory")
 		return 1
-	
+
 	var variants = []
 	dir.list_dir_begin()
 	var file_name = dir.get_next()
-	
+
 	while file_name != "":
 		if file_name.begins_with(search_prefix) and file_name.ends_with(".png"):
 			# Extract variant number from filename (e.g., "enemy_basic_hight_01.png" -> 1)
@@ -205,9 +205,9 @@ func select_random_sprite_variant(level):
 				if variant_num > 0 and not variants.has(variant_num):
 					variants.append(variant_num)
 		file_name = dir.get_next()
-	
+
 	dir.list_dir_end()
-	
+
 	# Return random variant or 1 as fallback
 	if variants.is_empty():
 		return 1
@@ -224,10 +224,10 @@ func get_sprite_path_for_health(level, health_state, variant):
 func update_enemy_sprite_for_health():
 	if not is_enemy_active():
 		return
-	
+
 	var health_percent = float(active_enemy.current_hp) / float(active_enemy.max_hp)
 	var new_health_state = ""
-	
+
 	# Determine health state based on HP percentage
 	if health_percent > 0.66:
 		new_health_state = "hight"
@@ -235,7 +235,7 @@ func update_enemy_sprite_for_health():
 		new_health_state = "middle"
 	else:
 		new_health_state = "low"
-	
+
 	# Only update if state changed
 	if new_health_state != active_enemy.get("health_state", "hight"):
 		active_enemy.health_state = new_health_state
@@ -245,7 +245,7 @@ func update_enemy_sprite_for_health():
 			active_enemy.sprite_variant
 		)
 		active_enemy.sprite_path = new_sprite_path
-		
+
 		print("🔄 Enemy health state changed to '%s': %s" % [new_health_state, new_sprite_path])
 		enemy_sprite_updated.emit(new_sprite_path)
 
@@ -291,7 +291,7 @@ func defeat_enemy():
 	moves_until_respawn = 10
 
 	# Return to Classic Mode (this clears all tile powers)
-	GameManager.enter_classic_mode()
+	GameManager.set_mode_classic()
 
 	# Emit defeat signal
 	enemy_defeated.emit(enemy_level, score_bonus)
@@ -320,7 +320,7 @@ func on_move_completed():
 	print("🎮 on_move_completed called - enemy_defeated_flag=%s, moves_until_respawn=%d" % [enemy_defeated_flag, moves_until_respawn])
 
 	# In Free Mode, no enemy logic
-	if GameManager.is_free_mode():
+	if GameManager.is_mode_free():
 		return
 
 	# If enemy is active, apply a new power to a random tile
@@ -365,9 +365,9 @@ func apply_power_to_random_tile():
 			var tile = GridManager.get_tile_at(Vector2i(x, y))
 			if tile != null and tile.power_type == "":
 				tiles_without_power.append({"tile": tile, "position": Vector2i(x, y)})
-	
+
 	print("🔍 Debug: Found %d tiles without power out of %d total tiles" % [tiles_without_power.size(), GridManager.grid_size * GridManager.grid_size])
-	
+
 	# Debug: Print power types of all tiles
 	for y in range(GridManager.grid_size):
 		for x in range(GridManager.grid_size):
@@ -423,7 +423,7 @@ func load_save_data(data: Dictionary):
 			var parts = sprite_path.get_file().replace(".png", "").split("_")
 			if parts.size() >= 4:
 				sprite_variant = int(parts[3])
-		
+
 		active_enemy = {
 			"level": level,
 			"name": data.get("enemy_name", "Unknown"),

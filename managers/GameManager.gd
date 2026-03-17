@@ -1,345 +1,227 @@
 # GameManager for Fusion Mania
-# Central game state manager
+# Reviewed
 extends Node
 
-# Viewport design constants
-const DESIGN_WIDTH      = 1080.0
-const DESIGN_HEIGHT     = 1920.0
-const MIN_WINDOW_WIDTH  = 540.0
-const MIN_WINDOW_HEIGHT = 960.0
-
-enum GameState {
-	MENU,
-	PLAYING,
-	PAUSED,
-	GAME_OVER
+const STATES = {
+	"MENU": 	"menu",
+	"PLAYING": 	"playing",
 }
 
-enum GameMode {
-	MANIA,    # Powers activated by enemy spawn
-	CLASSIC,  # No powers, no enemies
-	FREE      # Powers chosen by player and tile spawn with powers already set, no enemies
+const MODES = {
+	"MANIA": 	"mania",	# Powers activated by enemy spawn
+	"CLASSIC": 	"classic",  # No powers, no enemies
+	"FREE": 	"free"     	# Powers chosen by player and tile spawn with powers already set, no enemies
 }
 
-var current_state: GameState = GameState.MENU
-var current_mode = GameMode.CLASSIC
-var game_data    = {}  # Stores current game session data
-var game_session_active: bool = false  # True if a game is currently active or paused
+var powers = {
+	"none": 		"none",
+	"blind": 		{"active": false, "move": 3, "remaining": 0},
+	"ice": 			{"active": false, "move": 2, "remaining": 0},
+	"block_up": 	{"active": false, "move": 3, "remaining": 0},
+	"block_down": 	{"active": false, "move": 3, "remaining": 0},
+	"block_left": 	{"active": false, "move": 3, "remaining": 0},
+	"block_right": 	{"active": false, "move": 3, "remaining": 0}
+}
 
-# ============================
-# Scene Reload Persistence
-# ============================
-var pending_free_mode_powers: Array = []  # Powers to apply after scene reload
-var should_start_new_game = false   # Flag for scene reload to start new game
-var pending_game_mode     = GameMode.CLASSIC  # Mode to start after scene reload
-# ============================
-# Persistent Power States
-# ============================
-var blind_turns_remaining	= 0
-var is_blind_active         = false
-var blocked_directions      = {}  # {Direction: turns_remaining}
+var currents = {
+	"state":	STATES.MENU,
+	"mode": 	MODES.MANIA,
+	"power":	powers.none
+}
 
-# Constants for power durations
-const DEFAULT_BLIND_TURNS = 3
-const DEFAULT_BLOCK_TURNS = 3
+var party_started: bool = false
+var start_after_reload: bool = false  # Flag to indicate game should start after scene reload
 
-# Signals
-signal state_changed(new_state)
-signal mode_changed(new_mode)
+
+# Signals (minimal required)
 signal game_started()
+signal game_ended(victory: bool)
 signal game_paused()
 signal game_resumed()
-signal game_ended(victory)
 signal blind_started()
 signal blind_ended()
-signal direction_blocked(direction, turns)
-signal direction_unblocked(direction)
-signal all_tile_powers_cleared()
+signal direction_blocked(direction: int, turns: int)
+signal direction_unblocked(direction: int)
 
 func _ready():
-	print("🎮 GameManager ready")
-
-
-# Change game state
-func change_state(new_state: GameState):
-	if current_state == new_state:
-		return
-
-	current_state = new_state
-	state_changed.emit(new_state)
-
-	print("Game state changed to: %s" % GameState.keys()[new_state])
+	print("GameManager ready")
 
 
 # Start a new game
-func start_new_game():
+func start():
 	# Reset persistent power states
-	reset_power_states()
+	power_reset()
 
-	# Reset game data
-	game_data = {
-		"started_at": Time.get_datetime_string_from_system(),
-		"moves":      0,
-		"tiles":      []
-	}
+	# Initialize game session data in SaveManager
+	SaveManager.init_game_session()
 
 	# Mark game as started
-	game_session_active = true
+	party_started = true
 
 	# Reset score and grid (this clears visual tiles and spawns new ones)
 	ScoreManager.start_game()
 	GridManager.start_new_game()
 
-	change_state(GameState.PLAYING)
+	# Update state and emit signal
+	currents["state"] = STATES.PLAYING
 	game_started.emit()
 
-	print("🎮 New game started")
+# Check party started
+func is_party_started():
+	return party_started
 
+# Check states
+func is_state_playing():
+	return currents["state"] == STATES.PLAYING
+
+func is_state_in_menu():
+	return currents["state"] == STATES.MENU
+
+
+# Check mode
+func is_mode_mania():
+	return currents["mode"] == MODES.MANIA
+
+func is_mode_classic():
+	return currents["mode"] == MODES.CLASSIC
+
+func is_mode_free():
+	return currents["mode"] == MODES.FREE
+
+
+# Check active powers
+func is_power_blind():
+	return powers["blind"]["active"]
+
+func is_power_ice():
+	return powers["ice"]["active"]
+
+func is_power_block_up():
+	return powers["block_up"]["active"]
+
+func is_power_block_down():
+	return powers["block_down"]["active"]
+
+func is_power_block_left():
+	return powers["block_left"]["active"]
+
+func is_power_block_right():
+	return powers["block_right"]["active"]
+
+func is_power_block_by_string(direction: String):
+	direction = direction.to_lower()
+	return powers["block_" + direction]["active"]
+
+func is_power_block_by_int(direction: int):
+	match direction:
+		0: return is_power_block_up()
+		1: return is_power_block_down()
+		2: return is_power_block_left()
+		3: return is_power_block_right()
+		_: return false
+
+func is_power_none():
+	return currents["power"] == powers.none
+
+
+# Power setter
+func power_activate(power_name: String):
+	if powers.has(power_name):
+		powers[power_name]["active"] 	= true
+		powers[power_name]["remaining"] = powers[power_name]["move"]
+
+		# Emit signals for specific powers
+		if power_name == "blind":
+			blind_started.emit()
+		elif power_name in ["block_up", "block_down", "block_left", "block_right"]:
+			var direction_map = {"block_up": 0, "block_down": 1, "block_left": 2, "block_right": 3}
+			if direction_map.has(power_name):
+				direction_blocked.emit(direction_map[power_name], powers[power_name]["move"])
+
+
+# Power remaining
+func power_decrement():
+	for key in powers.keys():
+		var power = powers[key]
+		if typeof(power) != TYPE_DICTIONARY:
+			continue
+
+		if not power.has("active") or not power["active"]:
+			continue
+
+		if power["remaining"] > 0:
+			power["remaining"] -= 1
+
+			if power["remaining"] == 0:
+				power["active"] = false
+
+				# Emit signals when powers end
+				if key == "blind":
+					blind_ended.emit()
+				elif key in ["block_up", "block_down", "block_left", "block_right"]:
+					var direction_map = {"block_up": 0, "block_down": 1, "block_left": 2, "block_right": 3}
+					if direction_map.has(key):
+						direction_unblocked.emit(direction_map[key])
 
 # Reset all persistent power states
-func reset_power_states():
-	blind_turns_remaining = 0
-	is_blind_active       = false
-	blocked_directions.clear()
-	if current_mode != GameMode.FREE:
-		current_mode = GameMode.CLASSIC
-		PowerManager.set_no_powers()
-	EnemyManager.first_fusion_occurred = false
-	print("🔄 Power states reset - Mode: %s" % GameMode.keys()[current_mode])
-
-
-# Pause the game
-func pause_game():
-	if current_state == GameState.PLAYING:
-		change_state(GameState.PAUSED)
-		game_paused.emit()
-
-		print("⏸️ Game paused")
-
-
-# Resume the game
-func resume_game():
-	if current_state == GameState.PAUSED:
-		change_state(GameState.PLAYING)
-		game_resumed.emit()
-
-		print("▶️ Game resumed")
-
-
-# End the game
-func end_game(victory: bool):
-	# Save final score
-	var final_score = ScoreManager.get_current_score()
-	var rank        = ScoreManager.add_score(final_score)
-
-	game_data["ended_at"]     = Time.get_datetime_string_from_system()
-	game_data["final_score"]  = final_score
-	game_data["victory"]      = victory
-	game_data["rank"]         = rank
-	# Mark game as not started anymore
-	game_session_active = false
-
-	# Change state
-	change_state(GameState.GAME_OVER)
-	game_ended.emit(victory)
-
-# Get current game state data
-func get_game_state():
-	return game_data.duplicate()
-
-
-# Return to menu
-func return_to_menu():
-	change_state(GameState.MENU)
-
-
-# Check if currently playing
-func is_playing():
-	return current_state == GameState.PLAYING
-
-
-# Check if paused
-func is_paused():
-	return current_state == GameState.PAUSED
-
-
-# Check if in menu
-func is_in_menu():
-	return current_state == GameState.MENU
-
-
-# Check if game over
-func is_game_over():
-	return current_state == GameState.GAME_OVER
-
-
-# Get current state
-func get_current_state():
-	return current_state
-
-
-# ============================
-# Persistent Power Methods
-# ============================
-
-# Activate blind mode (or reset if already active)
-func activate_blind(turns: int = DEFAULT_BLIND_TURNS):
-	if is_blind_active:
-		# Already active: reset counter to default
-		blind_turns_remaining = turns
-		print("👁️ Blind mode reset to %d turns" % turns)
-	else:
-		is_blind_active = true
-		blind_turns_remaining = turns
-		blind_started.emit()
-		print("👁️ Blind mode activated for %d turns" % turns)
-
-
-# Decrement blind counter (called after each move)
-func decrement_blind_counter():
-	if is_blind_active and blind_turns_remaining > 0:
-		blind_turns_remaining -= 1
-		print("👁️ Blind mode: %d movements remaining" % blind_turns_remaining)
-
-		if blind_turns_remaining <= 0:
-			is_blind_active = false
-			blind_ended.emit()
-			print("👁️ Blind mode ended")
-
-
-# Check if blind is active
-func is_blind_mode_active():
-	return is_blind_active
-
-
-# Block a direction (or reset if already blocked)
-func block_direction(direction: int, turns: int = DEFAULT_BLOCK_TURNS):
-	if blocked_directions.has(direction):
-		# Already blocked: reset counter
-		blocked_directions[direction] = turns
-		print("🧊 Direction %d block reset to %d turns" % [direction, turns])
-	else:
-		blocked_directions[direction] = turns
-		direction_blocked.emit(direction, turns)
-		print("🧊 Direction %d blocked for %d turns" % [direction, turns])
-
-
-# Decrement all blocked direction counters (called after each move)
-func decrement_blocked_counters():
-	var to_remove = []
-
-	for dir in blocked_directions.keys():
-		blocked_directions[dir] -= 1
-		print("🧊 Direction %d: %d movements remaining" % [dir, blocked_directions[dir]])
-
-		if blocked_directions[dir] <= 0:
-			to_remove.append(dir)
-
-	for dir in to_remove:
-		blocked_directions.erase(dir)
-		direction_unblocked.emit(dir)
-		print("🧊 Direction %d unblocked" % dir)
-
-
-# Check if a direction is blocked
-func is_direction_blocked(direction: int):
-	return blocked_directions.has(direction) and blocked_directions[direction] > 0
-
-
-# Decrement ice counters for all tiles on the grid
-func decrement_tile_ice_counters():
-	for y in range(GridManager.grid_size):
-		for x in range(GridManager.grid_size):
-			var tile = GridManager.get_tile_at(Vector2i(x, y))
-			if tile != null and tile.ice_turns > 0:
-				tile.ice_turns -= 1
-				if tile.ice_turns == 0:
-					tile.remove_ice_effect()
-
-
-# Decrement all power counters (called after each move)
-func decrement_power_counters():
-	decrement_blind_counter()
-	decrement_blocked_counters()
-	decrement_tile_ice_counters()
-
-
-# ============================
-# Game Mode Methods
-# ============================
+func power_reset():
+	powers["blind"]["active"] 			= false
+	powers["blind"]["remaining"] 		= 0
+	powers["block_up"]["active"] 		= false
+	powers["block_up"]["remaining"] 	= 0
+	powers["block_down"]["active"] 		= false
+	powers["block_down"]["remaining"] 	= 0
+	powers["block_left"]["active"] 		= false
+	powers["block_left"]["remaining"] 	= 0
+	powers["block_right"]["active"] 	= false
+	powers["block_right"]["remaining"] 	= 0
+	powers["ice"]["active"] 			= false
+	powers["ice"]["remaining"] 			= 0
 
 # Enter Mania Mode (powers activated by enemy spawn)
-func enter_mania_mode():
-	if current_mode == GameMode.MANIA:
+func set_mode_mania():
+	if currents["mode"] == MODES.MANIA:
 		return
-	current_mode = GameMode.MANIA
-	mode_changed.emit(GameMode.MANIA)
-	print("⚔️ Entering MANIA mode")
+
+	# Set mode
+	currents["mode"] = MODES.MANIA
 
 
 # Enter Classic Mode (no powers, no enemies)
-func enter_classic_mode():
-	if current_mode == GameMode.CLASSIC:
+func set_mode_classic():
+	if currents["mode"] == MODES.CLASSIC:
 		return
-	current_mode = GameMode.CLASSIC
-	clear_all_tile_powers()
+
+	# Set mode
+	currents["mode"] = MODES.CLASSIC
+
+	# Force no powers
 	PowerManager.set_no_powers()
-	EnemyManager.first_fusion_occurred = true
-	mode_changed.emit(GameMode.CLASSIC)
-	print("🎮 Entering CLASSIC mode")
+
+	# Force no enemies
 
 
-# Enter Free Mode (player-selected powers)
-func enter_free_mode(selected_powers = []):
-	if current_mode == GameMode.FREE:
+# Enter Free Mode (powers automatically assigned to tiles, no enemies)
+func set_mode_free(selected_powers = []):
+	if currents["mode"] == MODES.FREE:
 		return
-	current_mode = GameMode.FREE
-	clear_all_tile_powers()
+
+	# Set mode
+	currents["mode"] = MODES.FREE
+
+	# Force spawn rates
 	PowerManager.set_custom_spawn_rates(selected_powers)
-	EnemyManager.first_fusion_occurred = true
-	mode_changed.emit(GameMode.FREE)
-	print("🆓 Entering FREE mode with %d selected powers" % selected_powers.size())
 
 
-# Clear all powers from all tiles on the grid
-func clear_all_tile_powers():
-	for y in range(GridManager.grid_size):
-		for x in range(GridManager.grid_size):
-			var tile = GridManager.get_tile_at(Vector2i(x, y))
-			if tile != null and tile.power_type != "":
-				tile.power_type = ""
-				tile.update_visual()
-
-	all_tile_powers_cleared.emit()
-	print("🧹 All tile powers cleared")
+# Enter Menu
+func set_state_menu():
+	if currents["state"] == STATES.PLAYING:
+		currents["state"] = STATES.MENU
+		game_paused.emit()
 
 
-# Assign powers to all existing tiles on the grid (for Free Mode)
-func assign_powers_to_existing_tiles():
-	var tiles_with_powers = 0
-	for y in range(GridManager.grid_size):
-		for x in range(GridManager.grid_size):
-			var tile = GridManager.get_tile_at(Vector2i(x, y))
-			if tile != null:
-				var power = PowerManager.get_random_power()
-				if power != "":
-					tile.power_type = power
-					tile.update_visual()
-					tiles_with_powers += 1
-
-	print("🔮 Assigned powers to %d existing tiles" % tiles_with_powers)
-
-
-# Check if in Mania mode
-func is_mania_mode():
-	return current_mode == GameMode.MANIA
-
-
-# Check if in Classic mode
-func is_classic_mode():
-	return current_mode == GameMode.CLASSIC
-
-
-# Check if in Free mode
-func is_free_mode():
-	return current_mode == GameMode.FREE
+# Enter Playing
+func set_state_playing():
+	if currents["state"] == STATES.MENU:
+		currents["state"] = STATES.PLAYING
+		game_resumed.emit()

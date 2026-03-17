@@ -8,9 +8,19 @@ const TILE_SPACING = 20
 const GRID_SIZE    = 4
 
 var cell_backgrounds: Array = []
+var background: ColorRect
 
 func _ready():
 	add_to_group("grid")
+
+	# Configure Grid layout
+	layout_mode = 3
+	anchors_preset = 0
+	offset_right = 1060.0
+	offset_bottom = 1060.0
+
+	# Build scene hierarchy
+	_setup_scene()
 
 	# Disable clipping to allow tiles to move outside grid bounds
 	clip_contents = false
@@ -26,11 +36,27 @@ func _ready():
 	print("Grid visual container ready (%dx%d pixels)" % [int(grid_pixel_size.x), int(grid_pixel_size.y)])
 
 
+# Build scene hierarchy programmatically
+func _setup_scene():
+	# Background
+	background = ColorRect.new()
+	background.name = "Background"
+	background.layout_mode = 1
+	background.anchors_preset = Control.PRESET_FULL_RECT
+	background.anchor_right = 1.0
+	background.anchor_bottom = 1.0
+	background.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	background.grow_vertical = Control.GROW_DIRECTION_BOTH
+	background.color = Color(0.25, 0.25, 0.3, 1)
+	add_child(background)
+	move_child(background, 0)
+
+
 # Create visual backgrounds for each cell
 func create_cell_backgrounds():
 	# Load texture for grid cells
-	var grid_texture = load("res://assets/images/texture_grid.svg")
-	
+	var grid_texture = load("res://assets/svg/texture_grid.svg")
+
 	# Create StyleBoxTexture with 9-slice
 	var style_box = StyleBoxTexture.new()
 	style_box.texture              = grid_texture
@@ -40,7 +66,7 @@ func create_cell_backgrounds():
 	style_box.texture_margin_bottom = 20.0
 	style_box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
 	style_box.axis_stretch_vertical   = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
-	
+
 	for y in range(GRID_SIZE):
 		for x in range(GRID_SIZE):
 			var cell = Panel.new()
@@ -58,7 +84,7 @@ func create_cell_backgrounds():
 			cell_backgrounds.append(cell)
 
 
-# Get grid size (for layout calculations)  
+# Get grid size (for layout calculations)
 func get_grid_pixel_size():
 	var width  = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING
 	var height = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * TILE_SPACING

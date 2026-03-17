@@ -46,6 +46,7 @@ fusionMania/
 │   ├── PowerManager.gd         # Power system management
 │   ├── ScoreManager.gd         # Score tracking system
 │   ├── SaveManager.gd          # Game save/load system
+│   ├── ThemeManager.gd         # Global theme with fonts and colors
 │   └── ToolsManager.gd         # Utility tools
 ├── overlays/                   # Modal overlay windows
 │   ├── TitleMenu.gd            # Title menu overlay logic
@@ -85,6 +86,46 @@ fusionMania/
 ```
 
 ## 🏗️ Architecture
+
+### Global Theme System
+The game uses a **centralized theme system** managed by `ThemeManager` for consistent styling across all UI elements.
+
+#### ThemeManager
+- **Location**: `managers/ThemeManager.gd` (AutoLoad singleton)
+- **Default Font**: `assets/others/font_super_crawler.ttf` applied globally to all UI controls
+- **Global Colors**: Centralized color palette accessible throughout the game
+
+#### Available Theme Colors
+The theme provides the following color constants:
+
+**UI Colors:**
+- `COLOR_TITLE` (#C7EBEB) - For titles, links, and actions
+- `COLOR_HOVER` (#3B2155) - Hover state color
+- `COLOR_CLICK` (#000000) - Click/pressed state color
+- `COLOR_WHITE` (#FFFFFF) - Default white
+
+**Level Colors (Tile Values):**
+- `level_2` (#FFFFFF) - White
+- `level_4` (#D9D9D9) - Light Gray
+- `level_8` (#00FF00) - Green
+- `level_16` (#6D9EEB) - Blue
+- `level_32` (#FFE599) - Light Yellow
+- `level_64` (#E69138) - Orange
+- `level_128` (#FF00FF) - Magenta
+- `level_256` (#C809C8) - Purple
+- `level_512` (#9C079C) - Dark Purple
+- `level_1024` (#700570) - Darker Purple
+- `level_2048` (#440344) - Deep Purple
+
+#### Usage
+```gdscript
+# Font is automatically applied to all Label, Button, etc.
+var label = Label.new()  # Already has the default font
+
+# Access theme colors
+var title_color = ThemeManager.get_color("title")
+var level_color = ThemeManager.get_level_color(512)  # Get color for tile value
+```
 
 ### Single Scene Design
 The game uses a **single main scene** with **modal overlays** instead of multiple separate scenes. This approach simplifies state management and screen transitions.
@@ -189,11 +230,11 @@ Enemies use the Fight Mode power system:
 #### Enemy Levels
 Enemies have levels matching tile values with corresponding colors:
 
-| Level | Color | Type | HP | Powers Available |
-|-------|-------|------|-----|------------------|
-| 2-512 | Tile colors | Normal | 10×Level | Limited set |
-| 1024 | #700570 | **Sub-Boss** | 5120 | Extended set |
-| 2048 | #440344 | **Main Boss** | 10240 | Full set (20 powers) |
+| Level | Type      | Powers Available     |
+|-------|-----------|----------------------|
+| 2-512 | Normal    | Limited set          |
+| 1024  | Sub-Boss  | Extended set         |
+| 2048  | Main Boss | Full set (20 powers) |
 
 #### Level Selection
 The enemy's maximum possible level equals the highest tile value on the grid.
@@ -208,20 +249,6 @@ The enemy's maximum possible level equals the highest tile value on the grid.
 - **Rounded Borders**: Smooth, modern tile appearance with rounded corners
 - **Color-Coded Icons**: Power icons in top-right corner (green for bonus, red for malus)
 - **Blind Overlay**: Black overlay covers the grid when Blind power activates
-
-### Tile Visual Design
-Each tile has:
-- **2**: #FFFFFF (White)
-- **4**: #D9D9D9 (Light Gray)
-- **8**: #00FF00 (Green)
-- **16**: #6D9EEB (Blue)
-- **32**: #FFE599 (Light Yellow)
-- **64**: #E69138 (Orange)
-- **128**: #FF00FF (Magenta)
-- **256**: #C809C8 (Purple)
-- **512**: #9C079C (Dark Purple)
-- **1024**: #700570 (Darker Purple)
-- **2048**: #440344 (Deep Purple)
 
 ### 🔥 Power System
 
@@ -330,6 +357,7 @@ Free Mode allows you to customize which powers will appear in your game:
 - **Signal System**: For component communication
 
 ### Key Systems
+- **Global Theme System**: Centralized theme management with default font and color palette
 - **Single Scene Architecture**: One main scene with modal overlays for simplified state management
 - **Grid Management**: 4x4 grid with tile spawning logic
 - **Power Management**: 20 different power effects with spawn rate control

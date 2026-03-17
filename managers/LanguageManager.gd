@@ -1,8 +1,6 @@
 # LanguageManager for Fusion Mania
-# Manages game localization and translations
+# Reviewed
 extends Node
-
-signal language_changed
 
 var current_language 	= "en"
 var available_languages = ["fr", "en"]
@@ -10,14 +8,12 @@ var available_languages = ["fr", "en"]
 # Settings file path
 const SETTINGS_PATH = "user://language_settings.cfg"
 
-
+signal language_changed
 
 # Load
 func _ready():
 	load_basic_translations()
 	load_settings()  # Load saved language or use default
-
-
 
 func load_basic_translations():
 	# EN
@@ -63,7 +59,7 @@ func load_basic_translations():
 	en_translation.add_message("NO",			"No")
 	en_translation.add_message("SUCCESS", 		"Success!")
 	en_translation.add_message("NO_SCORES",		"No scores yet")
-	
+
 	# Start screen
 	en_translation.add_message("PRESS_KEY_TO_START",	"Press any key to start")
 	en_translation.add_message("PRESS_SCREEN_TO_START",	"Tap the screen to start")
@@ -134,7 +130,7 @@ func load_basic_translations():
 	fr_translation.add_message("NO",			"Non")
 	fr_translation.add_message("SUCCESS",		"OK !")
 	fr_translation.add_message("NO_SCORES",		"Pas encore de scores")
-	
+
 	# Start screen
 	fr_translation.add_message("PRESS_KEY_TO_START",	"Appuyez sur une touche pour commencer")
 	fr_translation.add_message("PRESS_SCREEN_TO_START",	"Appuyez sur l'écran pour commencer")
@@ -162,10 +158,11 @@ func load_basic_translations():
 
 	TranslationServer.add_translation(fr_translation)
 
+
 # Load language settings from file
 func load_settings():
-	var config = ConfigFile.new()
-	var err = config.load(SETTINGS_PATH)
+	var config 	= ConfigFile.new()
+	var err 	= config.load(SETTINGS_PATH)
 
 	if err == OK:
 		var saved_lang = config.get_value("language", "current", "en")
@@ -181,20 +178,14 @@ func save_settings():
 	var config = ConfigFile.new()
 	config.set_value("language", "current", current_language)
 
-	var err = config.save(SETTINGS_PATH)
-	if err == OK:
-		print("✅ Language settings saved: %s" % current_language)
-	else:
-		print("❌ Failed to save language settings: error %d" % err)
+	config.save(SETTINGS_PATH)
 
 func set_language(lang):
 	if lang in available_languages:
 		current_language = lang
 		TranslationServer.set_locale(lang)
 		language_changed.emit()
-		save_settings()  # Save after changing language
-	else:
-		print("❌ ERROR: Unsupported language '", lang, "'. Available languages: ", available_languages)
+		save_settings()
 
 func get_current_language():
 	return current_language

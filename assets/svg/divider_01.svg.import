@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://rlxt16406ari"
-path="res://.godot/imported/texture_grid.svg-86d1cff8405232b05644445cdd5fdef0.ctex"
+uid="uid://cc8teq8nxtfoi"
+path="res://.godot/imported/divider_01.svg-2826ae436634f9fa66c96f144be8ed6b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/texture_grid.svg"
-dest_files=["res://.godot/imported/texture_grid.svg-86d1cff8405232b05644445cdd5fdef0.ctex"]
+source_file="res://assets/svg/divider_01.svg"
+dest_files=["res://.godot/imported/divider_01.svg-2826ae436634f9fa66c96f144be8ed6b.ctex"]
 
 [params]
 

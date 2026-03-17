@@ -113,36 +113,21 @@ func _ready():
 	game_over_menu.new_game_pressed.connect(_on_gameover_new_game)
 	game_over_menu.menu_pressed.connect(_on_gameover_menu)
 
-	# Handle scene reload for new game or custom powers
-	if GameManager.should_start_new_game:
-		GameManager.should_start_new_game = false
-		hide_all_overlays()
-		# Reset UI counters
-		move_count = 0
-		update_move_count()
-		update_score_display()
-		
-		# Check if coming from power selection (FREE mode) or direct mode choice (MANIA/CLASSIC)
-		if GameManager.pending_free_mode_powers.size() > 0:
-			# Enter Free Mode with selected powers
-			GameManager.enter_free_mode(GameManager.pending_free_mode_powers)
-			GameManager.pending_free_mode_powers.clear()
-			GameManager.start_new_game()
-			# Assign powers to the initial tiles after grid is created
-			GameManager.assign_powers_to_existing_tiles()
-		elif GameManager.pending_game_mode == GameManager.GameMode.MANIA:
-			# Enter Mania mode (powers activated by enemy spawn)
-			GameManager.enter_mania_mode()
-			GameManager.start_new_game()
-		else:
-			# Enter Classic mode (no powers, no enemies)
-			GameManager.enter_classic_mode()
-			GameManager.start_new_game()
-	else:
-		# Show start screen at launch
-		_hide_grid()
-		_hide_score()
-		start_screen.show_screen()
+	# Check if we should auto-start after reload  (e.g., after mode selection)
+	if GameManager.start_after_reload:
+		GameManager.start_after_reload = false  # Reset flag
+		# Clear wind effects before starting
+		#PowerEffect.clear_all_wind_effects()
+		# Start the game
+		#_show_grid()
+		_show_score()#
+		GameManager.start()
+		return
+
+	# Otherwise, start with title menu
+	_hide_grid()
+	_hide_score()
+	start_screen.show_screen()
 
 
 # Process loop for parallax scrolling
@@ -154,8 +139,8 @@ func _process(delta):
 # Recentrer les éléments quand la fenêtre est redimensionnée
 func _on_viewport_resized():
 	var viewport_size = get_viewport().get_visible_rect().size
-	var offset_x = (viewport_size.x - GameManager.DESIGN_WIDTH) / 2.0
-	var offset_y = (viewport_size.y - GameManager.DESIGN_HEIGHT) / 2.0
+	var offset_x = (viewport_size.x - ThemeManager.GAME_WIDTH) / 2.0
+	var offset_y = (viewport_size.y - ThemeManager.GAME_HEIGHT) / 2.0
 
 	# Positionner l'ennemi en haut à droite avec marges (droite: 2%, top: 2%)
 	# Le contenu fait 384px de large (sprite width)
@@ -205,16 +190,16 @@ func _center_overlay_menu(overlay):
 		return
 
 	var viewport_size = get_viewport().get_visible_rect().size
-	var offset_x = (viewport_size.x - GameManager.DESIGN_WIDTH) / 2.0
-	var offset_y = (viewport_size.y - GameManager.DESIGN_HEIGHT) / 2.0
+	var offset_x = (viewport_size.x - ThemeManager.GAME_WIDTH) / 2.0
+	var offset_y = (viewport_size.y - ThemeManager.GAME_HEIGHT) / 2.0
 
 	# Centrer le fond de l'overlay
 	var overlay_bg = overlay.get_node_or_null("OverlayBackground")
 	if overlay_bg:
 		overlay_bg.offset_left = offset_x
 		overlay_bg.offset_top = offset_y
-		overlay_bg.offset_right = GameManager.DESIGN_WIDTH + offset_x
-		overlay_bg.offset_bottom = GameManager.DESIGN_HEIGHT + offset_y
+		overlay_bg.offset_right = ThemeManager.GAME_WIDTH + offset_x
+		overlay_bg.offset_bottom = ThemeManager.GAME_HEIGHT + offset_y
 
 	# Centrer le conteneur du menu
 	var menu_container = overlay.get_node_or_null("MenuContainer")
@@ -230,11 +215,11 @@ func _center_overlay_menu(overlay):
 		menu_container.offset_bottom = original_bottom + offset_y
 
 
-# Définir la taille minimale de la fenêtre
+# Set minimum window size to prevent breaking the layout
 func _set_minimum_window_size():
 	var window = get_window()
 	if window:
-		window.min_size = Vector2i(GameManager.MIN_WINDOW_WIDTH, GameManager.MIN_WINDOW_HEIGHT)
+		window.min_size = Vector2i(ThemeManager.GAME_WIDTH_MIN, ThemeManager.GAME_HEIGHT_MIN)
 
 
 # Hide all overlays
@@ -276,16 +261,18 @@ func _on_start_screen_pressed():
 
 # Title menu signal handlers
 func _on_mania_mode_pressed():
-	# Set mode to MANIA and reload scene
-	GameManager.pending_game_mode = GameManager.GameMode.MANIA
-	GameManager.should_start_new_game = true
+	# Set mode first, then reload (start() will be called after reload)
+	GameManager.set_mode_mania()
+	GameManager.party_started = false  # Reset party state
+	GameManager.start_after_reload = true  # Tell scene to start after reload
 	get_tree().reload_current_scene()
 
 
 func _on_classic_mode_pressed():
-	# Set mode to CLASSIC and reload scene
-	GameManager.pending_game_mode = GameManager.GameMode.CLASSIC
-	GameManager.should_start_new_game = true
+	# Set mode first, then reload (start() will be called after reload)
+	GameManager.set_mode_classic()
+	GameManager.party_started = false  # Reset party state
+	GameManager.start_after_reload = true  # Tell scene to start after reload
 	get_tree().reload_current_scene()
 
 
@@ -297,7 +284,7 @@ func _on_free_mode_pressed():
 
 func _on_resume_pressed():
 	hide_all_overlays()
-	GameManager.resume_game()
+	GameManager.set_state_playing()
 
 
 func _on_ranking_pressed():
@@ -317,12 +304,9 @@ func _on_quit_pressed():
 
 
 # PowerChoiceMenu signal handlers
-func _on_powers_selected(selected_powers: Array):
-	# Save powers to GameManager before reloading scene
-	GameManager.pending_free_mode_powers = selected_powers
-	GameManager.should_start_new_game = true
-	# Reload scene completely for a clean state with selected powers
-	get_tree().reload_current_scene()
+func _on_powers_selected(powers: Array):
+	GameManager.start()
+	GameManager.set_mode_free(powers)
 
 
 func _on_power_choice_back():
@@ -357,7 +341,7 @@ func _on_gameover_new_game():
 
 func _on_gameover_menu():
 	# Return to menu - don't reload, as we may return to main menu outside GameScene
-	GameManager.return_to_menu()
+	GameManager.set_state_menu()
 	_hide_grid()
 	title_menu.show_menu()
 
@@ -370,7 +354,7 @@ func _on_game_started():
 
 
 func _on_grid_game_over():
-	if GameManager.is_playing():
+	if GameManager.is_state_playing():
 		var has_reached_2048 = GridManager.has_tile_value(2048)
 		GameManager.end_game(has_reached_2048)
 
@@ -388,7 +372,7 @@ func _on_game_ended(victory: bool):
 # GridManager signal handlers
 func _on_fusion_occurred(tile1, tile2, new_tile):
 	# Spawn enemy on first fusion (only if not in Free Mode)
-	if EnemyManager != null and not EnemyManager.first_fusion_occurred and not GameManager.is_free_mode():
+	if EnemyManager != null and not EnemyManager.first_fusion_occurred and GameManager.is_mode_mania():
 		EnemyManager.spawn_enemy()
 		# Note: enemy_just_spawned flag is set in _on_enemy_spawned callback
 
@@ -463,7 +447,7 @@ func _on_enemy_spawned(enemy_data: Dictionary):
 
 	# Initialize enemy with data from EnemyManager
 	enemy.initialize(enemy_data)
-	
+
 	# Set z-index so enemy is in front of fallen enemies (z_index = 1)
 	enemy.z_index = 2
 
@@ -546,13 +530,13 @@ func update_score_display():
 func _input(event):
 	# Pause with ESC
 	if event.is_action_pressed("ui_cancel"):
-		if GameManager.is_playing():
-			GameManager.pause_game()
+		if GameManager.is_state_playing():
+			GameManager.set_state_menu()
 			get_tree().root.set_input_as_handled()
 		return
 
 	# Movement only when playing
-	if not GameManager.is_playing():
+	if not GameManager.is_state_playing():
 		return
 
 	# Keyboard input
